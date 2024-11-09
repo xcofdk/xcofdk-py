@@ -1,0 +1,8 @@
+Multithreaded user application 'exampleB21':
+  - title        : MTGuiAppMessaging
+  - location     : ~/test/userapp/basic/mt/exampleB21/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates general use of multiple tasks.
+  - remark(s)    : a) The application is made quite parameterized to serve as 'generic application'
+                      used by other examples wherever applicable.
+                   b) It also is used to highlight basic features of the subsystem messaging.

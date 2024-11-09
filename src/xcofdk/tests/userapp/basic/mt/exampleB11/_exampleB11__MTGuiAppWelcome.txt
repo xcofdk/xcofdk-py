@@ -1,0 +1,5 @@
+Multithreaded user application '_exampleB11':
+  - title        : MTGuiAppWelcome
+  - location     : ~/test/userapp/basic/mt/exampleB11/
+  - description  : This Tk application uses an instance of class 'MainXTask' to (a)synchronously start the GUI.
+  - remark(s)    : -

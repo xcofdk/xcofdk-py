@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleB23':
+  - title        : MTGuiAppBlockingSrvTask
+  - location     : ~/test/userapp/basic/mt/exampleB23/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates use of blocking external queues.
+  - remark(s)    : -
