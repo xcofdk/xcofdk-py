@@ -37,7 +37,7 @@ class _FwApiBase:
 
     @staticmethod
     def FwApiGetXcofdkVer() -> str:
-        return _FwVersion._GetVersionInfo(bShort_=False, bSkipPrefix_=True)
+        return _FwVersion._GetVersionInfo(bSkipPrefix_=True)
 
     @staticmethod
     def FwApiGetPythonVer() -> str:
@@ -53,7 +53,7 @@ class _FwApiBase:
 
     @staticmethod
     def FwApiStartXcoFW(startOptions_ : Union[list, str] =None) -> bool:
-        _fwVer = _FwVersion._GetVersionInfo(bShort_=True, bSkipPrefix_=True)
+        _fwVer = _FwVersion._GetVersionInfo(bSkipPrefix_=True)
 
         if not _SystemInfo._IsFrameworkSupportingPythonVersion():
             logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_014).format(_fwVer))
@@ -117,7 +117,7 @@ class _FwApiBase:
         _verstr = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_Python_Version).format(_verstr)
 
         res = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble)
-        res = res.format(_dlLong, _dlShort, _dlShort, _FwVersion._GetVersionInfo(), _dlShort, _verstr, _dlShort, _dlLong)
+        res = res.format(_dlLong, _dlShort, _dlShort, _FwVersion._GetVersionInfo(bShort_=False), _dlShort, _verstr, _dlShort, _dlLong)
         return res
 
     @staticmethod

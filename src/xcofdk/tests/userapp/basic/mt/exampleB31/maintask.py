@@ -91,7 +91,7 @@ class MainTaskGIL(MainXTask, UserAppControllerIF):
         self.__lstSrv           = []
         self.__lstSrvNR         = []
         self.__taskInfo         = None
-        self.__fiboInput        = 19
+        self.__fiboInput        = 21
         self.__startTime        = None
         self.__bAutoStart       = True
         self.__bAutoClose       = False

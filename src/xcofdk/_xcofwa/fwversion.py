@@ -10,10 +10,10 @@
 
 class _FwVersion:
 
-    __VERSION_INFO_MIT = (2, 0, None, None, None)
+    __VERSION_INFO_MIT = (2, 0, 1, None, None)
 
     @staticmethod
-    def _GetVersionInfo(bShort_ =True, bSkipPrefix_ =False) -> str:
+    def _GetVersionInfo(bShort_ =False, bSkipPrefix_ =False) -> str:
         _verInfo = _FwVersion.__VERSION_INFO_MIT
 
         res = f'{_verInfo[0]}.{_verInfo[1]}'

@@ -41,9 +41,9 @@ $> python3.12 -m pip install xcofdk
 
 The example below demonstrates typical use of the framework of [XCOFDK](https://github.com/xcofdk/xcofdk-py) by 
 multithreaded applications. <br>
-Representing a quite simple example, it creates a *synchronous* task, i.e. application's main task, which is executed
-by the framework
-from within program's entry point <tt>Main()</tt>, that is synchronously to program's <tt>MainThread</tt>:
+Representing a quite simple example, it creates application's main task with synchronous execution type, which is
+executed by the framework from within program's entry point <tt>Main()</tt>, that is synchronously to program's
+<tt>MainThread</tt>:
 
 ```python
 # file : quickStart.py

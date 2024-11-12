@@ -28,6 +28,7 @@ class UserAppUtil:
     __slots__ = []
 
     __FW_START_OPTION_LOGLEVEL       = '--log-level'
+    __CMD_LINE_DUAL_OPTIONS_LIST     = [ __FW_START_OPTION_LOGLEVEL , '--service-tasks-count' , '--fibonacci-input 20' ]
     __FW_START_OPTION_DISABLE_LOG_TS = '--disable-log-timestamp'
     __FW_START_OPTION_DISABLE_LOG_HL = '--disable-log-highlighting'
 
@@ -251,42 +252,52 @@ class UserAppUtil:
         res = []
 
         _NARGS = len(sys.argv)
-        if _NARGS > 1:
-            _ii = 0
-            while _ii < _NARGS:
+        if _NARGS < 1:
+            return res
+
+        _ii = 0
+        while True:
+            _ii += 1
+            if _ii >= _NARGS:
+                break
+
+            _aa = sys.argv[_ii]
+            if _aa.startswith('#'):
+                break
+
+            # dual option?
+            if _aa in UserAppUtil.__CMD_LINE_DUAL_OPTIONS_LIST:
+                _aa  = sys.argv[_ii]
+                _bLL = _aa == UserAppUtil.__FW_START_OPTION_LOGLEVEL
+                if _bLL:
+                    res.append(_aa)
+
                 _ii += 1
+                if _ii >= _NARGS:
+                    print('[UserAppUtil] Missing value specification after cmdline option \'{}\'.'.format(_aa))
+                    return None
 
-                aa = sys.argv[_ii]
-                if aa.startswith('#'):
-                    break
-
-                # option '--log-level'
-                if aa == UserAppUtil.__FW_START_OPTION_LOGLEVEL:
-                    res.append(aa)
-
-                    _ii += 1
-                    if _ii >= _NARGS:
-                        print('[UserAppUtil] Missing loglevel specification after cmdline option \'{}\'.'.format(aa))
-                        return None
-
-                    _loglevel = sys.argv[_ii]
-                    if _loglevel not in lstValidLoglevelValues_:
-                        _tmp = ' | '.join(lstValidLoglevelValues_)
-                        print('[UserAppUtil] Unknown/invalid loglevel \'{}\' specified via cmdline, see below for defined values:\n\t{}'.format(str(_loglevel), _tmp))
-                        return None
-
-                    res.append(_loglevel)
+                if not _bLL:
                     continue
 
-                # option '--disable-log-timestamp'
-                if aa == UserAppUtil.__FW_START_OPTION_DISABLE_LOG_TS:
-                    res.append(aa)
-                    continue
+                _loglevel = sys.argv[_ii]
+                if _loglevel not in lstValidLoglevelValues_:
+                    _tmp = ' | '.join(lstValidLoglevelValues_)
+                    print('[UserAppUtil] Unknown/invalid loglevel \'{}\' specified via cmdline, see below for defined values:\n\t{}'.format(str(_loglevel), _tmp))
+                    return None
 
-                # option '--disable-log-highlighting'
-                if aa == UserAppUtil.__FW_START_OPTION_DISABLE_LOG_HL:
-                    res.append(aa)
-                    continue
+                res.append(_loglevel)
+                continue
+
+            # option '--disable-log-timestamp'
+            if _aa == UserAppUtil.__FW_START_OPTION_DISABLE_LOG_TS:
+                res.append(_aa)
+                continue
+
+            # option '--disable-log-highlighting'
+            if _aa == UserAppUtil.__FW_START_OPTION_DISABLE_LOG_HL:
+                res.append(_aa)
+                continue
         return res
     # --------------------------------------------------------------------------
     #END Impl
