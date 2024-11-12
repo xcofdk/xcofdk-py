@@ -7,7 +7,7 @@ License     : This software is distributed under the MIT License (http://opensou
 
 # Project Description
 
-**XCOFDK** is *the architecture* of an e**X**tensible, **C**ustomizable and **O**bject-oriented **F**ramework 
+**XCOFDK** is the architecture of an e**X**tensible, **C**ustomizable and **O**bject-oriented **F**ramework 
 **D**evelopment **K**it.
 
 This project presents an implementation of XCOFDK for Python through the package **<tt>xcofdk</tt>**. <br>
