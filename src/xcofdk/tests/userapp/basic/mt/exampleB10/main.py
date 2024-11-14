@@ -69,4 +69,10 @@ def Main():
 # Execution
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
+    for aa in sys.argv:
+        if aa == '--help':
+            _usage = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+            _usage = f'Usage:\n\t$> python3 -m {_usage} [--help]'
+            print(_usage)
+            exit(0)
     exit(Main())

@@ -123,6 +123,12 @@ def _ScanCmdLine():
 
     _bSync, _bMain, _lstOptions = False, True, []
     for aa in sys.argv:
+        if aa == '--help':
+            _usage = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+            _usage = f'Usage:\n\t$> python3 -m {_usage} [--help] [--use-sync-task] [--no-main-task] [--disable-log-timestamp] [--disable-log-highlighting]'
+            print(_usage)
+            return None, None, None
+
         if aa in _lstFW_START_OPTIONS:
             _lstOptions.append(aa)
             continue
@@ -141,4 +147,6 @@ def _ScanCmdLine():
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
     _bSyncTask, _bUseMainTask, _lstStartOptions = _ScanCmdLine()
+    if _bSyncTask is None:
+        exit(0)
     exit(Main(bSyncTask_=_bSyncTask, bUseMainTask_=_bUseMainTask, fwStartOptions_=_lstStartOptions))

@@ -58,6 +58,15 @@ def Main(fwStartOptions_ : list):
 # Execution
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
+    for aa in sys.argv:
+        if aa == '--help':
+            _usage  = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+            _usage  = f'Usage:\n\t$> python3 -m {_usage} [--help] [--enable-async-execution] [--service-tasks-count NUM] [--disable-auto-close] [--disable-auto-start] [--disable-log-timestamp] [--disable-log-highlighting] [--log-level LLEVEL]'
+            _usage += '\n\t   LLEVEL : [trace | debug | info | warning | error]'
+            _usage += '\n\t   NUM    : [1..12]'
+            print(_usage)
+            exit(0)
+
     _fwStartOptions = UserAppUtil.GetFwStartOptions(loglevel_=None, bDisableLogTimestamp_=None, bDisableLogHighlighting_=None)
     if _fwStartOptions is None:
         exit(80)

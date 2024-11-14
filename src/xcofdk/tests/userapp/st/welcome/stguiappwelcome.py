@@ -325,6 +325,12 @@ class STGuiAppWelcome(UserAppViewIF):
                 if aa.startswith('#'):
                     break
 
+                if aa == '--help':
+                    _usage = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+                    _usage = f'Usage:\n\t$> python3 -m {_usage} [--help] [--disable-auto-start] [--enable-auto-close]'
+                    print(_usage)
+                    return
+
                 if aa == '--disable-auto-start':
                     bAutoStart = False
                 elif aa == '--enable-auto-close':
