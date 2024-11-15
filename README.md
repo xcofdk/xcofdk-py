@@ -140,5 +140,5 @@ td, th {
 
 | Main page         | :      | [XCOFDK on GitHub](https://github.com/xcofdk/xcofdk-py)                      |
 | ----------------  | -----  | ---------------------------------------------------------------------------- |
-| **Wiki page**     | **:**  | [**XCOFDK Wiki**](https://github.com/xcofdk/xcofdk-py/wiki)                  |
+| **Wiki**          | **:**  | [**XCOFDK Wiki**](https://github.com/xcofdk/xcofdk-py/wiki)                  |
 | **License file**  | **:**  | [**MIT License**](https://github.com/xcofdk/xcofdk-py/blob/master/LICENSE.txt) |

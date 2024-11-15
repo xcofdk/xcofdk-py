@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------------------------
-# File   : mtUserAppUtil.py
+# File   : mpUserAppUtil.py
 #
 # Copyright(c) 2024 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).

@@ -81,7 +81,7 @@ class MainTaskGIL(MainXTask, UserAppControllerIF):
       , 21 : ServiceTaskGilSpec(fiboInput_=21, fiboCpuTimeMS_=4.584, runPhaseFreqMS_=65, deficientRunPhaseFreqMS_=45)     # 11x  4.584  = 50.424 [ms]
       , 22 : ServiceTaskGilSpec(fiboInput_=22, fiboCpuTimeMS_=7.889, runPhaseFreqMS_=100, deficientRunPhaseFreqMS_=75)    # 11x  7.889  = 86.779 [ms]
       , 23 : ServiceTaskGilSpec(fiboInput_=23, fiboCpuTimeMS_=11.393, runPhaseFreqMS_=140, deficientRunPhaseFreqMS_=120)  # 11x 11.393  =125.323 [ms]
-      , 24 : ServiceTaskGilSpec(fiboInput_=24, fiboCpuTimeMS_=16.964, runPhaseFreqMS_=200, deficientRunPhaseFreqMS_=180)  # 11x 16.964  =186.604 [ms]
+      , 24 : ServiceTaskGilSpec(fiboInput_=24, fiboCpuTimeMS_=16.964, runPhaseFreqMS_=210, deficientRunPhaseFreqMS_=180)  # 11x 16.964  =186.604 [ms]
     }
 
 
