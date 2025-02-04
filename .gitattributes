@@ -39,6 +39,8 @@
 *.so                -text
 *.sqlite3           -text
 *.svg               -text
+*.tar               -text
+*.tar.gz            -text
 *.tif               -text
 *.xls               -text
 *.xlsm              -text
