@@ -3,28 +3,31 @@
 # ------------------------------------------------------------------------------
 # File   : lcexecstate.py
 #
-# Copyright(c) 2023 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
-
 
 from enum      import auto
 from enum      import unique
 from threading import RLock as _PyRLock
+from typing    import Union as _PyUnion
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.flattendfe import _FlattendFatalError
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines       import _LcConfig
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines       import _LcFrcView
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _LogErrorCode
 from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask     import _EBitMask
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntFlag
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _EColorCode
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _TextStyle
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject     import _ProtectedAbstractSlotsObject
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+from xcofdk._xcofw.fw.fwssys.fwerrh.lcfrcview    import _LcFrcView
+from xcofdk._xcofw.fw.fwssys.fwerrh.flattendfe   import _FlattendFatalError
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _ELcExecutionState(_FwIntFlag):
@@ -52,7 +55,6 @@ class _ELcExecutionState(_FwIntFlag):
 
     eLcSetupFailure     = (0x000001 << 28)
     eLcRuntimeFailure   = (0x000001 << 29)
-
 
     @property
     def isErrorFree(self):
@@ -175,7 +177,6 @@ class _ELcExecutionState(_FwIntFlag):
     def RemoveLcExecutionState(eLcESMask_: _FwIntFlag, eLcESFlag_):
         return _EBitMask.RemoveEnumBitFlag(eLcESMask_, eLcESFlag_)
 
-
 @unique
 class _ELcKpiID(_FwEnum):
 
@@ -198,20 +199,17 @@ class _ELcKpiID(_FwEnum):
     eLogifCreate                = auto()  
     eLogifDestroy               = auto()  
 
-
 class _LcExecutionStateDriver(_ProtectedAbstractSlotsObject):
     __slots__ = []
 
     def __init__(self, ppass_ : int):
         super().__init__(ppass_)
 
-
 class _LcExecutionStateHistory(_ProtectedAbstractSlotsObject):
 
     __slots__ = [ '__lck' , '__eHistMask' ]
 
     __START_SUCCEEDED_ALL_TRANSITIONAL_STATES_MASK = 0x0000FF
-
 
     def __init__(self, ppass_: int):
         super().__init__(ppass_)
@@ -307,7 +305,7 @@ class _LcExecutionStateHistory(_ProtectedAbstractSlotsObject):
         elif not isinstance(eExecState_, _ELcExecutionState):
             pass
         elif not (eExecState_.isFailureState or isinstance(lcExecStateDriver_, _LcExecutionStateDriver)):
-            vlogif._LogOEC(True, -1536)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00325)
         else:
             with self.__lck:
                 if not _ELcExecutionState.IsLcExecutionStateSet(self.__eHistMask, eExecState_):
@@ -319,7 +317,7 @@ class _LcExecutionStateHistory(_ProtectedAbstractSlotsObject):
         elif not isinstance(eExecState_, _ELcExecutionState):
             pass
         elif not (eExecState_.isFailureState or isinstance(lcExecStateDriver_, _LcExecutionStateDriver)):
-            vlogif._LogOEC(True, -1537)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00326)
         else:
             with self.__lck:
                 if _ELcExecutionState.IsLcExecutionStateSet(self.__eHistMask, eExecState_):
@@ -334,7 +332,7 @@ class _LcExecutionStateHistory(_ProtectedAbstractSlotsObject):
         else:
             with self.__lck:
                 if not (_ELcExecutionState.ePreConfigPhase.value < eExecState_.value < _ELcExecutionState.eJoinPhase.value):
-                    vlogif._LogOEC(True, -1538)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00327)
 
                 elif eExecState_ == _ELcExecutionState.eRuntimePhase:
                     res = self.hasReachedRuntimePhase
@@ -404,63 +402,67 @@ class _LcExecutionStateHistory(_ProtectedAbstractSlotsObject):
     def __isInvalid(self):
         return self.__lck is None
 
-
 class _LcSetupFailure:
 
     __slots__ = [ '__errMsg' , '__errCode' ]
 
-    def __init__(self, errMsg_ : str, errCode_ : int =None):
+    def __init__(self, errCode_ : _PyUnion[_EFwErrorCode, int], errMsg_ : str =None):
         self.__errMsg  = None
         self.__errCode = None
 
-        self._Update(errMsg_, errCode_=errCode_)
+        self._Update(errCode_, errMsg_=errMsg_)
 
     def __str__(self):
         return self.ToString()
 
     @property
     def isValid(self) -> bool:
-        return self.__errMsg is not None
-
-    @property
-    def errorMessage(self) -> str:
-        return self.__errMsg
-
-    @property
-    def errorCode(self) -> int:
-        return self.__errCode
+        return self.__errCode is not None
 
     def ToString(self, bCompact_ =False):
         if not self.isValid:
             return None
 
-        res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(type(self).__name__)
-        if self.__errCode is not None:
-            res += _FwTDbEngine.GetText(_EFwTextID.eLcSetupFailure_ToString_01).format(self.__errCode)
-        res += _FwTDbEngine.GetText(_EFwTextID.eLcSetupFailure_ToString_02).format(self.__errMsg)
+        _prefix = type(self).__name__[1:]
+        if self.__errCode is None:
+            res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(_prefix)
+        else:
+            res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_003).format(_prefix, self.__errCode)
+
+        _errMsg = self.__errMsg
+        if _errMsg is None:
+            _errMsg = _CommonDefines._CHAR_SIGN_DASH
+        res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_016).format(self.__errMsg)
+        res = _TextStyle.ColorText(res, _EColorCode.RED)
         return res
 
-    def _Update(self, errMsg_: str, errCode_: int = None):
-        if not isinstance(errMsg_, str):
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSetupFailure_TextID_001).format(type(errMsg_).__name__)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1539)
-        elif len(errMsg_.strip()) == 0:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSetupFailure_TextID_002)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1540)
-        elif (errCode_ is not None) and not (isinstance(errCode_, int) and errCode_ > 0):
+    def _Update(self, errCode_ : _PyUnion[_EFwErrorCode, int], errMsg_ : str =None):
+        if isinstance(errCode_, _EFwErrorCode):
+            errCode_ = errCode_.toSInt
+        if not (_LogErrorCode.IsValidFwErrorCode(errCode_) and not _LogErrorCode.IsAnonymousErrorCode(errCode_)):
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSetupFailure_TextID_003).format(str(errCode_))
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1541)
-        else:
-            self.__errMsg  = errMsg_
-            self.__errCode = errCode_
+            vlogif._LogOEC(True, _EFwErrorCode.FE_LCSF_999)
+            errCode_ = _EFwErrorCode.FE_LCSF_999
+
+        _bStrMsg = isinstance(errMsg_, str)
+        if not (_bStrMsg and (len(errMsg_.strip()) > 0)):
+            if errMsg_ is None:
+                errMsg_ = _CommonDefines._CHAR_SIGN_DASH
+            elif not _bStrMsg:
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSetupFailure_TextID_001).format(type(errMsg_).__name__)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00328)
+                errMsg_ = str(errMsg_)
+            else:
+                errMsg_ = _CommonDefines._CHAR_SIGN_DASH
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSetupFailure_TextID_002)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00329)
+
+        self.__errMsg  = errMsg_
+        self.__errCode = errCode_
 
     def _ClearLcFailure(self):
         self.__errMsg  = None
         self.__errCode = None
-
 
 class _LcRuntimeFailure:
 
@@ -475,13 +477,13 @@ class _LcRuntimeFailure:
 
         if not (isinstance(frcView_, _LcFrcView) and frcView_.isValid):
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcRuntimeFailure_TextID_001).format(type(frcView_).__name__)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1542)
+            vlogif._XLogFatalEC(_EFwErrorCode.VFE_00330, _errMsg)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00330)
         else:
-            self.__flFE = _FlattendFatalError(frcView_.fatalErrorClone, bForeignFE_=frcView_.isForeignFatalError)
+            self.__flFE = _FlattendFatalError(frcView_._feClone, bFFE_=frcView_._isFFE)
             if not self.__flFE.isValid:
                 self.__flFE = None
-                vlogif._LogOEC(True, -1543)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00331)
             else:
                 self.__frcStrC = frcView_.ToString(bVerbose_=False)
                 self.__frcStrV = frcView_.ToString(bVerbose_=True)
@@ -519,7 +521,6 @@ class _LcRuntimeFailure:
         self.__frcStrC = None
         self.__frcStrV = None
 
-
 class _LcFailure:
 
     __slots__ = [ '__apiLck' , '__lcSF' , '__lstRF' ]
@@ -537,13 +538,13 @@ class _LcFailure:
 
         if _LcFailure.__theLcFailure is not None:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_001)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1544)
+            vlogif._XLogFatalEC(_EFwErrorCode.VFE_00332, _errMsg)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00332)
             return
         if _LcFailure.__theLcExecStateHist is None:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_002)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1545)
+            vlogif._XLogFatalEC(_EFwErrorCode.VFE_00333, _errMsg)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00333)
             return
 
         bError = False
@@ -551,24 +552,24 @@ class _LcFailure:
             if not lcFailure_.isValid:
                 bError = True
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_003).format(type(lcFailure_).__name__)
-                vlogif._XLogFatal(_errMsg)
-                vlogif._LogOEC(True, -1546)
+                vlogif._XLogFatalEC(_EFwErrorCode.VFE_00334, _errMsg)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00334)
             else:
                 self.__lcSF = lcFailure_
 
         elif not isinstance(lcFailure_, list):
             bError = True
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_004).format(type(lcFailure_).__name__)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1547)
+            vlogif._XLogFatalEC(_EFwErrorCode.VFE_00335, _errMsg)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00335)
 
         else:
             for _ee in lcFailure_:
                 if not (isinstance(_ee, _LcRuntimeFailure) and _ee.isValid):
                     bError = True
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_005).format(str(_ee))
-                    vlogif._XLogFatal(_errMsg)
-                    vlogif._LogOEC(True, -1548)
+                    vlogif._XLogFatalEC(_EFwErrorCode.VFE_00336, _errMsg)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00336)
                     break
                 continue
 
@@ -603,25 +604,27 @@ class _LcFailure:
         return _LcFailure.__theLcFailure
 
     @staticmethod
-    def CheckSetLcSetupFailure(errMsg_ : str =None, errCode_ : int =None, bForce_ =False):
+    def CheckSetLcSetupFailure(errCode_ : _PyUnion[_EFwErrorCode, int], errMsg_ : _PyUnion[str, _EFwTextID] =None, bForce_ =False):
         _theLcFailure = _LcFailure.__theLcFailure
 
         if errMsg_ is None:
             errMsg_ = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_001)
+        elif isinstance(errMsg_, _EFwTextID):
+            errMsg_ = _FwTDbEngine.GetText(errMsg_)
 
         if _theLcFailure is not None:
-            _paramsStr = errMsg_
+            _errMsg = str(errMsg_)
             if errCode_ is not None:
-                _paramsStr = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_002).format(str(errCode_), errMsg_)
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_009).format(str(errCode_), errMsg_)
 
             if not _theLcFailure.isLcSetupFailure:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_003).format(_paramsStr)
-                vlogif._XLogFatal(_errMsg)
-                vlogif._LogOEC(True, -1549)
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_003).format(_errMsg)
+                vlogif._XLogFatalEC(_EFwErrorCode.VFE_00337, _errMsg)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00337)
             elif not bForce_:
-                pass
+                pass 
             else:
-                _theLcFailure.__UpdateLcSetupFailure(errMsg_, errCode_=errCode_)
+                _theLcFailure.__UpdateLcSetupFailure(errCode_, errMsg_=errMsg_)
 
         else:
             _theExecState = _LcFailure._GetLcExecutionStateHistory()
@@ -629,21 +632,19 @@ class _LcFailure:
                 if _theExecState.IsLcExecutionStateSet(_ELcExecutionState.eSetupPassed):
                     if not bForce_:
                         _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_006)
-                        vlogif._LogOEC(True, -1550)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00338)
 
                 _theExecState._AddExecutionState(_ELcExecutionState.eLcSetupFailure, None)
 
-            _lcSF = _LcSetupFailure(errMsg_, errCode_=errCode_)
-            if not _lcSF.isValid:
-                pass
-            else:
+            _lcSF = _LcSetupFailure(errCode_, errMsg_=errMsg_)
+            if _lcSF.isValid:
                 _LcFailure(_lcSF)
 
                 _theLcFailure = _LcFailure.GetInstance()
                 if (_theLcFailure is None) or not _theLcFailure.isLcSetupFailure:
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_005)
-                    vlogif._XLogFatal(_errMsg)
-                    vlogif._LogOEC(True, -1551)
+                    vlogif._XLogFatalEC(_EFwErrorCode.VFE_00339, _errMsg)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00339)
 
     @staticmethod
     def UpdateLcRuntimeFailure(lstRuntimeFailures_ : list):
@@ -652,26 +653,24 @@ class _LcFailure:
         if _theLcFailure is not None:
             if not _theLcFailure.isLcRuntimeFailure:
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_007)
-                vlogif._XLogFatal(_errMsg)
-                vlogif._LogOEC(True, -1552)
+                vlogif._XLogFatalEC(_EFwErrorCode.VFE_00340, _errMsg)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00340)
             elif not _theLcFailure.__UpdateLcRuntimeFailure(lstRuntimeFailures_):
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_008)
-                vlogif._XLogFatal(_errMsg)
-                vlogif._LogOEC(True, -1553)
+                vlogif._XLogFatalEC(_EFwErrorCode.VFE_00341, _errMsg)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00341)
 
         else:
             _theExecState = _LcFailure._GetLcExecutionStateHistory()
             if _theExecState is not None:
                 _theExecState._AddExecutionState(_ELcExecutionState.eLcRuntimeFailure, None)
 
-            if not _LcFailure(lstRuntimeFailures_).isValid:
-                pass
-            else:
+            if _LcFailure(lstRuntimeFailures_).isValid:
                 _theLcFailure = _LcFailure.GetInstance()
                 if (_theLcFailure is None) or not _theLcFailure.isLcRuntimeFailure:
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_010)
-                    vlogif._XLogFatal(_errMsg)
-                    vlogif._LogOEC(True, -1554)
+                    vlogif._XLogFatalEC(_EFwErrorCode.VFE_00342, _errMsg)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00342)
 
     @property
     def isValid(self) -> bool:
@@ -705,6 +704,7 @@ class _LcFailure:
             else:
                 res = _FwTDbEngine.GetText(_EFwTextID.eLcFailure_ToString_01)
                 _NUM = len(self.__lstRF)
+
                 for _ii in range(_NUM):
                     if _ii > 0:
                         if _ii==1:
@@ -713,60 +713,64 @@ class _LcFailure:
                     res += self.__lstRF[_ii].ToString(bCompact_=bCompact_)
             return res
 
-
     @staticmethod
     def _PrintLcResult(bReinforcePrint_ =False):
-        __MIN_RUNTIME_FAILURES = 1
-
         if _LcFailure.__bLcResultPrintedOut:
             if not bReinforcePrint_:
                 return
 
         _LcFailure.__bLcResultPrintedOut = True
 
-        _errMsg       = None
+        _dMsg         = None
         _bErrorFree   = _LcFailure.IsLcErrorFree()
         _theLcFailure = _LcFailure.GetInstance()
+        _cc           = _EColorCode.GREEN if _bErrorFree else _EColorCode.RED
 
         if not _bErrorFree:
             if not _FwTDbEngine.GetCreateStatus().isTDBCreated:
                 if _theLcFailure is not None:
                     if _theLcFailure._lcSetupFailure is not None:
-                        print(_theLcFailure._lcSetupFailure.errorMessage)
+                        _myTxt = _TextStyle.ColorText(_theLcFailure._lcSetupFailure.ToString(), _cc)
+                        print(_myTxt)
                 return
 
+        _resStr = _EFwTextID.eMisc_LcResultSuccess if _bErrorFree else _EFwTextID.eMisc_LcResultFailed
+        _resStr = _FwTDbEngine.GetText(_resStr)
+        _resStr = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_015).format(_resStr)
+        _resStr = _TextStyle.ColorText(_resStr, _cc)
+
+        if not _bErrorFree:
             if _theLcFailure is not None:
                 if _theLcFailure.isLcSetupFailure:
                     _bPrintDetails = True
-                elif _theLcFailure.lcRuntimeFailuresCount >= __MIN_RUNTIME_FAILURES:
-                    _bPrintDetails = True
                 else:
-                    _bPrintDetails = False
+                    _bPrintDetails  = False
 
                 if _bPrintDetails:
                     _myTxt = str(_theLcFailure)
                     _myTxt = f'\n{_CommonDefines._DASH_LINE_SHORT} '.join(_myTxt.split(_CommonDefines._CHAR_SIGN_NEWLINE))
 
-                    _errMsg  = _FwTDbEngine.GetText(_EFwTextID.eLcFailure_PrintLcResult_FmtStr_02).format(_CommonDefines._DASH_LINE_SHORT)
-                    _errMsg += f'{_CommonDefines._DASH_LINE_SHORT} {_myTxt}'
+                    _dMsg  = _FwTDbEngine.GetText(_EFwTextID.eLcFailure_PrintLcResult_FmtStr_02).format(_CommonDefines._DASH_LINE_SHORT)
+                    _dMsg += f'{_CommonDefines._DASH_LINE_SHORT} {_myTxt}'
+                    _dMsg  = _TextStyle.ColorText(_dMsg, _cc)
 
-        _resStr = _EFwTextID.eMisc_LcResultSuccess if _bErrorFree else _EFwTextID.eMisc_LcResultFailed
-        _resStr = _FwTDbEngine.GetText(_resStr)
-        _resStr = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_015).format(_resStr)
+            if _LcFailure._GetCurrentLcState() is not None:
+                _myTxt   = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}{_LcFailure._GetCurrentLcState()}'
+                _myTxt   = f'\n{_CommonDefines._DASH_LINE_SHORT} '.join(_myTxt.split(_CommonDefines._CHAR_SIGN_NEWLINE))
+                _resStr += _TextStyle.ColorText(_myTxt, _cc)
 
-        if _LcFailure._GetCurrentLcState() is not None:
-            _myTxt = str(_LcFailure._GetCurrentLcState())
-            _myTxt = f'\n{_CommonDefines._DASH_LINE_SHORT} '.join(_myTxt.split(_CommonDefines._CHAR_SIGN_NEWLINE))
-            _resStr += _FwTDbEngine.GetText(_EFwTextID.eLcFailure_PrintLcResult_FmtStr_01).format(_CommonDefines._DASH_LINE_SHORT, _myTxt)
+        _ccDashLineLong  = _TextStyle.ColorText(_CommonDefines._DASH_LINE_LONG, _cc)
+        _ccDashLineShort = _TextStyle.ColorText(_CommonDefines._DASH_LINE_SHORT, _cc)
 
         print()
-        print(_CommonDefines._DASH_LINE_LONG)
-        print(_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_001).format(_CommonDefines._DASH_LINE_SHORT, _resStr))
-        print(_CommonDefines._DASH_LINE_SHORT)
-        if _errMsg is not None:
-            print(_errMsg)
-            print(_CommonDefines._DASH_LINE_SHORT)
-        print(_CommonDefines._DASH_LINE_LONG)
+        print(_ccDashLineLong)
+        print(_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_001).format(_ccDashLineShort, _resStr))
+        print(_ccDashLineShort)
+
+        if _dMsg is not None:
+            print(_dMsg)
+            print(_ccDashLineShort)
+        print(_ccDashLineLong)
         print()
 
     @staticmethod
@@ -819,39 +823,39 @@ class _LcFailure:
             self.__lstRF = None
         self.__apiLck = None
 
-    def __UpdateLcSetupFailure(self, errMsg_ : str, errCode_ : int =None):
+    def __UpdateLcSetupFailure(self, errCode_ : _PyUnion[_EFwErrorCode, int], errMsg_ : str =None):
         if not self.isValid:
             return
         if not self.isLcSetupFailure:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_011)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1555)
+            vlogif._XLogFatalEC(_EFwErrorCode.VFE_00343, _errMsg)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00343)
             return
 
         with self.__apiLck:
-            self.__lcSF._Update(errMsg_, errCode_=errCode_)
+            self.__lcSF._Update(errCode_, errMsg_=errMsg_)
 
     def __UpdateLcRuntimeFailure(self, lstRuntimeFailures_: list):
         if not self.isValid:
             return False
         if self.isLcSetupFailure:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_012)
-            vlogif._XLogFatal(_errMsg)
-            vlogif._LogOEC(True, -1556)
+            vlogif._XLogFatalEC(_EFwErrorCode.VFE_00344, _errMsg)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00344)
             return False
 
         with self.__apiLck:
             if not isinstance(lstRuntimeFailures_, list):
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_013).format(type(lstRuntimeFailures_).__name__)
-                vlogif._XLogFatal(_errMsg)
-                vlogif._LogOEC(True, -1557)
+                vlogif._XLogFatalEC(_EFwErrorCode.VFE_00345, _errMsg)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00345)
                 return False
 
             for _ee in lstRuntimeFailures_:
                 if not (isinstance(_ee, _LcRuntimeFailure) and _ee.isValid):
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TextID_014).format(str(_ee))
-                    vlogif._XLogFatal(_errMsg)
-                    vlogif._LogOEC(True, -1558)
+                    vlogif._XLogFatalEC(_EFwErrorCode.VFE_00346, _errMsg)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00346)
                     return False
                 continue
 

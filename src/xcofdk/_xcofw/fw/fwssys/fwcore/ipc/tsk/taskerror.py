@@ -7,23 +7,21 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _EErrorImpact
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.errorentry import _ErrorEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif    import _CallableIF
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util          import _Util
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex     import _Mutex
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge  import _TaskBadge
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex    import _Mutex
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge import _TaskBadge
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _TaskError(_AbstractSlotsObject):
 
@@ -45,10 +43,10 @@ class _TaskError(_AbstractSlotsObject):
         elif taskErrorCallableIF_ is None:
             if taskBadge_.hasForeignErrorListnerTaskRight:
                 _bError = True
-                vlogif._LogOEC(True, -1452)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00255)
         elif not (isinstance(taskErrorCallableIF_, _CallableIF) and taskErrorCallableIF_.isValid):
             _bError = True
-            vlogif._LogOEC(True, -1453)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00256)
 
         if _bError:
             self.CleanUp()
@@ -64,7 +62,6 @@ class _TaskError(_AbstractSlotsObject):
         with self.__mtxApi:
             self.__CheckResetCurError()
             return self.__curEE is None
-
 
     @property
     def isUserError(self):
@@ -169,9 +166,7 @@ class _TaskError(_AbstractSlotsObject):
             return res
 
     def _CleanUp(self):
-        if self.__tbadge is None:
-            pass
-        else:
+        if self.__tbadge is not None:
             if self.__cbif is not None:
                 self.__cbif.CleanUp()
                 self.__cbif = None
@@ -182,14 +177,13 @@ class _TaskError(_AbstractSlotsObject):
 
     def _OnErrorNotification(self, errEntry_ : _ErrorEntry):
 
-
-        _bNOT_CONSUMED = False
+        res = False
 
         if self.__mtxApi is None:
-            return _bNOT_CONSUMED
+            return res
         with self.__mtxApi:
             if not self._PreCheckNotification(errEntry_, bOwnError_=True):
-                return _bNOT_CONSUMED
+                return res
 
             if self.isUserError:
                 _tmp = self.__curEE
@@ -202,40 +196,39 @@ class _TaskError(_AbstractSlotsObject):
     def _PreCheckNotification(self, errEntry_ : _ErrorEntry, bOwnError_ =True):
         _bPASSED = True
         if not isinstance(errEntry_, _ErrorEntry):
-            vlogif._LogOEC(True, -1454)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00257)
             return not _bPASSED
         elif errEntry_.hasNoErrorImpact:
-            vlogif._LogOEC(True, -1455)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00258)
             return not _bPASSED
 
         if bOwnError_:
             if errEntry_.IsForeignTaskError(self.taskID):
-                vlogif._LogOEC(True, -1456)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00259)
                 return not _bPASSED
             if self.isFatalError:
-                vlogif._LogOEC(True, -1457)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00260)
                 return not _bPASSED
         else:
             if errEntry_.IsMyTaskError(self.taskID):
-                vlogif._LogOEC(True, -1458)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00261)
                 return not _bPASSED
             if not self.taskBadge.hasForeignErrorListnerTaskRight:
-                vlogif._LogOEC(True, -1459)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00262)
                 return not _bPASSED
         return _bPASSED
 
     def _CallOnTaskErrorIF(self, errEntry_: _ErrorEntry, bForeignError_ =False):
 
         if self.__cbif is None:
-            bN = False
+            _bN = False
         elif not self.taskBadge.hasFwTaskRight:
-            bN = True
+
+            _bN = True
         else:
-            bN = True
+            _bN = True
 
-        _midPart = _CommonDefines._STR_EMPTY
-
-        if not bN:
+        if not _bN:
             res = True
         else:
             try:
@@ -248,9 +241,7 @@ class _TaskError(_AbstractSlotsObject):
     def __msgPrefix(self):
         res = _FwTDbEngine.GetText(_EFwTextID.eTaskError_MsgPrefix)
         _tuname = self.taskUniqueName
-        if _tuname is None:
-            pass
-        else:
+        if _tuname is not None:
             res = res.rstrip() + _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(_tuname) + _CommonDefines._CHAR_SIGN_SPACE
         return res
 
@@ -306,9 +297,7 @@ class _TaskError(_AbstractSlotsObject):
         return res
 
     def __CheckResetCurError(self):
-        if self.__curEE is None:
-            pass
-        else:
+        if self.__curEE is not None:
             _errImp = self.__curEE.eErrorImpact
 
             if _errImp is None:
@@ -317,7 +306,6 @@ class _TaskError(_AbstractSlotsObject):
                 if not _errImp.hasNoImpactDueToFrcLinkage:
                     self.__curEE = None
 
-
 class _TaskErrorExtended(_TaskError):
 
     def __init__(self, mtxApi_ : _Mutex, taskBadge_ : _TaskBadge, taskErrorCallableIF_ : _CallableIF =None):
@@ -325,19 +313,17 @@ class _TaskErrorExtended(_TaskError):
 
     def _OnErrorNotification(self, errEntry_ : _ErrorEntry):
 
-
-        _bNOT_CONSUMED = False
-        _bConsumed     = False
+        res = False
 
         if not isinstance(errEntry_, _ErrorEntry):
-            return _bNOT_CONSUMED
+            return res
         if self._apiMutex is None:
-            return _bNOT_CONSUMED
+            return res
 
         if errEntry_.IsMyTaskError(self.taskID):
-            bC = _TaskError._OnErrorNotification(self, errEntry_)
+            res = _TaskError._OnErrorNotification(self, errEntry_)
         elif not self._PreCheckNotification(errEntry_, bOwnError_=False):
-            bC = _bNOT_CONSUMED
+            pass
         else:
-            bC = self._CallOnTaskErrorIF(errEntry_, bForeignError_=True)
-        return bC
+            res = self._CallOnTaskErrorIF(errEntry_, bForeignError_=True)
+        return res

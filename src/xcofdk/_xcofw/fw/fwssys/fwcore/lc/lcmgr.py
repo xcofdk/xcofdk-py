@@ -7,10 +7,12 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
+from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                 import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                 import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry      import _FatalEntry
+from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconn       import _FwApiConnector
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiimplshare  import _FwApiImplShare
 from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout           import _Timeout
 from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil           import _KpiLogBook
@@ -20,30 +22,29 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase    import _PySemaphore
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask           import _AbstractTask
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgr         import _TaskMgr
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines            import _ELcScope
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines            import _ELcCompID
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines            import _LcConfig
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdepmgr             import _LcDepManager
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate          import _ELcKpiID
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate          import _ELcExecutionState
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate          import _LcExecutionStateHistory
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate          import _LcFailure
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcguardimpl          import _LcGuardImpl
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcmgrtif             import _LcManagerTrustedIF
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines       import _ELcShutdownRequest
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyimpl          import _LcProxyImpl
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstate              import _LcState
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmonimpl         import _LcMonitorImpl
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject           import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes       import SyncPrint
-from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconn       import _FwApiConnector
 
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines      import _ELcScope
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines      import _ELcCompID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines      import _LcConfig
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdepmgr       import _LcDepManager
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate    import _ELcKpiID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate    import _ELcExecutionState
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate    import _LcExecutionStateHistory
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate    import _LcFailure
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcguardimpl    import _LcGuardImpl
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcmgrtif       import _LcManagerTrustedIF
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines import _ELcShutdownRequest
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyimpl    import _LcProxyImpl
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstate        import _LcState
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
 from xcofdk._xcofwa.fwadmindefs import _FwAdapterConfig
-
 
 class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
@@ -61,7 +62,6 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         @property
         def mainXTask(self):
             return self.__mainXT
-
 
     class _LcMgrSetupRunner(_AbstractSlotsObject):
         __slots__ = [ '__lcMgr' , '__ppass' , '__mainXT' , '__cmdLineArgs' , '__bSetupOK' ]
@@ -97,6 +97,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
     __MSG_PREFIX = _FwTDbEngine.GetText(_EFwTextID.eLcManager_MsgPrefix)
 
     def __init__(self, ppass_ : int, suPolicy_ : _FwStartupPolicy, startOptions_ : list, mainXT_ =None):
+
         self.__lcKPI     = None
         self.__fwSUP     = None
         self.__lcDMgr    = None
@@ -116,18 +117,16 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if _LcManager.__theLcM is not None:
             self.CleanUpByOwnerRequest(ppass_)
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(401)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_047)
 
-            vlogif._LogOEC(True, -1569)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00359)
             return
 
         if _FwAdapterConfig._IsRedirectPyLoggingEnabled() or _FwAdapterConfig._IsLogIFDefaultConfigReleaseModeDisabled():
             self.CleanUpByOwnerRequest(ppass_)
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(402)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_048)
 
-            vlogif._LogOEC(True, -1570)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00360)
             return
 
         _LcManager.__theLcM = self
@@ -139,32 +138,36 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         _FwApiConnector._FwCNSetFwApiLock(self, self.__fwApiLck)
 
         _tgtScope = _LcConfig.GetTargetScope()
-
-        _errMsg = None
-        _lcfMsg = None
+        _errMsg  = None
+        _lcfMsg  = None
+        _errCode = None
 
         _eExpectedExecState = _ELcExecutionState.ePreConfigPhase
 
         self.__eExecHist = _LcFailure._GetLcExecutionStateHistory()
         if (self.__eExecHist is None) or not self.__eExecHist.IsLcExecutionStateSet(_eExpectedExecState):
             self.CleanUpByOwnerRequest(ppass_)
-            _lcfMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_039).format(_eExpectedExecState.compactName)
-            _errMsg = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _lcfMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_039).format(_eExpectedExecState.compactName)
+            _errMsg  = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _errCode = _EFwErrorCode.FE_LCSF_092
 
         elif (startOptions_ is not None) and not isinstance(startOptions_, list):
             self.CleanUpByOwnerRequest(ppass_)
-            _lcfMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_034).format(type(startOptions_).__name__)
-            _errMsg = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _lcfMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_034).format(type(startOptions_).__name__)
+            _errMsg  = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _errCode = _EFwErrorCode.FE_LCSF_093
 
         elif not isinstance(_tgtScope, _ELcScope):
             self.CleanUpByOwnerRequest(ppass_)
-            _lcfMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_035).format(type(_tgtScope).__name__)
-            _errMsg = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _lcfMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_035).format(type(_tgtScope).__name__)
+            _errMsg  = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _errCode = _EFwErrorCode.FE_LCSF_094
 
         elif _tgtScope.isIdle:
             self.CleanUpByOwnerRequest(ppass_)
-            _lcfMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_036).format(_tgtScope.value, _tgtScope.compactName)
-            _errMsg = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _lcfMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_036).format(_tgtScope.value, _tgtScope.compactName)
+            _errMsg  = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
+            _errCode = _EFwErrorCode.FE_LCSF_095
 
         else:
             _myGuard = _LcGuardImpl(self._myPPass, self)
@@ -179,13 +182,12 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if (_errMsg is not None) or _LcFailure.IsLcNotErrorFree():
             if _LcFailure.IsLcErrorFree():
-                if _lcfMsg is None:
-                    _lcfMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(403)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_lcfMsg)
+                if _errCode is None:
+                    _errCode = _EFwErrorCode.FE_LCSF_049
+                _LcFailure.CheckSetLcSetupFailure(_errCode)
 
             if _errMsg is not None:
-                vlogif._LogOEC(True, -1571)
-
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00361)
 
     def _IsLcErrorFree(self):
         if _LcManager.__theLcM is None:
@@ -198,15 +200,50 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
                     res = not self.__lcGImpl.hasLcAnyFailureState
             return res
 
+    def _IsLcShutdownEnabled(self):
+        if _LcManager.__theLcM is None:
+            return False
+        if not _LcConfig.IsTargetScopeIPC():
+            return False
+
+        with self.__fwApiLck:
+            return (self.__lcMonImpl is not None) and self.__lcMonImpl.isLcShutdownEnabled
+
+    def _IsXTaskRunning(self, xtUID_ : int):
+        if _LcManager.__theLcM is None:
+            return False
+        if not _LcConfig.IsTargetScopeIPC():
+            return False
+
+        if isinstance(xtUID_, EPreDefinedMessagingID) and xtUID_==EPreDefinedMessagingID.MainTask:
+            _mt = _LcManager.__GetMainXTask()
+            return (_mt is not None) and _mt.isRunning
+
+        with self.__fwApiLck:
+            res     = False
+            _tskMgr = _TaskMgr()
+
+            _bOK = self.__lcMonImpl is not None
+            _bOK = _bOK and not self.__lcMonImpl.isLcShutdownEnabled
+            _bOK = _bOK and (_tskMgr is not None)
+            _bOK = _bOK and (self.__lcPxyImpl is not None) and self.__lcPxyImpl._PxyIsLcProxyModeNormal()
+            if not _bOK:
+                pass
+            else:
+                _myTsk      = _tskMgr._GetTask(xtUID_, bDoWarn_=False)
+                _myTskBadge = None if _myTsk is None else _myTsk.taskBadge
+                if (_myTskBadge is None) or not _myTskBadge.isDrivingXTask:
+                    pass
+                else:
+                    res = _myTsk._xtaskConnector._isRunning
+            return res
+
     def _StopFW(self) -> bool:
         if _LcManager.__theLcM is None:
             return True
 
         with self.__fwApiLck:
-            _bDoStop = True
-
-            if self.__lcMonImpl.isLcShutdownEnabled:
-                _bDoStop = False
+            _bDoStop = False if self.__lcMonImpl.isLcShutdownEnabled else True
             if _bDoStop:
                 logif._LogInfo(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_012))
                 self.__StopFW(bInternalRequest_=False)
@@ -225,47 +262,51 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         return res
 
-    def _GetXTask(self, xuUniqueID_ : int =0):
+    def _GetXTask(self, xtUID_ : int =0):
+        if not _LcConfig.IsTargetScopeIPC():
+            return None
         if _LcManager.__theLcM is None:
             return None
-        if xuUniqueID_ == 0:
+        if xtUID_ == 0:
             return self._GetCurXTask()
 
         with self.__fwApiLck:
-            res = None
+            res     = None
             _tskMgr = _TaskMgr()
 
             _bOK = True
             _bOK = _bOK and not self.__lcMonImpl.isLcShutdownEnabled
             _bOK = _bOK and (_tskMgr is not None)
-            _bOK = _bOK and (self.__lcPxyImpl is not None) and self.__lcPxyImpl.isLcModeNormal
+            _bOK = _bOK and (self.__lcPxyImpl is not None) and self.__lcPxyImpl._PxyIsLcProxyModeNormal()
             if not _bOK:
-                logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_045).format(xuUniqueID_))
+                logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_045).format(xtUID_))
             else:
-                _myTsk      = _tskMgr._GetTask(xuUniqueID_, bDoWarn_=False)
+                _myTsk      = _tskMgr._GetTask(xtUID_, bDoWarn_=False)
                 _myTskBadge = None if _myTsk is None else _myTsk.taskBadge
                 if (_myTskBadge is None) or not _myTskBadge.isDrivingXTask:
                     pass
                 else:
                     res = _myTsk._xtaskConnector._connectedXTask
                 if res is None:
-                    logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_046).format(xuUniqueID_))
+                    logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_046).format(xtUID_))
                 elif res.isDetachedFromFW:
                     logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_047).format(res.xtaskUniqueID))
             return res
 
     def _GetCurXTask(self):
+        if not _LcConfig.IsTargetScopeIPC():
+            return None
         if _LcManager.__theLcM is None:
             return None
 
         with self.__fwApiLck:
-            res = None
+            res     = None
             _tskMgr = _TaskMgr()
 
             _bOK = True
             _bOK = _bOK and not self.__lcMonImpl.isLcShutdownEnabled
             _bOK = _bOK and (_tskMgr is not None)
-            _bOK = _bOK and (self.__lcPxyImpl is not None) and self.__lcPxyImpl.isLcModeNormal
+            _bOK = _bOK and (self.__lcPxyImpl is not None) and self.__lcPxyImpl._PxyIsLcProxyModeNormal()
             if not _bOK:
                 logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_001))
             else:
@@ -283,16 +324,12 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
     def _TIFPreCheckLcFailureNotification(self, eFailedCompID_ : _ELcCompID):
         res = False
-        if self.__eExecHist is None:
+        if (self.__eExecHist is None) or (_TaskMgr() is None):
             pass
-        elif _TaskMgr() is None:
-            pass
-
         elif not self.__eExecHist.hasPassedCustomSetupPhase:
-            pass
-
-        elif self.__lcPxyImpl.isLcModeShutdown:
-            pass
+            pass 
+        elif self.__lcPxyImpl._PxyIsLcProxyModeShutdown():
+            pass 
         else:
             res = True
         return res
@@ -301,31 +338,33 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not self._TIFPreCheckLcFailureNotification(eFailedCompID_):
             return
-        self.__lcPxyImpl._ProcessShutdownRequest( _ELcShutdownRequest.eFailureHandling
-                                                , eFailedCompID_=eFailedCompID_
-                                                , frcError_=frcError_
-                                                , atask_=atask_
-                                                , bPrvRequestReply_=bPrvRequestReply_)
+
+        self.__lcPxyImpl._PxyProcessShutdownRequest( _ELcShutdownRequest.eFailureHandling
+                                                   , eFailedCompID_=eFailedCompID_
+                                                   , frcError_=frcError_
+                                                   , atask_=atask_
+                                                   , bPrvRequestReply_=bPrvRequestReply_)
 
     def _TIFOnLcShutdownRequest(self, eShutdownRequest_: _ELcShutdownRequest) -> bool:
         if (_LcManager.__theLcM is None) or (self.__lcPxyImpl is None):
             return False
 
         if eShutdownRequest_.isFailureHandling:
-            vlogif._LogOEC(True, -1572)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00362)
             return False
 
         _curSDR = self.__lcMonImpl.eCurrentShutdownRequest
+
         if eShutdownRequest_.isShutdown:
             if not _curSDR.isShutdown:
-                self.__lcPxyImpl._ProcessShutdownRequest(_ELcShutdownRequest.eShutdown, bPrvRequestReply_=False)
+                self.__lcPxyImpl._PxyProcessShutdownRequest(_ELcShutdownRequest.eShutdown, bPrvRequestReply_=False)
+
         else:
             if _curSDR is None:
                 self.__StopFW()
         return True
 
     def _TIFFinalizeStopFW(self, bCleanUpLcMgr_ : bool):
-
         if _LcManager.__theLcM is None:
             return False
 
@@ -335,16 +374,18 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if _mainXT is not None:
             if _mainXT.isRunning:
-                vlogif._LogOEC(True, -1573)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00363)
 
         if self.__lcPxyImpl is not None:
-            self.__lcPxyImpl._StopFwMain()
+            self.__lcPxyImpl._PxyStopFwMain()
 
             _xtUID = None if _mainXT is None else _mainXT.xtaskUniqueID
 
-            _srt = self.__lcPxyImpl._JoinFwMain(mainXTUID_=_xtUID)
+            _srt = self.__lcPxyImpl._PxyJoinFwMain(mainXTUID_=_xtUID)
+
             if _srt is not None:
                 _NUM = len(_srt)
+
                 _tiEMThrd = None
                 for _ii in range(_NUM):
                     _ti = _srt[_ii]
@@ -377,15 +418,11 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
                         _timeSpanMS    = 20
                         _tiEMThrdUName = _tiEMThrd.taskUniqueName if _tiEMThrd.linkedExecutable is None else _tiEMThrd.linkedExecutable.executableName
 
-                        _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_044).format(_LcManager.__MSG_PREFIX, _tiEMThrdUName)
-
                         try:
                             while not (_tiEMThrd.isDone or _tiEMThrd.isFailed):
                                 if not _tiEMThrd.isValid:
                                     break
 
-                                if (_totalTimeMS % 2000) == 0:
-                                    pass
                                 _TaskUtil.SleepMS(_timeSpanMS)
                                 _totalTimeMS += _timeSpanMS
 
@@ -396,8 +433,8 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
                     _tiEMThrd.CleanUp()
 
-        if self.__curLcScope.lcTransitionalOrder < _ELcScope.eSemiIPC.value:
-            pass
+        if (self.__curLcScope is None) or (self.__curLcScope.lcTransitionalOrder < _ELcScope.eSemiIPC.value):
+            _curLcScope = None if self.__curLcScope is None else self.__curLcScope.compactName
         else:
             for _ii in range((self.__curLcScope.value-1), (_ELcScope.eIdle.value-1), -1):
                 self.__UpdateScope(srcScope_=self.__curLcScope, dstScope_=_ELcScope(_ii))
@@ -405,7 +442,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         if self.__lcGImpl is not None:
             if self.__lcGImpl._isRunning:
                 if self.__semSSLcG is None:
-                    vlogif._LogOEC(True, -1574)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00364)
                 else:
                     _bSTOP_SyNC_NEEDED = False
 
@@ -420,7 +457,9 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             if not self.__lcState.isLcStopped:
                 if not self.__lcState.isLcFailed:
                     self.__SetLcOpState(_ELcCompID.eLcMgr, False)
+
             self.CleanUpByOwnerRequest(self._myPPass)
+
         return True
 
     @staticmethod
@@ -435,18 +474,18 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
     @staticmethod
     def _CreateStartupPolicy(ppass_ : int) -> _FwStartupPolicy:
-        _STARTUP_FAILURE_ERR_MSG = 'Encountered severe error (#{}) while preparing for startup.'
+        _STARTUP_FAILURE_ERR_MSG = 'Encountered severe error while preparing for startup.'
 
         _dbCreateSt = _FwTDbEngine.GetCreateStatus()
         if not _dbCreateSt.isTDBIdle:
             if not _dbCreateSt.isTDBCreated:
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_STARTUP_FAILURE_ERR_MSG.format(1))
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_096, errMsg_=_STARTUP_FAILURE_ERR_MSG)
                 return None
 
         _lcKPI = _KpiLogBook._CreateStartupKPI(_ELcKpiID.eFwStartRequest)
         if not _lcKPI.isValid:
             _lcKPI.CleanUp()
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_STARTUP_FAILURE_ERR_MSG.format(2))
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_097, errMsg_=_STARTUP_FAILURE_ERR_MSG)
             return None
 
         res = _FwStartupPolicy(ppass_)
@@ -454,7 +493,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         if not res.isValid:
             res.CleanUpByOwnerRequest(ppass_)
             res = None
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_STARTUP_FAILURE_ERR_MSG.format(3))
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_098, errMsg_=_STARTUP_FAILURE_ERR_MSG)
 
         elif _dbCreateSt.isTDBIdle:
             _FwTDbEngine._CreateDB(res.isPackageDist)
@@ -463,7 +502,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             if not _dbCreateSt.isTDBCreated:
                 res.CleanUpByOwnerRequest(ppass_)
                 res = None
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_STARTUP_FAILURE_ERR_MSG.format(4))
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_099, errMsg_=_STARTUP_FAILURE_ERR_MSG)
 
         if res is not None:
             _dbFirstFetchTS = None
@@ -473,10 +512,8 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             _lcKPI.AddKPI(_ELcKpiID.eTextDBCreate, usTimeTicksKPI_=_dbCreateTS)
         return res
 
-
     def _AsyncSetUpLcMgr(self, ppass_ : int, startOptions_ : list, mainXT_ =None):
         return self.__SetUp(ppass_, startOptions_, mainXT_=mainXT_)
-
 
     def _ToString(self):
         if self.__lcDMgr is None:
@@ -524,7 +561,6 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             self.__lcMonImpl = None
             vlogif._PrintVSummary(bPrint_=True)
 
-
     @property
     def __lcState(self) -> _LcState:
         return None if self.__lcGImpl is None else self.__lcGImpl._GetLcState(bypassApiLock_=True)
@@ -541,11 +577,11 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         _lcKPI = _KpiLogBook._GetStartupKPI()
 
         if not (isinstance(startupPolicy_, _FwStartupPolicy) and startupPolicy_.isValid):
-            vlogif._LogOEC(True, -1575)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00365)
             return None
 
         if not (isinstance(_lcKPI, _KpiLogBook) and _lcKPI.isValid):
-            vlogif._LogOEC(True, -1576)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00366)
             return None
 
         _kpiTD = _lcKPI.GetKpiTimeDelta(_ELcKpiID.eTextDBCreate)
@@ -564,21 +600,19 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         _eExecHist = _LcExecutionStateHistory(_ppass)
         if not _eExecHist.IsLcExecutionStateSet(_ELcExecutionState.ePreConfigPhase):
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_038)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_104, errMsg_=_EFwTextID.eLogMsg_LcManager_TextID_038)
             _eExecHist.CleanUpByOwnerRequest(_ppass)
             return None
         _LcFailure._SetLcExecutionStateHistory(_eExecHist)
 
-        _lcmgr = _LcManager(_ppass, startupPolicy_, startOptions_)
+        _lcmgr = _LcManager(_ppass, startupPolicy_, startOptions_, mainXT_=None)
 
         if not _eExecHist.isErrorFree:
             _lcmgr.CleanUpByOwnerRequest(_ppass)
             return None
 
-        _lcMgrSetupRunner = _LcManager._LcMgrSetupRunner(_lcmgr, _ppass, startOptions_)
-
-        _bLcGuardStarted = _lcmgr.__StartLcGuard(_lcMgrSetupRunner)
+        _lcMgrSetupRunner  = _LcManager._LcMgrSetupRunner(_lcmgr, _ppass, startOptions_, mainXT_=None)
+        _bLcGuardStarted   = _lcmgr.__StartLcGuard(_lcMgrSetupRunner)
 
         _bAsyncSetupOK = _bLcGuardStarted and _LcFailure.IsSetupPhasePassed()
         _bAsyncSetupOK = _bAsyncSetupOK   and _lcMgrSetupRunner.isLcMgrSetupRunnerSucceeded
@@ -590,16 +624,14 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not _bAsyncSetupOK:
             _bStopFW = _bLcGuardStarted
-
-        elif not _lcmgr.__CheckStartMainXT():
+        elif not _lcmgr.__CheckStartMainXT(True):
             _bStopFW = True
 
-        res = _lcmgr.__DetermineAsyncStartupResult(_bAsyncSetupOK)
+        res = _lcmgr.__DetermineAsyncStartupResult(_bAsyncSetupOK, True)
         if res is None:
             _bStopFW = True
 
         if _bStopFW:
-
             _lcmgr.__StopFW()
             _lcmgr.__JoinFW()
         return res
@@ -637,18 +669,14 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         else:
             res = self.__curLcScope == self.__tgtScope
             if not res:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(465)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-
-            res = self.__lcPxyImpl._SyncStarFwMainByAsynStartup()
-            res = res and _LcFailure.IsLcErrorFree()
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_050)
+            else:
+                res = self.__lcPxyImpl._PxySyncStarFwMainByAsynStartup()
+                res = res and _LcFailure.IsLcErrorFree()
 
         if not res:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(466)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_051)
         else:
             self.__lcGImpl._SetLcMonitorImpl(self.__lcMonImpl)
             _TaskMgr()._SetLcMonitorImpl(self.__lcMonImpl)
@@ -668,15 +696,14 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         _bBadUse = _bBadUse or not self.__lcState.isLcStarted
         _bBadUse = _bBadUse or self.__lcState.hasLcAnyFailureState
         if _bBadUse:
-            vlogif._LogOEC(True, -1578)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00367)
 
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(441)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_052)
             return False
 
         if reinjectCurScope_:
             if not self.__UpdateScope(self.__curLcScope, self.__curLcScope, bForceReinject_=True):
-                vlogif._LogOEC(True, -1579)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00368)
                 return False
 
         if self.__tgtScope.lcTransitionalOrder < _ELcScope.eSemiIPC.value:
@@ -685,21 +712,15 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         _bFinalScopeSemiIPC = eFinalScope.isSemiIPC
 
         res = self.__UpdateScope(self.__curLcScope, self.__tgtScope, bFinalize_=_bFinalScopeSemiIPC)
-        if not res:
-            pass
-        else:
+        if res:
             res = res and self.__curLcScope.isSemiIPC
             res = res and self.__lcState.isLcStarted
             res = res and self.__lcState.isTaskManagerStarted
             if not res:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(442)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_053)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00369)
 
-                vlogif._LogOEC(True, -1580)
-
-        if not res:
-            pass
-        else:
+        if res:
             if _bFinalScopeSemiIPC:
                 self.__CreateLcProxy()
 
@@ -710,9 +731,8 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
                 res = res and self.__lcState.isFwMainStarted
                 if not res:
                     if _LcFailure.IsLcErrorFree():
-                        _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(443)
-                        _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-                        vlogif._LogOEC(True, -1581)
+                        _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_054)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00370)
         return res
 
     def __BoostFullIPC(self) -> bool:
@@ -726,10 +746,8 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         _bBadUse = _bBadUse or self.__lcState.hasLcAnyFailureState
         if _bBadUse:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(452)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-                vlogif._LogOEC(True, -1582)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_056)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00371)
             return False
 
         if self.__tgtScope != eFinalScope:
@@ -744,10 +762,8 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not res:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(453)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-                vlogif._LogOEC(True, -1583)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_057)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00372)
             return False
 
         self.__CreateLcProxy()
@@ -760,13 +776,12 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not res:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(454)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_058)
 
             if self.__lcPxyImpl is None:
                 pass
             else:
-                vlogif._LogOEC(True, -1584)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00373)
         return res
 
     def __StopFW(self, bInternalRequest_ =True) -> bool:
@@ -791,7 +806,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         elif self.__lcMonImpl.eCurrentShutdownRequest is not None:
             pass
         else:
-            self.__lcPxyImpl._ProcessShutdownRequest(_ELcShutdownRequest.ePreShutdown, bPrvRequestReply_=False)
+            self.__lcPxyImpl._PxyProcessShutdownRequest(_ELcShutdownRequest.ePreShutdown, bPrvRequestReply_=False)
         return res
 
     def __JoinFW(self, bInternalRequest_ =True) -> bool:
@@ -811,7 +826,10 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             with self.__fwApiLck:
                 if self.__lcMonImpl._isCurrentThreadAttachedToFW:
                     _bDoJoin = False
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_010).format(_TaskUtil.GetCurPyThread().name))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00103, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_010).format(_TaskUtil.GetCurPyThread().name))
+                elif not bInternalRequest_:
+                    if not self.__eExecHist.IsLcExecutionStateSet(_ELcExecutionState.eStopPhase):
+                        self.__StopFW(bInternalRequest_=False)
 
             if _bDoJoin:
                 logif._LogInfo(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_011))
@@ -823,9 +841,9 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
                     self.__eExecHist._AddExecutionState(_ELcExecutionState.eJoinPassed, self)
                 except KeyboardInterrupt:
-                    pass
+                    pass 
                 except BaseException as xcp:
-                    pass
+                    pass 
 
         if not self.__lcState.isLcStopped:
             if not self.__lcState.isLcFailed:
@@ -840,14 +858,13 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         return res
 
     def __SetUp(self, ppass_: int, startOptions_: list, mainXT_ =None):
+
         if _LcFailure.IsLcNotErrorFree():
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(421)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_059)
             return False
 
         if not self.__eExecHist.IsLcExecutionStateSet(_ELcExecutionState.ePreConfigPhase):
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(422)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_060)
             return False
 
         self.__eExecHist._AddExecutionState(_ELcExecutionState.eConfigPhase, self)
@@ -863,16 +880,13 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not res:
             if _LcFailure.IsLcErrorFree():
-                _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_Async)
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_013).format(_midPart)
-
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_013).format(_FwTDbEngine.GetText(_EFwTextID.eMisc_Async))
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_102, errMsg_=_errMsg)
             _lcdm.CleanUpByOwnerRequest(ppass_)
             return False
 
-        rclTSMS = _lcdm.subsystemConfigSupervisor.subsystemConfigIPC.lcGuardRunCycleLoopTimespanMS
-        self.__lcGImpl._UpdateRunCycleLoopTimespanMS(rclTSMS)
+        _rclTSMS = _lcdm.subsystemConfigSupervisor.subsystemConfigIPC.lcGuardRunCycleLoopTimespanMS
+        self.__lcGImpl._UpdateRunCycleLoopTimespanMS(_rclTSMS)
 
         self.__mainXT   = mainXT_
         self.__lcDMgr   = _lcdm
@@ -890,31 +904,25 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not res:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(423)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_061)
 
         else:
             self.__lcKPI.AddKPI(_ELcKpiID.eLcBoostEnd)
             self.__lcKPI.AddKPI(_ELcKpiID.eLcCustomSetupStart)
 
             self.__eExecHist._AddExecutionState(_ELcExecutionState.eCustomSetupPhase, self)
-            res = self.__lcPxyImpl._FinalizeSetup()
+            res = self.__lcPxyImpl._PxyFinalizeSetup()
             res = res and _LcFailure.IsLcErrorFree()
 
             if not res:
                 if _LcFailure.IsLcErrorFree():
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(424)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_062)
         if not res:
-            logif._XLogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_017))
+            logif._XLogFatalEC(_EFwErrorCode.FE_00928, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_017))
         else:
             self.__lcKPI.AddKPI(_ELcKpiID.eLcCustomSetupEnd)
-
             self.__eExecHist._AddExecutionState(_ELcExecutionState.eSetupPassed, self)
-
             self.__eExecHist._AddExecutionState(_ELcExecutionState.eRuntimePhase, self)
-
             print()
 
             if not self.__fwSUP.isReleaseModeEnabled:
@@ -936,9 +944,9 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         if not res:
             if _vffe is not None:
                 if _LcFailure.IsLcErrorFree():
-                    vlogif._LogOEC(True, -1585)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00374)
         elif _vffe is not None:
-            vlogif._LogOEC(True, -1586)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00375)
         return res
 
     def __PrintLcKPI(self, bForce_ =False):
@@ -957,7 +965,6 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             return True
 
         res= True
-
         if srcScope_ == dstScope_:
             if not (bForceReinject_ or bFinalize_):
                 pass
@@ -986,22 +993,18 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             _tgtScope = _ELcScope(_nextScopeVal)
             _ures = self.__lcDMgr.UpdateLcScope(_tgtScope)
             res = _ures.isOK
-            if not res:
-                pass
-            elif _bTMgrAvailable is not None:
+            if res and (_bTMgrAvailable is not None):
                 if _bTMgrAvailable:
                     res = _TaskMgr() is not None
                     if not res:
-                        vlogif._LogOEC(True, -1587)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00376)
                     elif not self.__SetLcOpState(_ELcCompID.eTMgr, True):
                         res = False
-                        vlogif._LogOEC(True, -1588)
-
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00377)
         if not res:
             if _LcFailure.IsLcErrorFree():
                 if not _LcFailure.IsSetupPhasePassed():
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(461)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_063)
         return res
 
     def __CreateLcProxy(self):
@@ -1010,16 +1013,13 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
         if not _bMonOK:
             _lcMon.CleanUpByOwnerRequest(self._myPPass)
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_019)
-
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_070, errMsg_=_EFwTextID.eLogMsg_LcManager_TextID_019)
             return
 
         self.__lcMonImpl = _lcMon
-
         _lcPxyImpl = _LcProxyImpl(self._myPPass, self.__curLcScope, self.__lcGImpl, self.__lcMonImpl, self.__lcDMgr.fwConfig.fwStartupConfig, None)
 
-        if _lcPxyImpl.lcScope is None:
+        if _lcPxyImpl._PxyGetTaskMgr() is None:
             _lcPxyImpl.CleanUpByOwnerRequest(self._myPPass)
             _lcPxyImpl = None
 
@@ -1027,8 +1027,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
                 self.__SetLcOpState(_ELcCompID.eTMgr, False)
 
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_020)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_071, errMsg_=_EFwTextID.eLogMsg_LcManager_TextID_020)
 
         elif not self.__SetLcOpState(_ELcCompID.eFwMain, True):
             _lcPxyImpl.CleanUpByOwnerRequest(self._myPPass)
@@ -1036,7 +1035,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
             if _LcFailure.IsLcErrorFree():
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_021).format(_ELcCompID.eFwMain.compactName)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_001, errMsg_=_errMsg)
 
         if _lcPxyImpl is None:
             self.__lcMonImpl.CleanUpByOwnerRequest(self._myPPass)
@@ -1046,10 +1045,9 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
 
     def __StartLcGuard(self, lcMgrSetupRunner_):
         if lcMgrSetupRunner_ is None:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(411)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_064)
 
-            vlogif._LogOEC(True, -1589)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00378)
             return False
 
         self.__semSSLcG = _PySemaphore(1)
@@ -1058,16 +1056,14 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
         if not self.__lcGImpl._Start(self.__semSSLcG, lcMgrSetupRunner_):
             res = False
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_022)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_002, errMsg_=_EFwTextID.eLogMsg_LcManager_TextID_022)
         else:
             self.__semSSLcG.acquire()
 
             if not self.__lcGImpl._isRunning:
                 res = False
                 if _LcFailure.IsLcErrorFree():
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(412)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_065)
             else:
                 res = True
         return res
@@ -1086,7 +1082,53 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
             self._FwCNPublishFwApiConnector()
             return True
 
-        return False
+        self.__eExecHist._AddExecutionState(_ELcExecutionState.eMxuAutoStartPhase, self)
+        self.__lcKPI.AddKPI(_ELcKpiID.eMxuStartStart)
+
+        res = self.__StartMainXTByAsyncStartup(_mainXT)
+        return res
+
+    def __StartMainXTByAsyncStartup(self, mainXT_, bRequestByResumeAutoStart_ =False):
+        if not (self.__eExecHist.hasPassedSetupPhase and self.__eExecHist.hasReachedRuntimePhase):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00379)
+            return False
+        if not (self.__eExecHist.IsLcExecutionStateSet(_ELcExecutionState.eMxuAutoStartPhase) or self.__eExecHist.IsLcExecutionStateSet(_ELcExecutionState.eMxuPostStartPhase)):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00380)
+            return False
+
+        _mxt = mainXT_
+
+        if _mxt.xtaskProfile.isSynchronousTask:
+            if not self.__SetLcOpState(_ELcCompID.eMainXTask, True):
+                logif._LogFatalEC(_EFwErrorCode.FE_00040, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_023).format(2))
+                return False
+
+        if not self._FwCNIsFwApiAvailable():
+            self._FwCNPublishFwApiConnector()
+
+        res = _mxt.Start()
+        res = res and not (_mxt.isFailed or _mxt.isTerminating)
+
+        vlogif._LogNewline()
+        vlogif._LogNewline()
+
+        if not res:
+            logif._LogErrorEC(_EFwErrorCode.UE_00104, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_024).format(_mxt))
+
+            if not self.__lcState.isMainXTaskFailed:
+                if self.__lcState.isMainXTaskStarted:
+                    if not (_mxt.isFailed or _mxt.isTerminating):
+                        self.__SetLcOpState(_ELcCompID.eMainXTask, False)
+
+        elif not (self.__lcState.isMainXTaskFailed or self.__lcState.isMainXTaskStopped):
+            res = self.__SetLcOpState(_ELcCompID.eMainXTask, True)
+            if not res:
+                logif._LogFatalEC(_EFwErrorCode.FE_00041, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_023).format(3))
+
+        if res:
+            self.__lcKPI.AddKPI(_ELcKpiID.eMxuStartEnd)
+            self.__eExecHist._AddExecutionState(_ELcExecutionState.eMxuStartPassed, self)
+        return res
 
     def __DetermineAsyncStartupResult(self, bAsyncStartupOK_ : bool, bSkipAutoStartMainXT_ : bool =True):
         res = None
@@ -1111,7 +1153,7 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
                         self.__eExecHist._RemoveExecutionState(_ELcExecutionState.eSetupPassed, self)
 
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_040).format(self.__eExecHist)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_003, errMsg_=_errMsg)
 
         else:
             _bOK = self.__eExecHist.isErrorFree
@@ -1132,10 +1174,10 @@ class _LcManager(_FwApiConnector, _LcManagerTrustedIF):
                     self.__eExecHist._RemoveExecutionState(_ELcExecutionState.eSetupPassed, self)
 
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TextID_041).format(self.__eExecHist)
-                logif._XLogFatal(_errMsg)
+                logif._XLogFatalEC(_EFwErrorCode.FE_00929, _errMsg)
 
                 if self.__eExecHist.isErrorFree:
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_004, errMsg_=_errMsg)
 
             else:
                 res = _LcManager._FwApiReturnRecord(_mainXT, None)

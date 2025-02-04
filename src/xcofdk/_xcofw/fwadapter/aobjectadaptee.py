@@ -7,9 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
-
 class _AbstractObject:
     def __init__(self):
         pass

@@ -7,15 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from collections import OrderedDict as _PyOrderedDict
 from typing      import Union as _PyUnion
 
 from xcofdk._xcofwa.fwadmindefs import _FwAdapterConfig
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
-
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _CreateLogFatal
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _CreateLogImplError
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                   import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                   import vlogif
@@ -29,6 +25,23 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnablefwc      import _AbstractRu
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.xtaskrunnable     import _XTaskRunnable
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex            import _Mutex
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore        import _BinarySemaphore
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask             import _AbstractTask
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop           import _EATaskOperationID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop           import _ATaskOperationPreCheck
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.fwtask            import _FwTask
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.fwthread          import _FwThread
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge         import _TaskBadge
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror         import _TaskError
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgr           import _TaskManager
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskprofile       import _TaskProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate         import _TaskState
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.threadprofile     import _ThreadProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _ETaskRightFlag
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _ETaskResourceFlag
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _EFwApiBookmarkID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _AutoEnclosedThreadsBag
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _PyThread
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines              import _ELcCompID
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxy                import _LcProxy
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyclient          import _LcProxyClient
@@ -37,31 +50,14 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject             import _AbstractSl
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes         import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile            import _AbstractProfile
 
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask                import _AbstractTask
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop              import _EATaskOperationID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop              import _ATaskOperationPreCheck
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.fwtask               import _FwTask
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.fwthread             import _FwThread
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge            import _TaskBadge
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror            import _TaskError
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgr              import _TaskManager
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskprofile          import _TaskProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate            import _TaskState
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.threadprofile        import _ThreadProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil             import _TaskUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil             import _ETaskRightFlag
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil             import _ETaskResourceFlag
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil             import _EFwApiBookmarkID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil             import _AutoEnclosedThreadsBag
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil             import _PyThread
-
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _EMessagePeer
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-
-class _TaskManagerImpl(_TaskManager):
+class _TaskManagerImpl(_TaskManager, _LcProxyClient):
 
     class __TaskEntry(_AbstractSlotsObject):
 
@@ -128,10 +124,10 @@ class _TaskManagerImpl(_TaskManager):
                 return None
 
             if len(args_) > 2:
-                vlogif._LogOEC(True, -1321)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00263)
     
             if len(kwargs_) > 0:
-                vlogif._LogOEC(True, -1322)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00264)
     
             printNID = False
             printUID = False
@@ -157,11 +153,10 @@ class _TaskManagerImpl(_TaskManager):
                         self.teTaskID, self.teTaskName, self.teTaskInst.isEnclosingPyThread, self.teTaskInst.isAlive, self.teTaskInst.taskStateID.compactName.lower())
             return res
 
-    __slots__ = [ '__mtxApi' , '__mtxData' , '__tidtable' , '__tuidtable' , '__tnametable' , '__semSS' , '__lcPxy' , '__lcMon' , '__bFailed' ]
+    __slots__ = [ '__mtxApi' , '__mtxData' , '__tidtable' , '__tuidtable' , '__tnametable' , '__semSS' , '__lcMon' , '__bFailed' ]
 
     def __init__(self):
         self.__lcMon      = None
-        self.__lcPxy      = None
         self.__semSS      = None
         self.__mtxApi     = None
         self.__mtxData    = None
@@ -169,10 +164,12 @@ class _TaskManagerImpl(_TaskManager):
         self.__tidtable   = None
         self.__tuidtable  = None
         self.__tnametable = None
-        super().__init__()
+
+        _TaskManager.__init__(self)
+        _LcProxyClient.__init__(self)
 
         if _TaskManager._theTMgrImpl is not None:
-            vlogif._LogOEC(True, -1323)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00265)
             self.CleanUp()
         else:
             self.__bFailed    = False
@@ -185,16 +182,67 @@ class _TaskManagerImpl(_TaskManager):
             self.__mtxData = _Mutex()
 
             if self.__EncloseCurThread(bAutoEnclosed_=True, bSkipTableEntryCheck_=True) is None:
-                logif._XLogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_001))
+                logif._XLogFatalEC(_EFwErrorCode.FE_00925, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_001))
                 self.CleanUp()
             else:
                 _TaskManager._theTMgrImpl = self
 
+    def _PcClientName(self) -> str:
+        return _FwTDbEngine.GetText(_EFwTextID.eELcCompID_TMgr)
+
+    def _ToString(self, *args_, **kwargs_):
+        if self.__isTMgrInvalid:
+            return None
+        with self.__mtxData:
+            res = 'TMgr: #tasks={}'.format(len(self.__tidtable))
+            return res
+
+    def _CleanUp(self):
+        if self.__isTMgrInvalid:
+            return
+
+        _TaskManager._theTMgrImpl = None
+
+        self.__StopAllTasks(bCleanupStoppedTasks_=False, lstSkipTaskIDs_=None, bSkipStartupThrd_=False)
+
+        for _vv in self.__tidtable.values():
+            _vv.CleanUp()
+
+        self.__lcMon   = None
+        self.__bFailed = None
+
+        self.__tnametable.clear()
+        self.__tnametable = None
+
+        self.__tuidtable.clear()
+        self.__tuidtable = None
+
+        self.__tidtable.clear()
+        self.__tidtable = None
+
+        self.__semSS.CleanUp()
+        self.__semSS = None
+
+        self.__mtxData.CleanUp()
+        self.__mtxData = None
+
+        self.__mtxApi.CleanUp()
+        self.__mtxApi = None
+
+        _LcProxyClient._CleanUp(self)
 
     @property
-    def _isTaskManagerApiAvailable(self):
-        return self.__isMyApiAvailable
+    def _isTMgrApiFullyAvailable(self):
+        return self.__isMyApiFullyAvailable
 
+    def _IsCurTask(self, taskID_ : int):
+        if not isinstance(taskID_, int):
+            return False
+        if self.__isMyApiNotFullyAvailable:
+            return False
+        _bg, _ti = self.__GetCurTaskBadge()
+        res = (_bg is not None) and _bg.taskID == taskID_
+        return res
 
     def _CreateTask( self
                    , taskPrf_                : _TaskProfile            =None
@@ -209,9 +257,7 @@ class _TaskManagerImpl(_TaskManager):
                    , bStart_                 : bool                    =False
                    , tskOpPreCheck_          : _ATaskOperationPreCheck =None  ) -> _PyUnion[int, None]:
         res = None
-        if self.__isMyApiUnavailable:
-            pass
-        else:
+        if not self.__isMyApiNotFullyAvailable:
             ept = enclosedPyThread_
             if (ept is None) and (taskProfileAttrs_ is not None):
                 if _AbstractProfile._ATTR_KEY_ENCLOSED_PYTHREAD in taskProfileAttrs_:
@@ -220,17 +266,15 @@ class _TaskManagerImpl(_TaskManager):
                 return None
 
             _tp = self.__CheckCreateTaskRequest( taskPrf_=taskPrf_
-                                              , runnable_=runnable_
-                                              , taskName_=taskName_
-                                              , resourcesMask_=resourcesMask_
-                                              , delayedStartTimeSpanMS_=delayedStartTimeSpanMS_
-                                              , enclosedPyThread_=enclosedPyThread_
-                                              , args_=args_
-                                              , kwargs_=kwargs_
-                                              , taskProfileAttrs_=taskProfileAttrs_)
-            if _tp is None:
-                pass
-            else:
+                                               , runnable_=runnable_
+                                               , taskName_=taskName_
+                                               , resourcesMask_=resourcesMask_
+                                               , delayedStartTimeSpanMS_=delayedStartTimeSpanMS_
+                                               , enclosedPyThread_=enclosedPyThread_
+                                               , args_=args_
+                                               , kwargs_=kwargs_
+                                               , taskProfileAttrs_=taskProfileAttrs_)
+            if _tp is not None:
                 res = self.__CreateStartProfiledTask(_tp, bStart_, tskOpPreCheck_=tskOpPreCheck_)
                 if res is None:
                     if taskPrf_ is None:
@@ -251,9 +295,7 @@ class _TaskManagerImpl(_TaskManager):
                      , threadProfileAttrs_     : dict                    =None
                      , tskOpPreCheck_          : _ATaskOperationPreCheck =None ) -> _PyUnion[int, None]:
         res = None
-        if self.__isMyApiUnavailable:
-            pass
-        else:
+        if not self.__isMyApiNotFullyAvailable:
             ept = enclosedPyThread_
             if (ept is None) and (threadProfileAttrs_ is not None):
                 if _AbstractProfile._ATTR_KEY_ENCLOSED_PYTHREAD in threadProfileAttrs_:
@@ -275,15 +317,14 @@ class _TaskManagerImpl(_TaskManager):
                 res = res.taskID
         return res
 
-
     def _GetCurTaskBadge(self):
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return None
         _bg, _ti = self.__GetCurTaskBadge()
         return _bg
 
-    def _GetCurTaskError(self, taskID_ =None):
-        if self.__isMyApiUnavailable:
+    def _GetTaskError(self, taskID_ =None):
+        if self.__isMyApiNotFullyAvailable:
             return None
 
         res = None
@@ -297,10 +338,10 @@ class _TaskManagerImpl(_TaskManager):
                 res = _ti.taskError
         return res
 
-    def _GetTask(self, taskID_ : _PyUnion[_EMessagePeer, int], bDoWarn_ =True):
-        if self.__isMyApiUnavailable:
+    def _GetTask(self, taskID_ : _PyUnion[int, _EMessagePeer], bDoWarn_ =True):
+        if self.__isMyApiNotFullyAvailable:
             return None
-        elif not isinstance(taskID_, int):
+        if not isinstance(taskID_, (int, _EMessagePeer)):
             return None
         res = self.__GetTableEntry(taskID_=taskID_, bDoWarn_=bDoWarn_)
         if res is not None:
@@ -308,7 +349,7 @@ class _TaskManagerImpl(_TaskManager):
         return res
 
     def _GetTaskID(self, taskName_):
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return None
         with self.__mtxData:
             res = None
@@ -317,10 +358,10 @@ class _TaskManagerImpl(_TaskManager):
                 res = _te.teTaskID
             return res
 
-    def _GetTaskBadge(self, taskID_ : _PyUnion[_EMessagePeer, int], bDoWarn_ =True):
-        if self.__isMyApiUnavailable:
+    def _GetTaskBadge(self, taskID_ : _PyUnion[int, _EMessagePeer], bDoWarn_ =True):
+        if self.__isMyApiNotFullyAvailable:
             return None
-        elif not isinstance(taskID_, int):
+        if not isinstance(taskID_, (int, _EMessagePeer)):
             return None
         res = self.__GetTableEntry(taskID_=taskID_, bDoWarn_=bDoWarn_)
         if res is not None:
@@ -328,7 +369,7 @@ class _TaskManagerImpl(_TaskManager):
         return res
 
     def _StartTask(self, taskID_, tskOpPreCheck_ : _ATaskOperationPreCheck =None, bSkipPrecheck_ =False) -> bool:
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
 
         self.__mtxApi.Take()
@@ -344,14 +385,14 @@ class _TaskManagerImpl(_TaskManager):
         return self.__StartTaskInstance(_te.teTaskInst, tskOpPreCheck_, cleanupOnFailure_=False)
 
     def _StopTask(self, taskID_, removeTask_=True, tskOpPreCheck_ : _ATaskOperationPreCheck =None) -> bool:
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
         else:
             _tid = self.__StopTaskByID(taskID_, removeTask_=removeTask_, tskOpPreCheck_=tskOpPreCheck_)
             return _tid is not None
 
     def _JoinTask(self, taskID_, timeout_ : _Timeout =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None) -> bool:
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
 
         with self.__mtxApi:
@@ -373,18 +414,18 @@ class _TaskManagerImpl(_TaskManager):
         return res
 
     def _StartXTask(self, xtConn_ : _XTaskConnectorIF, tskOpPreCheck_ : _ATaskOperationPreCheck =None) -> bool:
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
         elif not (isinstance(xtConn_, _XTaskConnectorIF) and xtConn_._isXTaskConnected):
             if not isinstance(xtConn_, _XTaskConnectorIF):
-                vlogif._LogOEC(True, -1324)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00266)
             else:
-                vlogif._LogOEC(True, -1325)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00267)
             return False
         elif xtConn_._isStarted:
             return xtConn_._isPendingRun or xtConn_._isRunning or xtConn_._isDone
         elif not xtConn_._connectedXTask.isXtask:
-            vlogif._LogOEC(True, -1326)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00268)
             return False
 
         res       = False
@@ -437,14 +478,13 @@ class _TaskManagerImpl(_TaskManager):
         return res
 
     def _StopXTask(self, xtConn_ : _XTaskConnectorIF, cleanupDriver_ =True, tskOpPreCheck_ : _ATaskOperationPreCheck =None) -> bool:
-
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
         elif not (isinstance(xtConn_, _XTaskConnectorIF) and xtConn_._isXTaskConnected):
             if not isinstance(xtConn_, _XTaskConnectorIF):
-                vlogif._LogOEC(True, -1327)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00271)
             else:
-                vlogif._LogOEC(True, -1328)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00272)
             return False
 
         _tid      = None
@@ -454,12 +494,13 @@ class _TaskManagerImpl(_TaskManager):
         try:
             _curTsk = self.__BookmarkCurTask(_EFwApiBookmarkID.eXTaskApiRequestStop)
 
+            _bTD   = xtConn_.xtaskProfile.isTeardownPhaseEnabled
             _cxt   = xtConn_._connectedXTask
             _xtUID = None if _cxt is None else _cxt.xtaskUniqueID
 
-            if _xtUID is None:
-                pass
-            else:
+            if _xtUID is not None:
+                if _bTD:
+                    cleanupDriver_ = False
                 _tid = self.__StopTaskByID(_xtUID, removeTask_=cleanupDriver_, tskOpPreCheck_=tskOpPreCheck_, curTask_=_curTsk)
 
         except _XcoExceptionRoot as xcp:
@@ -479,12 +520,11 @@ class _TaskManagerImpl(_TaskManager):
         return (_xtUID is None) or (_tid is not None)
 
     def _JoinXTask(self, xtConn_ : _XTaskConnectorIF, timeout_ : _Timeout =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None) -> bool:
-
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
         elif not (isinstance(xtConn_, _XTaskConnectorIF) and xtConn_._isXTaskConnected):
             if not isinstance(xtConn_, _XTaskConnectorIF):
-                vlogif._LogOEC(True, -1329)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00273)
             return False
 
         res       = False
@@ -517,14 +557,8 @@ class _TaskManagerImpl(_TaskManager):
 
         return res
 
-    def _PrintTaskTable(self, tabPrefixed_=False, printNavtiveID_=False, printIdent_=False):
-        if self.__isMyApiUnavailable:
-            pass
-        else:
-            self.__PrintTaskTable(tabPrefixed_=tabPrefixed_, printNavtiveID_=printNavtiveID_, printIdent_=printIdent_)
-
     def _ProcUnhandledXcp(self, xcp_: _XcoExceptionRoot):
-        if self.__isMyApiUnavailable:
+        if self.__isMyApiNotFullyAvailable:
             return False
         else:
             _te = self.__GetCurTableEntry(bDoWarn_=True)
@@ -532,54 +566,6 @@ class _TaskManagerImpl(_TaskManager):
                 return False
             else:
                 return _te.teTaskInst._ProcUnhandledException(xcp_)
-
-
-    def _ToString(self, *args_, **kwargs_):
-        if self.__isTMgrInvalid:
-            return None
-        with self.__mtxData:
-            res = 'TMgr: #tasks={}'.format(len(self.__tidtable))
-            return res
-
-    def _CleanUp(self):
-        if self.__isTMgrInvalid:
-            return
-
-        _TaskManager._theTMgrImpl = None
-
-        self.__StopAllTasks(bCleanupStoppedTasks_=False, lstSkipTaskIDs_=None, bSkipStartupThrd_=False)
-
-        for _vv in self.__tidtable.values():
-            _vv.CleanUp()
-
-        self.__lcMon   = None
-        self.__lcPxy   = None
-        self.__bFailed = None
-
-        self.__tnametable.clear()
-        self.__tnametable = None
-
-        self.__tuidtable.clear()
-        self.__tuidtable = None
-
-        self.__tidtable.clear()
-        self.__tidtable = None
-
-        self.__semSS.CleanUp()
-        self.__semSS = None
-
-        self.__mtxData.CleanUp()
-        self.__mtxData = None
-
-        self.__mtxApi.CleanUp()
-        self.__mtxApi = None
-
-        super()._CleanUp()
-
-
-    @staticmethod
-    def _GetInstance():
-        return _TaskManager._theTMgrImpl
 
     @staticmethod
     def _CreateXTaskProfile(xtConn_ : _XTaskConnectorIF, enclosedPyThread_ : _PyThread =None, profileAttrs_ : dict =None):
@@ -593,14 +579,14 @@ class _TaskManagerImpl(_TaskManager):
         elif _TaskManager._theTMgrImpl.__isTMgrInvalid:
             pass
         else:
-            res = _TaskManager._theTMgrImpl.__lcPxy
+            res = _TaskManager._theTMgrImpl._PcGetLcProxy()
         return res
 
     def _GetCurTask(self, bAutoEncloseMissingThread_ =True) -> _AbstractTask:
         if self.__isTMgrInvalid:
             return None
         else:
-            badge, res = self.__GetCurTaskBadge(bAutoEncloseMissingThread_=bAutoEncloseMissingThread_)
+            _bg, res = self.__GetCurTaskBadge(bAutoEncloseMissingThread_=bAutoEncloseMissingThread_)
             return res
 
     def _GetProxyInfoReplacementData(self):
@@ -622,8 +608,7 @@ class _TaskManagerImpl(_TaskManager):
 
             return _tname, _bXTask
 
-    def _GetTaskError(self, taskID_ : int) -> _AbstractTask:
-
+    def _GetTaskErrorByTID(self, taskID_ : int) -> _AbstractTask:
         if self.__isTMgrInvalid:
             return None
         elif not isinstance(taskID_, int):
@@ -640,28 +625,21 @@ class _TaskManagerImpl(_TaskManager):
             self.__lcMon = lcMonImpl_
 
     def _InjectLcProxy(self, lcProxy_ : _LcProxy):
-        res = True
-        if self.__isTMgrInvalid:
-            res = False
-        else:
-            self.__lcPxy = lcProxy_
 
-            if lcProxy_ is None:
-                pass
-            else:
-                res = lcProxy_.isLcProxyAvailable
-                if not res:
-                    self.__lcPxy = None
-                    vlogif._LogOEC(True, -1330)
-                else:
-                    with self.__mtxData:
-                        _ii = 0
-                        for _kk, _te in self.__tidtable.items():
-                            if isinstance(_te.teTaskInst, _LcProxyClient):
-                                if _te.teTaskInst._lcProxy is None:
-                                    _ii += 1
-                                    _te.teTaskInst._SetLcProxy(self.__lcPxy)
-        return res
+        if self.__isTMgrInvalid:
+            return False
+
+        self._PcSetLcProxy(lcProxy_, bForceUnset_=True)
+
+        if self._PcIsLcProxySet():
+            with self.__mtxData:
+                _ii = 0
+                for _kk, _te in self.__tidtable.items():
+                    if isinstance(_te.teTaskInst, _LcProxyClient):
+                        if not _te.teTaskInst._PcIsLcProxySet():
+                            _ii += 1
+                            _te.teTaskInst._PcSetLcProxy(self)
+        return True
 
     def _StopAllTasks(self, bCleanupStoppedTasks_ =True, lstSkipTaskIDs_ =None) -> list:
         if self.__isTMgrInvalid:
@@ -675,7 +653,7 @@ class _TaskManagerImpl(_TaskManager):
         if self.__isTMgrInvalid:
             return None
         elif not isinstance(taskInst_, _AbstractTask):
-            vlogif._LogOEC(True, -1331)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00274)
             return None
 
         self.__mtxApi.Take()
@@ -685,12 +663,12 @@ class _TaskManagerImpl(_TaskManager):
                 _te = self.__GetTableEntry(pythread_=taskInst_.linkedPyThread, bDoWarn_=False)
                 if _te is not None:
                     if _te.teIsAutoEnclosedEntry:
-                        aet = _te.teTaskInst
-                        if not self.__RemoveFromTable(aet):
+                        _aet = _te.teTaskInst
+                        if not self.__RemoveFromTable(_aet):
                             self.__mtxApi.Give()
                             return None
                         else:
-                            aet.CleanUp()
+                            _aet.CleanUp()
 
         res = None
         if self.__AddToTable(taskInst_):
@@ -698,24 +676,25 @@ class _TaskManagerImpl(_TaskManager):
         self.__mtxApi.Give()
         return res
 
-    def _RemoveTaskEntry(self, taskInst_ : _AbstractTask):
+    def _DetachTask(self, taskInst_ : _AbstractTask, cleanup_ =True):
 
-        if self.__isTMgrInvalid:
-            return
-        elif not isinstance(taskInst_, _AbstractTask):
-            vlogif._LogOEC(True, -1332)
-            return
+       if self.__isTMgrInvalid:
+           return
+       elif not isinstance(taskInst_, _AbstractTask):
+           vlogif._LogOEC(True, _EFwErrorCode.VFE_00275)
+           return
 
-        self.__mtxApi.Take()
+       self.__mtxApi.Take()
 
-        _te = self.__GetTableEntry(pythread_=taskInst_.linkedPyThread, bDoWarn_=False)
-        if _te is None:
-            pass
-        elif not self.__RemoveFromTable(_te.teTaskInst):
-            ttn, tn, _tid = type(taskInst_).__name__, taskInst_.taskName, taskInst_.taskID
-            vlogif._LogOEC(False, -3018)
-        self.__mtxApi.Give()
-
+       _te = self.__GetTableEntry(pythread_=taskInst_.linkedPyThread, bDoWarn_=False)
+       if _te is None:
+           pass
+       elif not self.__RemoveFromTable(_te.teTaskInst):
+           _ttn, _tn, _tid = type(taskInst_).__name__, taskInst_.taskName, taskInst_.taskID
+           vlogif._LogOEC(False, _EFwErrorCode.VUE_00026)
+       elif cleanup_:
+           self.__CleanUpTaskInstance(taskInst_)
+       self.__mtxApi.Give()
 
     @property
     def __isTMgrInvalid(self):
@@ -726,27 +705,29 @@ class _TaskManagerImpl(_TaskManager):
         return False if self.__isTMgrInvalid else self.__bFailed
 
     @property
-    def __isMyApiUnavailable(self):
-        if not self.__isMyApiAvailable:
-            return True
-        return False
+    def __isTMgrInvalidOrFailed(self):
+        return True if self.__tidtable is None else self.__bFailed
 
     @property
-    def __isMyApiAvailable(self):
-        res =         not (self.__isTMgrInvalid or self.__isTMgrFailed)
-        res = res and self.__lcPxy is not None
-        res = res and self.__lcPxy.isLcModeNormal
-        return res
+    def __isMyApiNotFullyAvailable(self):
+        if self.__isTMgrInvalidOrFailed:
+            return True
+        return not self._PcIsLcProxyModeNormal()
+
+    @property
+    def __isMyApiFullyAvailable(self):
+        if self.__isTMgrInvalidOrFailed:
+            return False
+        return self._PcIsLcProxyModeNormal()
 
     @staticmethod
     def __CreateXTaskProfile(xtConn_ : _XTaskConnectorIF, enclosedPyThread_ : _PyThread =None, profileAttrs_ : dict =None):
         if not isinstance(xtConn_, _XTaskConnectorIF):
-            vlogif._LogOEC(True, -1333)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00276)
             return None
         elif not (xtConn_._isXTaskConnected and (xtConn_._connectedXTask is not None)):
-            vlogif._LogOEC(True, -1334)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00277)
             return None
-
 
         _TRM_KEY = _ThreadProfile._ATTR_KEY_TASK_RIGHTS
 
@@ -755,7 +736,7 @@ class _TaskManagerImpl(_TaskManager):
         _trm = profileAttrs_[_TRM_KEY] if _TRM_KEY in profileAttrs_ else _ETaskRightFlag.UserTaskRightDefaultMask()
 
         if not isinstance(_trm, _ETaskRightFlag):
-            vlogif._LogOEC(True, -1335)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00278)
             return None
 
         if not _trm.hasUserTaskRight:
@@ -776,7 +757,7 @@ class _TaskManagerImpl(_TaskManager):
             if _xtp.isInternalQueueEnabled or _xtp.isExternalQueueEnabled:
                 _rr = _XTaskRunnable(xtConn_)
                 if _rr._eRunnableType is None:
-                    vlogif._LogOEC(True, -1336)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00279)
                 else:
                     res = _TaskProfile(runnable_=_rr, enclosedPyThread_=enclosedPyThread_, taskProfileAttrs_=profileAttrs_)
             else:
@@ -785,17 +766,16 @@ class _TaskManagerImpl(_TaskManager):
             if _FwAdapterConfig._IsLogIFUTSwitchModeEnabled() or not logif._IsReleaseModeEnabled():
                 raise xcp
             else:
-                print(f'>>>> xcp: {xcp}')
-                vlogif._LogOEC(True, -1337)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00280)
 
         if res is not None:
             if not (res.isValid and res.isDrivingXTaskTaskProfile):
-                logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_010).format(xtConn_._connectedXTask))
+                logif._LogImplErrorEC(_EFwErrorCode.FE_00689, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_010).format(xtConn_._connectedXTask))
                 res.CleanUp()
                 res = None
 
         if res is None:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_002).format(xtConn_._connectedXTask))
+            logif._LogErrorEC(_EFwErrorCode.UE_00092, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_002).format(xtConn_._connectedXTask))
         return res
 
     @staticmethod
@@ -812,20 +792,19 @@ class _TaskManagerImpl(_TaskManager):
         res = curTask_
         if res is None:
             res = self._GetCurTask()
-        if res is None:
-            pass
-        else:
+        if res is not None:
             res._SetFwApiBookmark(eFwApiBookmarkID_)
         return res
 
-    def __CheckForReraiseXcoException(self, xcp_: _XcoExceptionRoot) -> bool:
-        return True
+    def __CheckForReraiseXcoException(self, xcp_: _XcoExceptionRoot, bForceReraise_ =True) -> bool:
+        return self is not None
 
     def __HandleXcoBaseException(self, xcp_: _XcoBaseException, bCausedByTMgr_ =None, curTask_ : _AbstractTask =None):
-        if (self.__lcPxy is None) or self.__lcPxy.isTaskManagerFailed:
+
+        if self._PcIsTaskMgrFailed():
             return
         if not xcp_.isXcoBaseException:
-            vlogif._LogOEC(True, -1338)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00281)
             return
 
         _bDoLogSysXcp     = False
@@ -852,7 +831,7 @@ class _TaskManagerImpl(_TaskManager):
                 if _fwApiBmID.isXTaskApiRequest:
                     _bRootCauseFWC, _bRootCauseTMgr = True, True
                 elif _fwApiBmID.isXTaskApiBeginAction:
-                    if curTask_.eTaskExecPhase.isXTaskExecution:
+                    if curTask_.eTaskXPhase.isXTaskExecution:
                         _bRootCauseClient = True
                     else:
                         _bRootCauseFWC = True
@@ -864,7 +843,7 @@ class _TaskManagerImpl(_TaskManager):
                 if _fwApiBmID.isXTaskApiRequest:
                     _bRootCauseFWC, _bRootCauseTMgr = True, True
                 elif _fwApiBmID.isXTaskApiBeginAction:
-                    if curTask_.eTaskExecPhase.isXTaskExecution:
+                    if curTask_.eTaskXPhase.isXTaskExecution:
                         _bDoLogSysXcp, _bRootCauseClient = True, True
                     else:
                         _bDoLogSysXcp, _bRootCauseFWC = True, True
@@ -872,40 +851,42 @@ class _TaskManagerImpl(_TaskManager):
                     _bRootCauseFWC = True
 
         if _bDoLogSysXcp:
-            logif._LogSysException(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_003), xcp_._enclosedException, xcp_.traceback)
+            logif._LogSysExceptionEC(_EFwErrorCode.FE_00016, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_003), xcp_._enclosedException, xcp_.traceback)
             return
 
         if not self.__bFailed:
             self.__bFailed = _bRootCauseTMgr
 
-
         if not (_bRootCauseFWC or _bRootCauseTMgr or _bRootCauseClient):
-            vlogif._LogOEC(True, -1339)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00282)
             return
 
         _bCreateFE = _bCurTaskAutoEnclosed or not (_bCurTaskNotTerminated and curTask_.isRunning)
 
+        if _bRootCauseClient:
+            _cc = _ELcCompID.eXTask
+        elif _bRootCauseTMgr:
+            _cc = _ELcCompID.eTMgr
+        else:
+            _cc = _ELcCompID.eFwComp
+
         _frc = None
 
         if _bCreateFE:
-            _frc =_CreateLogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_009).format(str(xcp_)))
+            _bFwTsk  = not _cc.isXtask
+            _errCode = _EFwErrorCode.FE_00024 if _bFwTsk else _EFwErrorCode.FE_00926
+            _frc     = logif._CreateLogFatalEC(_bFwTsk, _errCode, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_009).format(str(xcp_)))
         else:
-            logif._LogUnhandledXcoBaseXcp(xcp_)
+            logif._LogUnhandledXcoBaseXcpEC(_EFwErrorCode.FE_00021, xcp_)
 
             _te = curTask_.taskError
             if (_te is None) or not _te.isFatalError:
-                pass
+                pass 
             else:
                 _frc = _te._currentErrorEntry
 
-        if _frc is None:
-            pass
-        else:
-            if   _bRootCauseClient: cc = _ELcCompID.eXTask
-            elif _bRootCauseTMgr:   cc = _ELcCompID.eTMgr
-            else:                   cc = _ELcCompID.eFwComp
-
-            self.__lcPxy._NotifyLcFailure(cc, _frc, atask_=curTask_)
+        if _frc is not None:
+            self._PcNotifyLcFailure(_cc, _frc, atask_=curTask_)
 
     def __PrintTaskTable(self, tabPrefixed_=False, printNavtiveID_=False, printIdent_=False):
         with self.__mtxData:
@@ -933,7 +914,7 @@ class _TaskManagerImpl(_TaskManager):
                     _tuid = _TaskUtil.GetPyThreadUniqueID(_curPyThrd)
 
                     if _AutoEnclosedThreadsBag.IsProcessingCurPyThread(curPyThrd_=_curPyThrd):
-                        pass
+                        pass 
                     else:
                         _AutoEnclosedThreadsBag._AddPyThread(_curPyThrd)
                         _fthrd = self.__EncloseCurThread(bAutoEnclosed_=True, bSkipTableEntryCheck_=True)
@@ -941,37 +922,38 @@ class _TaskManagerImpl(_TaskManager):
 
                         if _fthrd is None:
                             _errMsg = 'TMgr failed to auto-enclose current thread {}:{}.'.format(_curPyThrd.name, _tuid)
-                            vlogif._LogOEC(True, -1340)
-                            if (self.__lcPxy is not None) and not self.__lcPxy.isTaskManagerFailed:
-                                _myFE = _CreateLogImplError(_errMsg)
-                                self.__lcPxy._NotifyLcFailure(_ELcCompID.eTMgr, _myFE, atask_=None)
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00283)
+
+                            if not self._PcIsTaskMgrFailed():
+                                _myFE = logif._CreateLogImplErrorEC(_EFwErrorCode.FE_00030, _errMsg)
+                                self._PcNotifyLcFailure(_ELcCompID.eTMgr, _myFE)
                         else:
                             _te = self.__GetTableEntry(taskID_=_fthrd.taskID)
 
         res = None
-        _myTskInst = None
+        _tinst = None
         if (_te is None) or (_te.teTaskBadge is None):
             pass
         else:
-            res, _myTskInst = _te.teTaskBadge, _te.teTaskInst
+            res, _tinst = _te.teTaskBadge, _te.teTaskInst
 
-            if _myTskInst.isAutoEnclosed:
+            if _tinst.isAutoEnclosed:
                 pass
-            elif not _myTskInst.isEnclosingPyThread:
+            elif not _tinst.isEnclosingPyThread:
                 pass
             elif (self.__lcMon is None) or not self.__lcMon.isLcShutdownEnabled:
                 pass
-            elif (_myTskInst.lcDynamicTLB is None) or _myTskInst.lcDynamicTLB.isDummyTLB:
+            elif (_tinst.lcDynamicTLB is None) or _tinst.lcDynamicTLB.isDummyTLB:
                 pass
-            elif _myTskInst.isInLcCeaseMode:
+            elif _tinst.isInLcCeaseMode:
                 pass
             else:
-                if _myTskInst.isRunning:
-                    _AbstractTask._SetGetTaskState(_myTskInst, _TaskState._EState.ePendingStopRequest)
-                    if not _myTskInst.isPendingStopRequest:
-                        vlogif._LogOEC(True, -1341)
+                if _tinst.isRunning:
+                    _AbstractTask._SetGetTaskState(_tinst, _TaskState._EState.ePendingStopRequest)
+                    if not _tinst.isPendingStopRequest:
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00284)
 
-        return res, _myTskInst
+        return res, _tinst
 
     def __GetCurTableEntry(self, bDoWarn_ =False):
         return self.__GetTableEntry(pythread_=_TaskUtil.GetCurPyThread(), bDoWarn_=bDoWarn_)
@@ -982,7 +964,7 @@ class _TaskManagerImpl(_TaskManager):
         _bEMessagePeer = isinstance(taskID_, _EMessagePeer)
 
         if not (_bEMessagePeer or isinstance(taskID_, int) or isinstance(pythread_, _PyThread)):
-            vlogif._LogOEC(True, -1342)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00285)
         elif _bEMessagePeer and not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
             pass
         else:
@@ -1013,7 +995,7 @@ class _TaskManagerImpl(_TaskManager):
                                 continue
                     elif taskID_ not in self.__tidtable:
                         if bDoWarn_:
-                            vlogif._LogOEC(False, -3019)
+                            vlogif._LogOEC(False, _EFwErrorCode.VUE_00027)
                     else:
                         res = self.__tidtable[taskID_]
                 else:
@@ -1027,13 +1009,13 @@ class _TaskManagerImpl(_TaskManager):
     def __AddToTable(self, taskInst_ : _AbstractTask):
 
         if not isinstance(taskInst_, _AbstractTask):
-            vlogif._LogOEC(True, -1343)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00286)
             return False
 
         with self.__mtxData:
             _tid = taskInst_.taskID
             if _tid in self.__tidtable:
-                vlogif._LogOEC(True, -1344)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00287)
                 return False
 
             _te = _TaskManagerImpl.__TaskEntry(taskInst_)
@@ -1044,13 +1026,13 @@ class _TaskManagerImpl(_TaskManager):
 
             _tname = taskInst_.taskName
             if _tname in self.__tnametable:
-                pass
+                _teOther = self.__tnametable[_tname]
             else:
                 self.__tnametable[_tname] = _te
 
-            if (self.__lcPxy is not None) and self.__lcPxy.isLcModeNormal:
+            if self._PcIsLcProxyModeNormal():
                 if isinstance(taskInst_, _LcProxyClient):
-                    taskInst_._SetLcProxy(self.__lcPxy)
+                    taskInst_._PcSetLcProxy(self)
 
             self.__RemoveCleanedUpEntries()
             return True
@@ -1058,7 +1040,7 @@ class _TaskManagerImpl(_TaskManager):
     def __RemoveFromTable(self, taskInst_ : _AbstractTask):
 
         if not isinstance(taskInst_, _AbstractTask):
-            vlogif._LogOEC(True, -1345)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00288)
             return False
         elif not taskInst_.isValid:
             return False
@@ -1071,7 +1053,7 @@ class _TaskManagerImpl(_TaskManager):
             if _tid not in self.__tidtable:
                 return False
             elif _tuid not in self.__tuidtable:
-                vlogif._LogOEC(True, -1346)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00289)
                 return False
 
             _teByName     = None
@@ -1135,6 +1117,7 @@ class _TaskManagerImpl(_TaskManager):
 
             if not _oppc.isASynchronous:
                 self.__mtxApi.Give()
+
             res = taskInst_.StartTask(semStart_=_semSS, tskOpPreCheck_=tskOpPreCheck_, curTask_=_curTsk)
 
         except _XcoExceptionRoot as xcp:
@@ -1176,7 +1159,7 @@ class _TaskManagerImpl(_TaskManager):
                     self.__HandleXcoBaseException(_mySysXcp, curTask_=_curTsk)
         return res
 
-    def __StopTaskByID(self, taskID_ : int, removeTask_=True, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None):
+    def __StopTaskByID(self, taskID_ : int, removeTask_ =True, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None):
         if not _Util.IsInstance(taskID_, int, bThrowx_=True):
             return None
 
@@ -1187,21 +1170,21 @@ class _TaskManagerImpl(_TaskManager):
             self.__mtxApi.Give()
             return None
 
-        _myTskInst = _te.teTaskInst
-        if _myTskInst.isAutoEnclosed:
-            if _myTskInst.taskStateID.isDone:
-                pass
+        _tinst = _te.teTaskInst
+        if _tinst.isAutoEnclosed:
+            if _tinst.taskStateID.isDone:
+                pass 
             else:
-                _AbstractTask._SetGetTaskState(_myTskInst, _TaskState._EState.eDone)
+                _AbstractTask._SetGetTaskState(_tinst, _TaskState._EState.eDone)
 
             if removeTask_:
-                self.__RemoveFromTable(_myTskInst)
-                self.__CleanUpTaskInstance(_myTskInst)
+                self.__RemoveFromTable(_tinst)
+                self.__CleanUpTaskInstance(_tinst)
 
             self.__mtxApi.Give()
             return taskID_
 
-        _oppc = _TaskManagerImpl.__GetTaskOpPreCheck(_myTskInst, _EATaskOperationID.eStop, tskOpPreCheck_=tskOpPreCheck_)
+        _oppc = _TaskManagerImpl.__GetTaskOpPreCheck(_tinst, _EATaskOperationID.eStop, tskOpPreCheck_=tskOpPreCheck_)
         if _oppc.isNotApplicable or _oppc.isIgnorable:
             _bIgnorable = _oppc.isIgnorable
             if tskOpPreCheck_ is None:
@@ -1209,24 +1192,24 @@ class _TaskManagerImpl(_TaskManager):
 
             if _bIgnorable:
                 if removeTask_:
-                    self.__RemoveFromTable(_myTskInst)
-                    self.__CleanUpTaskInstance(_myTskInst)
+                    self.__RemoveFromTable(_tinst)
+                    self.__CleanUpTaskInstance(_tinst)
             self.__mtxApi.Give()
             return taskID_ if _bIgnorable else None
 
         _semSS= None
         _bASynchronous = _oppc.isASynchronous
         if _bASynchronous:
-            if not _myTskInst.isEnclosingPyThread:
-                if _myTskInst.linkedExecutable is not None:
+            if not _tinst.isEnclosingPyThread:
+                if _tinst.linkedExecutable is not None:
                     _semSS = self.__semSS
 
         if not _bASynchronous:
             self.__mtxApi.Give()
 
-        _bStopOK = _myTskInst.StopTask(semStop_=_semSS, tskOpPreCheck_=_oppc, curTask_=curTask_)
+        _bStopOK = _tinst.StopTask(semStop_=_semSS, tskOpPreCheck_=_oppc, curTask_=curTask_)
         if not _bStopOK:
-            vlogif._LogOEC(False, -3020)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00028)
 
         if tskOpPreCheck_ is None:
             _oppc.CleanUp()
@@ -1239,8 +1222,8 @@ class _TaskManagerImpl(_TaskManager):
                 _semSS.Take()
 
             if removeTask_:
-                self.__RemoveFromTable(_myTskInst)
-                self.__CleanUpTaskInstance(_myTskInst)
+                self.__RemoveFromTable(_tinst)
+                self.__CleanUpTaskInstance(_tinst)
 
         return taskID_ if _bStopOK else None
 
@@ -1249,7 +1232,7 @@ class _TaskManagerImpl(_TaskManager):
         if self.__isTMgrInvalid:
             return None
         if (lstSkipTaskIDs_ is not None) and not isinstance(lstSkipTaskIDs_, list):
-            vlogif._LogOEC(True, -1347)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00290)
             return None
 
         res = []
@@ -1257,20 +1240,18 @@ class _TaskManagerImpl(_TaskManager):
         if (lstSkipTaskIDs_ is not None) and len(lstSkipTaskIDs_) == 0:
             lstSkipTaskIDs_ = None
 
-        lstRemoveTIDs, lstStopTIDs = [], []
-
-
+        _lstRemoveTIDs, _lstStopTIDs = [], []
 
         with self.__mtxData:
             _tblSize = len(self.__tidtable)
             if _tblSize == 0:
                 return None
 
-            lstSkip = None
+            _lstSkip = None
             if lstSkipTaskIDs_ is not None:
-                lstSkip = [ _tid for _tid in lstSkipTaskIDs_ if _tid in self.__tidtable ]
+                _lstSkip = [ _tid for _tid in lstSkipTaskIDs_ if _tid in self.__tidtable ]
 
-            _numTaskToBeStopped = _tblSize if lstSkip is None else (_tblSize-len(lstSkip))
+            _numTaskToBeStopped = _tblSize if _lstSkip is None else (_tblSize-len(_lstSkip))
 
             for _kk in self.__tidtable.keys():
                 _te = self.__tidtable[_kk]
@@ -1279,56 +1260,55 @@ class _TaskManagerImpl(_TaskManager):
                     continue
                 if _te.teTaskInst.isEnclosingStartupThread and bSkipStartupThrd_:
                     continue
-                if (lstSkip is not None) and _te.teTaskID in lstSkip:
+                if (_lstSkip is not None) and _te.teTaskID in _lstSkip:
                     continue
                 if not _te.teTaskInst.isRunning:
-                    if bCleanupStoppedTasks_: lstRemoveTIDs.append(_kk)
+                    if bCleanupStoppedTasks_: _lstRemoveTIDs.append(_kk)
                     continue
 
                 if _te.teIsAutoEnclosedEntry:
-                    bCalledByCleanup = not bSkipStartupThrd_
-                    if bCalledByCleanup: lstRemoveTIDs.append(_kk)
+                    _bCalledByCleanup = not bSkipStartupThrd_
+                    if _bCalledByCleanup: _lstRemoveTIDs.append(_kk)
 
-                lstStopTIDs.append(_te.teTaskID)
+                _lstStopTIDs.append(_te.teTaskID)
 
         _numStopped = 0
         _numRemoved = 0
 
-        if len(lstStopTIDs) > 0:
-            for _tid in lstStopTIDs:
+        if len(_lstStopTIDs) > 0:
+            for _tid in _lstStopTIDs:
                 _tid = self.__StopTaskByID(_tid, removeTask_=False)
                 if _tid is not None:
                     _numStopped += 1
-                    if bCleanupStoppedTasks_: lstRemoveTIDs.append(_tid)
+                    if bCleanupStoppedTasks_: _lstRemoveTIDs.append(_tid)
 
-        if len(lstRemoveTIDs) > 0:
+        if len(_lstRemoveTIDs) > 0:
             with self.__mtxApi:
                 with self.__mtxData:
-                    for _kk in lstRemoveTIDs:
+                    for _kk in _lstRemoveTIDs:
                         _te = self.__tidtable[_kk]
                         _ti = _te.teTaskInst
-                        ttn, tn, _tid = type(_ti).__name__, _ti.taskName, _ti.taskID
+                        _ttn, _tn, _tid = type(_ti).__name__, _ti.taskName, _ti.taskID
                         self.__RemoveFromTable(_ti)
                         _numRemoved += 1
 
                         if _ti.taskBadge.isFwMain:
-                            pass
+                            pass 
                         else:
                             if not self.__CleanUpTaskInstance(_ti, bIgnoreCeaseMode_=True):
                                 res.append(_ti)
 
         _tblSizeLeft = len(self.__tidtable)
         if len(res) > 0:
-            pass
+            pass 
         else:
             res = None
         return res
 
     def __CleanUpTaskInstance(self, tskInst_ : _AbstractTask, bIgnoreCeaseMode_ =False):
-        if self: pass
 
         if not tskInst_.isValid:
-            return True
+            return self is not None
         if not tskInst_.eLcCeaseTLBState.isNone:
             if not bIgnoreCeaseMode_:
                 return False
@@ -1354,17 +1334,16 @@ class _TaskManagerImpl(_TaskManager):
         _bParamsOK = _bParamsOK and (aprofile_   is None or (isinstance(aprofile_, _AbstractProfile) and aprofile_.isValid and (aprofile_.isTaskProfile or aprofile_.isThreadProfile)))
         _bParamsOK = _bParamsOK and (enclPyThrd_ is None or isinstance(enclPyThrd_, _PyThread))
         if not _bParamsOK:
-            vlogif._LogOEC(True, -1348)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00291)
             return False
 
         if tskID_ is not None:
             if not (aprofile_ is None and enclPyThrd_ is None):
-                vlogif._LogOEC(True, -1349)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00292)
                 return False
 
             else:
                 return self.__PrecheckExecutableRequestByTaskID(tskID_)
-
 
         res = None
 
@@ -1383,31 +1362,32 @@ class _TaskManagerImpl(_TaskManager):
                 _bError = True
 
             if _bError:
-                vlogif._LogOEC(True, -1350)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00293)
                 res = False
             else:
                 enclPyThrd_ = _enclPyThrdPrf
 
         elif enclPyThrd_ is not None:
-            vlogif._LogOEC(True, -1351)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00294)
             res = False
+
         else:
             res = True
 
         if res is not None:
             return res
 
-
         if enclPyThrd_ is None:
-            vlogif._LogOEC(True, -1352)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00295)
             res = False
 
         else:
             _curPyThrd = _TaskUtil.GetCurPyThread()
 
             if id(enclPyThrd_) != id(_curPyThrd):
-                vlogif._LogOEC(True, -1353)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00296)
                 res = False
+
             else:
                 _curTblE = self.__GetTableEntry(pythread_=_curPyThrd, bDoWarn_=False)
 
@@ -1415,9 +1395,9 @@ class _TaskManagerImpl(_TaskManager):
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_004).format(_curPyThrd.name, _curTblE.teTaskInst.taskID, _curTblE.teTaskInst.taskName)
 
                     if not _curTblE.teIsXTaskEntry:
-                        vlogif._LogOEC(True, -1354)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00297)
                     else:
-                        logif._LogError(_errMsg)
+                        logif._LogErrorEC(_EFwErrorCode.UE_00095, _errMsg)
                     res = False
                 else:
                     res = True
@@ -1431,28 +1411,29 @@ class _TaskManagerImpl(_TaskManager):
             _te = self.__GetTableEntry(taskID_=tskID_, bDoWarn_=True)
 
             if _te is None:
-                vlogif._LogOEC(True, -1355)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00298)
 
             else:
                 _errMsg     = None
-                _myTskInst = _te.teTaskInst
+                _tinst = _te.teTaskInst
                 _curTblE   = self.__GetCurTableEntry(bDoWarn_=False)
 
-                if _myTskInst.isAutoEnclosed:
-                    vlogif._LogOEC(True, -1356)
+                if _tinst.isAutoEnclosed:
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00299)
 
-                elif _myTskInst.isStarted:
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_005).format(tskID_, str(_myTskInst))
+                elif _tinst.isStarted:
+                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_005).format(tskID_, str(_tinst))
 
-                elif not _myTskInst.isInitialized:
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_006).format(tskID_, str(_myTskInst))
+                elif not _tinst.isInitialized:
+                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_006).format(tskID_, str(_tinst))
 
-                if _myTskInst.isEnclosingPyThread:
-                    if _myTskInst.isEnclosingPyThread and not _TaskUtil.IsCurPyThread(_myTskInst.linkedPyThread):
-                        _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_007).format(tskID_, _myTskInst.linkedPyThread.name, _TaskUtil.GetCurPyThread().name)
+                if _tinst.isEnclosingPyThread:
+                    if _tinst.isEnclosingPyThread and not _TaskUtil.IsCurPyThread(_tinst.linkedPyThread):
+                        _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_007).format(tskID_, _tinst.linkedPyThread.name, _TaskUtil.GetCurPyThread().name)
 
-                    elif (_curTblE is not None) and (not _curTblE.teIsAutoEnclosedEntry) and id(_myTskInst) != id(_curTblE.teTaskInst):
-                        _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_008).format(tskID_, _myTskInst.taskName, _curTblE.teTaskInst.taskID, _curTblE.teTaskInst.taskName)
+                    elif (_curTblE is not None) and (not _curTblE.teIsAutoEnclosedEntry) and id(_tinst) != id(_curTblE.teTaskInst):
+                        _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskManager_TextID_008).format(tskID_, _tinst.taskName, _curTblE.teTaskInst.taskID, _curTblE.teTaskInst.taskName)
+
                     else:
                         res = True
                 else:
@@ -1461,15 +1442,14 @@ class _TaskManagerImpl(_TaskManager):
                 if not res:
                     if _errMsg is not None:
                         if (_curTblE is not None) and not (_curTblE.teIsAutoEnclosedEntry or _curTblE.teIsXTaskEntry):
-                            vlogif._LogOEC(True, -1357)
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00300)
                         else:
-                            logif._LogError(_errMsg)
+                            logif._LogErrorEC(_EFwErrorCode.UE_00096, _errMsg)
         return res
-
 
     def __CreateStartProfiledTask(self, taskPrf_ : _TaskProfile, bStart_ : bool, tskOpPreCheck_ : _ATaskOperationPreCheck =None) -> _PyUnion[_FwTask, None]:
         if not (isinstance(taskPrf_, _TaskProfile) and taskPrf_.isValid):
-            vlogif._LogOEC(True, -1358)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00301)
             return None
 
         self.__mtxApi.Take()
@@ -1482,7 +1462,7 @@ class _TaskManagerImpl(_TaskManager):
                 if not _autoEnclTE.teIsAutoEnclosedEntry:
                     _autoEnclTE.CleanUp()
                     self.__mtxApi.Give()
-                    vlogif._LogOEC(True, -1359)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00302)
                     return None
 
         res = None
@@ -1512,7 +1492,7 @@ class _TaskManagerImpl(_TaskManager):
             if not self.__RemoveFromTable(_autoEnclTE.teTaskInst):
                 _tid, _tname = res.taskID, res.taskName
                 self.__mtxApi.Give()
-                vlogif._LogOEC(True, -1360)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00303)
                 _autoEnclTE.CleanUp()
                 return None
             else:
@@ -1545,7 +1525,7 @@ class _TaskManagerImpl(_TaskManager):
                                 , args_                       : list               =None
                                 , kwargs_                     : dict               =None
                                 , taskProfileAttrs_           : dict               =None) -> _PyUnion[_TaskProfile, None]:
-        res, valid, _enclPyThrd = taskPrf_, True, None
+        res, _bValid, _enclPyThrd = taskPrf_, True, None
 
         with self.__mtxApi:
             if res is None:
@@ -1560,36 +1540,34 @@ class _TaskManagerImpl(_TaskManager):
                                  , taskProfileAttrs_=taskProfileAttrs_ )
 
             if not isinstance(res, _TaskProfile):
-                valid = False
-                vlogif._LogOEC(True, -1361)
+                _bValid = False
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00304)
             elif not (res.isValid and res.runnable is not None):
-                valid = False
-                vlogif._LogOEC(True, -1362)
+                _bValid = False
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00305)
             else:
                 _enclPyThrd = res.enclosedPyThread
                 if (_enclPyThrd is not None) and not _enclPyThrd.is_alive():
-                    valid = False
-                    vlogif._LogOEC(True, -1363)
+                    _bValid = False
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00306)
 
-            if not valid:
+            if not _bValid:
                 pass
             elif _enclPyThrd is None:
                 pass
             else:
                 _te = self.__GetTableEntry(pythread_=_enclPyThrd, bDoWarn_=False)
                 if _te is not None:
-                    valid = False
-                    _midPart = 'auto-' if _te.teIsAutoEnclosedEntry else ''
-                    vlogif._LogOEC(True, -1364)
+                    _bValid = False
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00307)
                 elif not _TaskUtil.IsCurPyThread(_enclPyThrd):
-                    valid = False
-                    vlogif._LogOEC(True, -1365)
+                    _bValid = False
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00308)
 
-            if not valid:
+            if not _bValid:
                 if (res is not None) and taskPrf_ is None:
                     res.CleanUp()
         return res
-
 
     def __CreateStartThread( self
                            , thrdProfile_            : _ThreadProfile          =None
@@ -1612,7 +1590,7 @@ class _TaskManagerImpl(_TaskManager):
                 if not _autoEnclTE.teIsAutoEnclosedEntry:
                     _autoEnclTE.CleanUp()
                     self.__mtxApi.Give()
-                    vlogif._LogOEC(True, -1366)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00309)
                     return None
 
         res = None
@@ -1647,7 +1625,7 @@ class _TaskManagerImpl(_TaskManager):
             if not self.__RemoveFromTable(_autoEnclTE.teTaskInst):
                 _tid, _tname = res.taskID, res.taskName
                 self.__mtxApi.Give()
-                vlogif._LogOEC(True, -1367)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00310)
                 return None
             else:
                 _autoEnclTaskInst.CleanUp()
@@ -1678,7 +1656,7 @@ class _TaskManagerImpl(_TaskManager):
 
         if _te is not None:
             if not isinstance(_te.teTaskInst, _FwThread):
-                vlogif._LogOEC(True, -1368)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00311)
             else:
                 res = _te.teTaskInst
 
@@ -1688,7 +1666,6 @@ class _TaskManagerImpl(_TaskManager):
         _mySysXcp = None
         try:
             res = _FwThread._CreateThread(enclosedPyThread_=_curPyThrd, bAutoEnclosedPyThrd_=bAutoEnclosed_, bAutoStartEnclosedPyThread_=False)
-
             if res is None:
                 pass
             elif not self.__AddToTable(res):
@@ -1701,7 +1678,7 @@ class _TaskManagerImpl(_TaskManager):
 
         except BaseException as xcp:
             if _TaskManager._theTMgrImpl is None:
-                vlogif._LogOEC(True, -1369)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00312)
             else:
                 _mySysXcp = _XcoBaseException(xcp, tb_=logif._GetFormattedTraceback())
 

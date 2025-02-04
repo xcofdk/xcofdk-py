@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum      import Enum
 from enum      import unique
 from threading import TIMEOUT_MAX as _TIMEOUT_MAX
@@ -22,9 +21,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil        import _TimeUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util            import _Util
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject        import _AbstractSlotsObject
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _ETimeoutResolution(Enum):
@@ -32,7 +32,6 @@ class _ETimeoutResolution(Enum):
     eTicksPerUSec  = 1  
     eTicksPerNSec  = 2  
     eTicksPerSec   = 3  
-
 
 class _Timeout(_AbstractSlotsObject):
 
@@ -44,18 +43,18 @@ class _Timeout(_AbstractSlotsObject):
         if isinstance(timeSpan_, _Timeout):
             if timeSpan_.__remainingTicksNS is None:
                 res = None
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_001).format(type(timeSpan_).__name__))
+                logif._LogErrorEC(_EFwErrorCode.UE_00029, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_001).format(type(timeSpan_).__name__))
             elif timeSpan_.isInfiniteTimeout:
                 res = _Timeout.CreateInfiniteTimeout()
             else:
                 res = _Timeout.CreateTimeoutMS(timeSpan_.toMSec)
         elif not isinstance(timeSpan_, (int, float)):
             res = None
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_002).format(type(timeSpan_).__name__))
+            logif._LogErrorEC(_EFwErrorCode.UE_00030, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_002).format(type(timeSpan_).__name__))
         else:
             if timeSpan_ < 0:
                 res = None
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_003).format(type(timeSpan_).__name__))
+                logif._LogErrorEC(_EFwErrorCode.UE_00031, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_003).format(type(timeSpan_).__name__))
             elif float(timeSpan_) == 0.0:
                 res = _Timeout.CreateInfiniteTimeout()
             elif isinstance(timeSpan_, float):
@@ -68,7 +67,7 @@ class _Timeout(_AbstractSlotsObject):
     def CreateInfiniteTimeout():
         res = _Timeout.__CreateTimeout(1, 1, _ETimeoutResolution.eTicksPerNSec, None)
         if res is None:
-            logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(201))
+            logif._LogImplErrorEC(_EFwErrorCode.FE_00001, None)
         res.__timeSpan         = 0
         res.__remainingTicksNS = 0
         return res
@@ -130,9 +129,8 @@ class _Timeout(_AbstractSlotsObject):
     def IsTimeout(timeout_, bThrowx_ =True) -> bool:
         res = isinstance(timeout_, _Timeout)
         if not res and bThrowx_:
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_004).format(_Timeout.__name__, _Util.TypeName(timeout_)))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00083, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_004).format(_Timeout.__name__, _Util.TypeName(timeout_)))
         return res
-
 
     __slots__ = [ '__timeSpan' , '__remainingTicksNS' , '__resolution' , '__cycleTimes' , '__clockTicksNSec' , '__consumedCycleTimes' ]
 
@@ -145,7 +143,6 @@ class _Timeout(_AbstractSlotsObject):
         self.__remainingTicksNS   = None
         self.__consumedCycleTimes = None
         super().__init__()
-
 
         self.__resolution          = None
         r1, r2, r3, r4, r5 = _Timeout.__EvaluateParams(timeSpan_, cycleTimes_, timeoutRes_, clockTicksNSec_)
@@ -198,7 +195,6 @@ class _Timeout(_AbstractSlotsObject):
     @property
     def resolution(self):
         return self.__resolution
-
 
     @property
     def clockTicksNS(self):
@@ -298,7 +294,7 @@ class _Timeout(_AbstractSlotsObject):
 
         if bUpdateTimeSpan_:
             if self.resolution != _ETimeoutResolution.eTicksPerNSec:
-                vlogif._LogOEC(True, -1141)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00040)
                 return 0
             else:
                 self.__timeSpan -= clockTicksNSec_ - self.__clockTicksNSec
@@ -311,7 +307,7 @@ class _Timeout(_AbstractSlotsObject):
 
     def SetTimeSpan(self, timeSpan_, clockTicksNSec_ : int =None):
         if self.isFiniteTimeout:
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_005))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00084, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_005))
         self.Reconfigure(timeSpan_, cycleTimes_=self.cycleTimes, timeoutRes_=self.resolution, clockTicksNSec_=clockTicksNSec_)
 
     def Clone(self, clockTicksNSec_ : int =None):
@@ -322,7 +318,7 @@ class _Timeout(_AbstractSlotsObject):
 
     def Reconfigure(self, timeSpan_, cycleTimes_ : int =None, timeoutRes_ : _ETimeoutResolution =None, clockTicksNSec_ : int =None):
         if self.isInfiniteTimeout:
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_006))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00085, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_006))
             return False
 
         if cycleTimes_ is None:
@@ -375,10 +371,10 @@ class _Timeout(_AbstractSlotsObject):
     def __CreateTimeout(timeSpan_, cycleTimes_, timeoutRes_, clockTicksNSec_, createCyclic_ =False):
         if createCyclic_:
             if cycleTimes_ == 1:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_007))
+                logif._LogErrorEC(_EFwErrorCode.UE_00032, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_007))
                 return None
         elif cycleTimes_ != 1:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_008).format(cycleTimes_))
+            logif._LogErrorEC(_EFwErrorCode.UE_00033, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_008).format(cycleTimes_))
             return None
 
         res = None
@@ -422,10 +418,10 @@ class _Timeout(_AbstractSlotsObject):
     @staticmethod
     def __TimeSpanToTicks(timeSpan_, timeoutRes_):
         if _Timeout.GetBaseResolution() != _ETimeoutResolution.eTicksPerNSec:
-            logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_009))
+            logif._LogImplErrorEC(_EFwErrorCode.FE_00570, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_009))
 
         if not _Util.IsInstance(timeSpan_, [int, float, str], bThrowx_=False):
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_010).format(_Util.TypeName(timeSpan_)))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00086, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_010).format(_Util.TypeName(timeSpan_)))
             return -1
 
         if isinstance(timeSpan_, str):
@@ -433,11 +429,11 @@ class _Timeout(_AbstractSlotsObject):
                 base = 10 if not _StrUtil.IsHexString(timeSpan_) else 16
                 timeSpan_ = int(timeSpan_, base)
             except ValueError as xcp:
-                logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_011).format(timeSpan_, timeoutRes_.name))
+                logif._LogBadUseEC(_EFwErrorCode.FE_00087, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_011).format(timeSpan_, timeoutRes_.name))
                 return -1
 
         if not _Util.CheckMinRange(timeSpan_, 1, bThrowx_=True):
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_012).format(timeSpan_, timeoutRes_.name))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00088, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_012).format(timeSpan_, timeoutRes_.name))
             return -1
 
         if timeoutRes_ == _ETimeoutResolution.eTicksPerSec:
@@ -449,7 +445,7 @@ class _Timeout(_AbstractSlotsObject):
         elif timeoutRes_ == _ETimeoutResolution.eTicksPerNSec:
             ticksFactor = _TimeUtil.TICKS_PER_NSECOND
         else:
-            logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_013).format(timeoutRes_))
+            logif._LogImplErrorEC(_EFwErrorCode.FE_00571, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Timeout_TextID_013).format(timeoutRes_))
             return -1
         return int(timeSpan_ * ticksFactor)
 
@@ -484,6 +480,6 @@ class _Timeout(_AbstractSlotsObject):
             _trStr = 's'
             _ts = self.toSec
         else:
-            logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(202))
+            logif._LogImplErrorEC(_EFwErrorCode.FE_00002, None)
             return None
         return _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_013).format(_ts, _trStr)

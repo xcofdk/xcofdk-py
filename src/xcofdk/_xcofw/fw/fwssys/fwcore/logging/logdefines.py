@@ -7,8 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
 import os
 import sys
 import traceback
@@ -27,8 +25,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-
-
 @unique
 class _ELogLevel(IntEnum):
     eFatal   = 0
@@ -38,8 +34,6 @@ class _ELogLevel(IntEnum):
     eInfo    = auto()
     eDebug   = auto()
     eTrace   = auto()
-
-
 
     @property
     def compactName(self):
@@ -63,11 +57,10 @@ class _ELogLevel(IntEnum):
                     break
         return res
 
-
 @unique
 class _ELogType(IntEnum):
 
-    FREE                     =  0
+    FREE                     =  0  # free logs are 'unformatted' traces
     TRC                      = 10
     DBG                      = 20
     INF                      = 30
@@ -151,12 +144,11 @@ class _ELogType(IntEnum):
     def _absoluteValue(self):
         return -1*self.value if self.value < 0 else self.value
 
-
 @unique
 class _EErrorImpact(IntEnum):
     eNoImpact = 0
 
-    eNoImpactByOperationFailureSetError     = 4201
+    eNoImpactByOperationFailureSetError     = 3824    
     eNoImpactByLogTypePrecedence            = auto()  
     eNoImpactByExistingFatalError           = auto()  
     eNoImpactByExistingUserError            = auto()  
@@ -222,14 +214,14 @@ class _EErrorImpact(IntEnum):
             res = res or (self == _EErrorImpact.eImpactByFatalErrorDueToExecApiReturn)
             return res
 
-
 @unique
 class _ELogifOperationOption(IntEnum):
     eDontCare                       = 0
     ePrintXcpOnly                   = 6704
-    eSetErrorOnly                   = 6804
-    eCreateLogOnly                  = auto()  
-    eCreateLogOnlyDueToExecApiAbort = auto()  
+    eStrictEcMatch                  = 6804
+    eSetErrorOnly                   = 6904
+    eCreateLogOnly                  = auto()
+    eCreateLogOnlyDueToExecApiAbort = auto()
 
     @property
     def isDontCare(self):
@@ -240,17 +232,20 @@ class _ELogifOperationOption(IntEnum):
         return self == _ELogifOperationOption.ePrintXcpOnly
 
     @property
+    def isStrictEcMatch(self):
+        return self == _ELogifOperationOption.eStrictEcMatch
+
+    @property
     def isSetErrorOnly(self):
         return self == _ELogifOperationOption.eSetErrorOnly
 
     @property
     def isCreateLogOnly(self):
-        return (self == _ELogifOperationOption.eCreateLogOnly) or (self == _ELogifOperationOption.eCreateLogOnlyDueToExecApiAbort)
+        return self.value >= _ELogifOperationOption.eCreateLogOnly.value
 
     @property
     def isCreateLogOnlyDueToExecApiAbort(self):
         return self == _ELogifOperationOption.eCreateLogOnlyDueToExecApiAbort
-
 
 class _LogUniqueID:
 
@@ -272,7 +267,6 @@ class _LogUniqueID:
             with uidLL:
                 _LogUniqueID.__uidLock = None
         _LogUniqueID.__nextUniqueID = 0
-
 
 class _LogUtil:
     __DEFAULT_CALLSTACK_LEVEL        = 4
@@ -365,7 +359,6 @@ class _LogUtil:
     def _DisableCallstackLevelOffset():
         _LogUtil.__callstackLevelOffset = -1
 
-
 class _LogErrorCode:
 
     _RESERVED_FW_FATAL_ERR_CODE_MAX = -1001
@@ -373,6 +366,10 @@ class _LogErrorCode:
     _RESERVED_FW_USER_ERR_CODE_MAX  = -3001
     _RESERVED_FW_USER_ERR_CODE_MIN  = -4999
     _REGULAR_FW_ERR_CODE_MAX        = -10001
+
+    @staticmethod
+    def IsInvalidErrorCode(errCode_ : int):
+        return not (isinstance(errCode_, int) and (errCode_ != _LogErrorCode.GetInvalidErrorCode()))
 
     @staticmethod
     def IsValidFwErrorCode(errCode_ : int):

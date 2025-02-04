@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import threading
 from enum import unique
 
@@ -19,6 +18,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil  import _PyThread
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntEnum
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 @unique
 class _EATaskOperationID(_FwIntEnum):
@@ -43,7 +43,6 @@ class _EATaskOperationID(_FwIntEnum):
     def isJoin(self):
         return self==_EATaskOperationID.eJoin
 
-
 @unique
 class _EATaskOperationCallTypeID(_FwIntEnum):
     eNA      =-1  
@@ -66,7 +65,6 @@ class _EATaskOperationCallTypeID(_FwIntEnum):
     @property
     def isASynchronous(self):
         return self ==  _EATaskOperationCallTypeID.eASyncOP
-
 
 class _ATaskOperationPreCheck(_AbstractSlotsObject):
 
@@ -140,8 +138,8 @@ class _ATaskOperationPreCheck(_AbstractSlotsObject):
             return res
 
         _prvOpCallTypeID = None if ((self.__eOpCallTypeID is None) or self.__eOpCallTypeID.isNotApplicable) else self.__eOpCallTypeID
-        _bLinkedPyThrdCurThrd     = _TaskUtil.IsCurPyThread(self.__linkeyPyThrd)
-        _bLinkedPyThrdMainPyThrd  = _TaskUtil.IsMainPyThread(self.__linkeyPyThrd)
+        _bLinkedPyThrdCurThrd    = _TaskUtil.IsCurPyThread(self.__linkeyPyThrd)
+        _bLinkedPyThrdMainPyThrd = _TaskUtil.IsMainPyThread(self.__linkeyPyThrd)
         bLinkedPyThrdStartupThrd = _TaskUtil.IsStartupThread(self.__linkeyPyThrd)
         _bJoinable = _bLinkedPyThrdCurThrd or not bLinkedPyThrdStartupThrd
 
@@ -154,16 +152,13 @@ class _ATaskOperationPreCheck(_AbstractSlotsObject):
         else:
             res = self.__UpdateStarted(_eCurStateID, _bLinkedPyThrdCurThrd, _bJoinable)
 
-        doLog = False or (_prvOpCallTypeID is None)
-        doLog = doLog or (res != _prvOpCallTypeID)
-        if not doLog:
-            pass
-        else:
-            doLogErr = reportErr_ if res.isNotApplicable else False
+        _doLog = False  or (_prvOpCallTypeID is None)
+        _doLog = _doLog or (res != _prvOpCallTypeID)
+        if _doLog:
+            _doLogErr = reportErr_ if res.isNotApplicable else False
 
-
-            if doLogErr:
-                vlogif._LogOEC(False, -3021)
+            if _doLogErr:
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00012)
 
         self.__eOpCallTypeID = res
         return res
@@ -181,7 +176,7 @@ class _ATaskOperationPreCheck(_AbstractSlotsObject):
     def __UpdateNotStarted(self, eCurStateID_ : _TaskState._EState, bLinkedPyThrdCurThrd_ : bool) -> _EATaskOperationCallTypeID:
         reqOP = self.__eOpID.compactName
         if eCurStateID_.isStarted:
-            vlogif._LogOEC(True, -1410)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00184)
             return _EATaskOperationCallTypeID.eNA
 
         if not eCurStateID_.isInitialized:
@@ -197,7 +192,7 @@ class _ATaskOperationPreCheck(_AbstractSlotsObject):
     def __UpdateTransitional(self, eCurStateID_ : _TaskState._EState, bLinkedPyThrdCurThrd_ : bool, bLinkedPyThrdJoinable_ : bool) -> _EATaskOperationCallTypeID:
         reqOP = self.__eOpID.compactName
         if not eCurStateID_.isTransitional:
-            vlogif._LogOEC(True, -1411)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00185)
             return _EATaskOperationCallTypeID.eNA
 
         if self.__eOpID.isStart or self.__eOpID.isRestart:
@@ -231,7 +226,7 @@ class _ATaskOperationPreCheck(_AbstractSlotsObject):
     def __UpdateStarted(self, eCurStateID_ : _TaskState._EState, bLinkedPyThrdCurThrd_ : bool, bLinkedPyThrdJoinable_ : bool) -> _EATaskOperationCallTypeID:
         reqOP = self.__eOpID.compactName
         if not (eCurStateID_.isStarted and not eCurStateID_.isTransitional):
-            vlogif._LogOEC(True, -1412)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00186)
             return _EATaskOperationCallTypeID.eNA
 
         if self.__eOpID.isStart or self.__eOpID.isRestart:

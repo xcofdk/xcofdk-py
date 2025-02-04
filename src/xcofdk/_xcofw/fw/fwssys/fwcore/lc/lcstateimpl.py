@@ -3,17 +3,19 @@
 # ------------------------------------------------------------------------------
 # File   : lcstateimpl.py
 #
-# Copyright(c) 2023 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
+
+from xcofdk.fwcom import override
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.strutil       import _StrUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _EErrorImpact
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _LogErrorCode
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask      import _AbstractTask
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil   import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil   import _PyRLock
@@ -23,14 +25,15 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _ETernaryOpResult
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines       import _ELcCompID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines       import _LcFrcView
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate     import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate     import _LcRuntimeFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstate         import _LcState
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+from xcofdk._xcofw.fw.fwssys.fwerrh.lcfrcview    import _LcFrcView
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _ELcStateFlag(_FwIntFlag):
@@ -183,7 +186,6 @@ class _ELcStateFlag(_FwIntFlag):
     def IsAnyFailedBitFlagSet(eLcBitMask_ : _FwIntFlag):
         return eLcBitMask_ >= _ELcStateFlag.ebfLcFailed
 
-
 @unique
 class _ELcStateTransReq(_FwIntEnum):
     eLcFailed       = _ELcCompID.eLcMgr.value
@@ -238,30 +240,28 @@ class _ELcStateTransReq(_FwIntEnum):
 
     @staticmethod
     def _ConvertFromLcCompID(eLcCompID_ : _ELcCompID, bStartStopFailFlag_ : [bool, None]):
-        res = None
         if not isinstance(eLcCompID_, _ELcCompID):
-            pass
-        else:
-            eGrpID = eLcCompID_.lcCompGroupID
+            return None
 
-            if eGrpID == _ELcCompID.eLcMgr:
-                res = _ELcStateTransReq.eLcFailed
-            elif eGrpID == _ELcCompID.eTMgr:
-                res = _ELcStateTransReq.eTMgrFailed
-            elif eGrpID == _ELcCompID.eFwComp:
-                res = _ELcStateTransReq.eFwCompFailed
-            elif eGrpID == _ELcCompID.eXTask:
-                res = _ELcStateTransReq.eXTaskFailed
-            else:  
-                res = _ELcStateTransReq.eMiscCompFailed
+        eGrpID = eLcCompID_.lcCompGroupID
 
-            if bStartStopFailFlag_ is not None:
-                val = -1 * res.value
-                if not bStartStopFailFlag_:
-                    val -= 1
-                res = _ELcStateTransReq(val)
+        if eGrpID == _ELcCompID.eLcMgr:
+            res = _ELcStateTransReq.eLcFailed
+        elif eGrpID == _ELcCompID.eTMgr:
+            res = _ELcStateTransReq.eTMgrFailed
+        elif eGrpID == _ELcCompID.eFwComp:
+            res = _ELcStateTransReq.eFwCompFailed
+        elif eGrpID == _ELcCompID.eXTask:
+            res = _ELcStateTransReq.eXTaskFailed
+        else:  
+            res = _ELcStateTransReq.eMiscCompFailed
+
+        if bStartStopFailFlag_ is not None:
+            val = -1 * res.value
+            if not bStartStopFailFlag_:
+                val -= 1
+            res = _ELcStateTransReq(val)
         return res
-
 
 class _TransReqPreCheckResult:
     __slots__ = [
@@ -338,7 +338,6 @@ class _TransReqPreCheckResult:
     def bFailSeeded(self):
         return self.__bFailSeeded
 
-
 class _LcStateImpl(_LcState):
 
     @unique
@@ -359,161 +358,118 @@ class _LcStateImpl(_LcState):
         def isFwTask(self):
             return self == _LcStateImpl._EFrcRecordTaskType.eFwTask
 
+    class _FrcRecord(_LcFrcView):
 
-    class _FrcRecord:
-        __slots__ = [ '__eCID' , '__feClone' , '__ttype' , '__tskName' , '__thrdName' , '__tid' , '__tuid' , '__bFFE' ]
+        __slots__ = [ '__rtt' ]
 
         def __init__(self, eCID_ : _ELcCompID, ferr_, atask_ : _AbstractTask =None):
-            self.__eCID    = eCID_
-            self.__feClone = ferr_
 
-            if not (isinstance(atask_, _AbstractTask) and (atask_.taskBadge is not None)):
-                ttype = _LcStateImpl._EFrcRecordTaskType.ePyThread
+            self.__rtt = None
+
+            if not (isinstance(ferr_, _FatalEntry) and ferr_.isClone):
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00408)
+            if (atask_ is None) and (ferr_._taskInstance is not None):
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00409)
+                atask_ = ferr_._taskInstance
+
+            if not (isinstance(atask_, _AbstractTask) and atask_.isValid):
+                _rtt = _LcStateImpl._EFrcRecordTaskType.ePyThread
             elif atask_.isFwTask:
-                ttype = _LcStateImpl._EFrcRecordTaskType.eFwTask
+                _rtt = _LcStateImpl._EFrcRecordTaskType.eFwTask
             else:
-                ttype = _LcStateImpl._EFrcRecordTaskType.eFwThread
+                _rtt = _LcStateImpl._EFrcRecordTaskType.eFwThread
 
-            if ttype.isPyThread:
-                _curThrd = _TaskUtil.GetCurPyThread()
-                _tuid    = id(_curThrd)
-                _tname   = str(_curThrd.name)
+            if _rtt.isPyThread:
+                _curThrd  = _TaskUtil.GetCurPyThread()
 
-                self.__tid      = _tuid
-                self.__tuid     = _tuid
-                self.__bFFE     = False
-                self.__tskName  = _tname
-                self.__thrdName = _tname
+                _bFFE     = False
+                _bRTT     = None
+                _rtid     = id(_curThrd)
+                _thrdID   = _rtid
+                _thrdName = str(_curThrd.name)
             else:
-                self.__tid      = atask_.taskID
-                self.__tuid     = id(atask_.linkedPyThread)
-                self.__bFFE     = ferr_.IsForeignTaskError(atask_.taskID)
-                self.__tskName  = str(atask_.taskName)
-                self.__thrdName = str(atask_.linkedPyThread.name)
-            self.__ttype = ttype
+                _bFFE     = ferr_.IsForeignTaskError(atask_.taskID)
+                _bRTT     = _rtt.isFwTask
+                _rtid     = atask_.taskID
+                _thrdID   = id(atask_.linkedPyThread)
+                _thrdName = str(atask_.linkedPyThread.name)
 
-        def __str__(self):
-            return self.ToString()
+            self.__rtt = _rtt
+            super().__init__( eCID_=eCID_, ferr_=ferr_, bFFE_=_bFFE, bRTT_=_bRTT, thrdName_=_thrdName, thrdID_=_thrdID)
 
         def __hash__(self):
-            return None if self.__isInvalid else hash(hash(self.__eCID.compactName) + self.__tuid)
+            return None if self.__isInvalid else _LcStateImpl._FrcRecord.__GetHash(self.eLcCompID, self.threadID)
 
-        @property
-        def isForeignFatalError(self):
-            return self.__bFFE
+        @override
+        def CleanUp(self):
+            if self.__isInvalid:
+                return
+            self.__rtt = None
+            super().CleanUp()
 
-        @property
-        def isReportedByPyThread(self):
-            return False if self.__isInvalid else self.__ttype.isPyThread
-
-        @property
-        def isReportedByFwTask(self):
-            return False if self.__isInvalid else self.__ttype.isFwTask
-
-        @property
-        def isReportedByFwThread(self):
-            return False if self.__isInvalid else self.__ttype.isFwThread
-
-        @property
-        def eCID(self):
-            return self.__eCID
-
-        @property
-        def fatalErrorClone(self):
-            return self.__feClone
-
-        @property
-        def reportingTaskID(self):
-            return self.__tid
-
-        @property
-        def reportingTaskName(self):
-            return self.__tskName
-
-        def IsMatching(self, eCID_ : _ELcCompID, atask_ : _AbstractTask =None):
+        def _IsMatching(self, eCID_ : _ELcCompID, atask_ : _AbstractTask =None):
             if self.__isInvalid:
                 return False
-            elif eCID_ != self.__eCID:
-                return False
-            elif not ((atask_ is None) or (isinstance(atask_, _AbstractTask) and (atask_.taskBadge is not None))):
+            if eCID_ != self.eLcCompID:
                 return False
 
             if atask_ is None:
-                atask_ = _TaskUtil.GetCurPyThread()
-                _hashVal = hash(hash(eCID_.compactName) + id(atask_))
+                _hashVal = hash(hash(eCID_.compactName) + id(_TaskUtil.GetCurPyThread()))
+            elif not (isinstance(atask_, _AbstractTask) and atask_.isValid):
+                return False
             else:
-                _hashVal = hash(hash(eCID_.compactName) + id(atask_.linkedPyThread))
+                _hashVal = _LcStateImpl._FrcRecord.__GetHash(eCID_, id(atask_.linkedPyThread))
                 self.__UpdateTaskInfo(atask_)
 
             return _hashVal == hash(self)
-
-        def ToString(self) -> str:
-            if self.__isInvalid:
-                res = None
-            else:
-                res = _FwTDbEngine.GetText(_EFwTextID.eLcStateImpl_FrcEntry_ToString_001)
-                res = res.format( self.__eCID.compactName, self.__tskName, self.__tid, self.__feClone.uniqueID, self.__feClone.shortMessage)
-            return res
-
-        def CleanUp(self):
-            if self.__feClone is not None:
-                self.__feClone.CleanUp()
-                self.__feClone = None
-            self.__tid     = None
-            self.__bFFE    = None
-            self.__eCID    = None
-            self.__tuid    = None
-            self.__ttype   = None
-            self.__tskName = None
-            self.__feClone = None
 
         def _CreateFrcView(self) -> _LcFrcView:
             if self.__isInvalid:
                 return None
 
-            _ferr = self.__feClone.Clone()
+            _ferr = self._feClone.Clone()
             if (_ferr is None) or _ferr.isInvalid:
-                if _ferr is  not None:
+                if _ferr is not None:
                     _ferr.CleanUp()
-                vlogif._LogOEC(True, -1562)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00410)
                 return None
 
-            _bTType = None if self.isReportedByPyThread else self.isReportedByFwTask
-            _tid    = None if _bTType is None else self.__tid
-            _tname  = None if _bTType is None else self.__tskName
+            _bRTT = None if self.isReportedByPyThread else self.isReportedByFwTask
 
-            res = _LcFrcView( eCID_=self.__eCID, ferr_=_ferr, bForeignFE_=self.__bFFE, bTType_=_bTType
-                            , tskName_=_tname, thrdName_=self.__thrdName, tid_=_tid, tuid_=self.__tuid)
+            res = _LcFrcView(eCID_=self.eLcCompID, ferr_=_ferr, bFFE_=self._isFFE, bRTT_=_bRTT, thrdName_=self.threadName, thrdID_=self.threadID)
             if not res.isValid:
                 res.CleanUp()
                 res = None
-                vlogif._LogOEC(True, -1563)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00411)
             return res
+
+        @staticmethod
+        def __GetHash(eCID_, threadID_):
+            return hash(hash(eCID_.compactName) + threadID_)
 
         @property
         def __isInvalid(self):
-            return self.__eCID is None
+            return self.__rtt is None
 
         def __UpdateTaskInfo(self, atask_ : _AbstractTask):
             if self.__isInvalid:
+                return
+            if not (isinstance(atask_, _AbstractTask) and atask_.isValid):
                 return
 
             if not self.isReportedByPyThread:
                 return
 
-            _tuid = id(atask_.linkedPyThread)
-
-            if self.__tuid != _tuid:
+            if self.threadID != id(atask_.linkedPyThread):
                 return
 
-            prvStr = self.ToString()
-            self.__tid     = atask_.taskID
-            self.__tuid    = _tuid
-            self.__bFFE    = (self.__feClone is not None) and self.__feClone.IsForeignTaskError(atask_.taskID)
-            self.__ttype   = _LcStateImpl._EFrcRecordTaskType.eFwTask if atask_.isFwTask else _LcStateImpl._EFrcRecordTaskType.eFwThread
-            self.__tskName = str(atask_.taskName)
-            self.__tskName = str(atask_.linkedPyThread.name)
+            _rtt       = _LcStateImpl._EFrcRecordTaskType.eFwTask if atask_.isFwTask else _LcStateImpl._EFrcRecordTaskType.eFwThread
+            self.__rtt = _rtt
 
+            if self._feClone._taskInstance is not None:
+                return
+
+            self._feClone._SetTaskInstance(atask_, bAdaptTaskInfo_=True)
 
     class _FrcRecordManager:
         __slots__ = [ '__lstFrcRecs' ]
@@ -533,21 +489,21 @@ class _LcStateImpl(_LcState):
 
         def FindFrcRecord(self, eCID_ : _ELcCompID, atask_ : _AbstractTask =None):
             if eCID_ is None:
-                _LcStateImpl._RaiseException(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_001))
+                _LcStateImpl.__RaiseException(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_001))
                 return None
             elif self.__lstFrcRecs is None:
                 return None
 
             res = None
             for _ee in self.__lstFrcRecs:
-                if _ee.IsMatching(eCID_, atask_=atask_):
+                if _ee._IsMatching(eCID_, atask_=atask_):
                     res = _ee
             return res
 
         def AddFrcRecord(self, eCID_ : _ELcCompID, ferr_, atask_ : _AbstractTask =None):
             if (eCID_ is None) or (ferr_ is None):
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_002).format(str(eCID_) if eCID_ is None else eCID_.compactName)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return
 
             if self.__lstFrcRecs is None:
@@ -564,7 +520,7 @@ class _LcStateImpl(_LcState):
                 _frcv = _ee._CreateFrcView()
                 if _frcv is None:
 
-                    vlogif._LogOEC(True, -1564)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00412)
                     return
                 _lstRuntimeFailures.append(_LcRuntimeFailure(_frcv))
 
@@ -594,7 +550,6 @@ class _LcStateImpl(_LcState):
                 self.__lstFrcRecs.clear()
                 self.__lstFrcRecs = None
 
-
     __slots__ = [ '__eBitMask' , '__apiLock' , '__frcRecMgr' ]
 
     def __init__(self, ppass_ : int):
@@ -622,14 +577,6 @@ class _LcStateImpl(_LcState):
             return res
 
     @property
-    def isLcPreCoreOperable(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__apiLock:
-            _mm = _ELcStateFlag.ebfLcStarted | _ELcStateFlag.ebfTMgrStarted
-            res = _ELcStateFlag.IsLcBitFlagSet(self.__eBitMask, _mm)
-            return res
-
-    @property
     def isLcStarted(self):
         if self.__isInvalid: return False
         with self.__apiLock:
@@ -641,20 +588,17 @@ class _LcStateImpl(_LcState):
         with self.__apiLock:
             return _ELcStateFlag.IsTMgrStarted(self.__eBitMask)
 
-
     @property
     def isFwMainStarted(self):
         if self.__isInvalid: return False
         with self.__apiLock:
             return _ELcStateFlag.IsFwMainStarted(self.__eBitMask)
 
-
     @property
     def isMainXTaskStarted(self):
         if self.__isInvalid: return False
         with self.__apiLock:
             return _ELcStateFlag.IsMainXTaskStarted(self.__eBitMask)
-
 
     @property
     def isLcStopped(self):
@@ -668,20 +612,17 @@ class _LcStateImpl(_LcState):
         with self.__apiLock:
             return _ELcStateFlag.IsTMgrStopped(self.__eBitMask)
 
-
     @property
     def isFwMainStopped(self):
         if self.__isInvalid: return True
         with self.__apiLock:
             return _ELcStateFlag.IsFwMainStopped(self.__eBitMask)
 
-
     @property
     def isMainXTaskStopped(self):
         if self.__isInvalid: return True
         with self.__apiLock:
             return _ELcStateFlag.IsMainXTaskStopped(self.__eBitMask)
-
 
     @property
     def isLcFailed(self):
@@ -732,12 +673,6 @@ class _LcStateImpl(_LcState):
             return _ELcStateFlag.IsLcBitMaskExclusive(self.__eBitMask) and self.isLcStarted
 
     @property
-    def hasLcAnyStoppedState(self):
-        if self.__isInvalid: return True
-        with self.__apiLock:
-            return _ELcStateFlag.IsAnyStoppedBitFlagSet(self.__eBitMask)
-
-    @property
     def hasLcAnyFailureState(self):
         if self.__isInvalid: return True
         with self.__apiLock:
@@ -746,9 +681,7 @@ class _LcStateImpl(_LcState):
     @property
     def lcFrcView(self) -> _LcFrcView:
         res = None
-        if self.__isInvalid:
-            pass
-        else:
+        if not self.__isInvalid:
             with self.__apiLock:
                 res = self.__firstFrcRecord
                 if res is not None:
@@ -858,7 +791,18 @@ class _LcStateImpl(_LcState):
 
                 if   self.isMiscCompFailed:      res += _midPart + _ELcStateTransReq.eMiscCompFailed.compactName
 
-            res = _FwTDbEngine.GetText(_EFwTextID.eLcStateImpl_ToString_02).format(hex(self.__eBitMask), res)
+            if not vlogif._IsReleaseModeEnabled():
+                res = _FwTDbEngine.GetText(_EFwTextID.eLcStateImpl_ToString_02).format(hex(self.__eBitMask), res)
+            else:
+                res = _FwTDbEngine.GetText(_EFwTextID.eLcStateImpl_ToString_03).format(res)
+
+            _ffr = self.__frcRecMgr.firstFrcRecord
+            if _ffr is not None:
+                _ec = _ffr.errorCode
+                if not (isinstance(_ec, int) and _ec != _LogErrorCode.GetAnonymousErrorCode()):
+                    _ec = _CommonDefines._CHAR_SIGN_DASH
+                res += _FwTDbEngine.GetText(_EFwTextID.eLcStateImpl_ToString_04).format(_ec)
+
             if not _bCompact:
                 _myTxt = self.__frcRecMgr.ToString()
                 if _myTxt is not None:
@@ -866,9 +810,7 @@ class _LcStateImpl(_LcState):
             return res
 
     def _CleanUpByOwnerRequest(self):
-        if self.__isInvalid:
-            pass
-        else:
+        if not self.__isInvalid:
             if self.__frcRecMgr is not None:
                 self.__frcRecMgr.CleanUp()
             self.__apiLock   = None
@@ -886,27 +828,30 @@ class _LcStateImpl(_LcState):
     def __CheckRuleViolation__LcAlreadyStopped(self, pcr_ : _TransReqPreCheckResult) -> _ETernaryOpResult:
         if self.isLcStopped:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_004).format(pcr_.paramsCurStateStr)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return _ETernaryOpResult.Abort()
         return _ETernaryOpResult.Continue()
 
     def __CheckRuleViolation__StartTransition(self, pcr_ : _TransReqPreCheckResult) -> _ETernaryOpResult:
+        if self is None: pass
         if pcr_.eLcTrans.isStartTransitionRequest:
             if pcr_.bStopSeeded or pcr_.bFailSeeded:
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_005).format(pcr_.paramsCurStateStr)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return _ETernaryOpResult.Abort()
         return _ETernaryOpResult.Continue()
 
     def __CheckRuleViolation__StopTransition(self, pcr_ : _TransReqPreCheckResult) -> _ETernaryOpResult:
+        if self is None: pass
         if pcr_.eLcTrans.isStopTransitionRequest:
             if pcr_.bFailSeeded:
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_006).format(pcr_.paramsCurStateStr)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return _ETernaryOpResult.Abort()
         return _ETernaryOpResult.Continue()
 
     def __CheckRuleViolation__UnsupportStartStopTransition(self, pcr_ : _TransReqPreCheckResult) -> _ETernaryOpResult:
+        if self is None: pass
         if not pcr_.eLcTrans.isFailureTransitionRequest:
             _bIgnore =             (pcr_.ebfRequest == _ELcStateFlag.ebfFwCompStarted) or (pcr_.ebfRequest == _ELcStateFlag.ebfFwCompStopped)
             _bIgnore = _bIgnore or (pcr_.ebfRequest == _ELcStateFlag.ebfXTaskStarted) or (pcr_.ebfRequest == _ELcStateFlag.ebfXTaskStopped)
@@ -916,6 +861,7 @@ class _LcStateImpl(_LcState):
         return _ETernaryOpResult.Continue()
 
     def __CheckRuleViolation__ResetSameTransition(self, pcr_ : _TransReqPreCheckResult) -> _ETernaryOpResult:
+        if self is None: pass
         if     pcr_.eLcTrans.isFailureTransitionRequest \
            and ((pcr_.ebfRequest == _ELcStateFlag.ebfFwCompFailed) or (pcr_.ebfRequest == _ELcStateFlag.ebfXTaskFailed) or (pcr_.ebfRequest == _ELcStateFlag.ebfMiscCompFailed)):
             _frc = self.__frcRecMgr.FindFrcRecord(pcr_.eLcCompID, atask_=pcr_.absTask)
@@ -934,7 +880,7 @@ class _LcStateImpl(_LcState):
             if _ELcStateFlag.IsLcBitFlagSet(self.__eBitMask, pcr_.ebfRequestInv):
                 self.__eBitMask = _eOldBitMask
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_007).format(pcr_.paramsCurStateStr)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return False
 
         self.__eBitMask = _ELcStateFlag.AddLcBitFlag(self.__eBitMask, pcr_.ebfRequest)
@@ -942,14 +888,14 @@ class _LcStateImpl(_LcState):
         if not _ELcStateFlag.IsLcBitFlagSet(self.__eBitMask, pcr_.ebfRequest):
             self.__eBitMask = _eOldBitMask
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_008).format(1, pcr_.paramsCurStateStr)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return False
 
         res = self.__eBitMask != _eOldBitMask
         if not res:
             self.__eBitMask = _eOldBitMask
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_008).format(2, pcr_.paramsCurStateStr)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return False
 
         _frcErr = None
@@ -962,32 +908,30 @@ class _LcStateImpl(_LcState):
                 if _frcErr is None:
                     self.__eBitMask = _eOldBitMask
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_010).format(type(pcr_.fatalError).__name__, pcr_.paramsCurStateStr, str(pcr_.fatalError))
-                    _LcStateImpl._RaiseException(_errMsg)
+                    _LcStateImpl.__RaiseException(_errMsg)
                     return False
 
             self.__frcRecMgr.AddFrcRecord(pcr_.eLcCompID, _frcErr, atask_=pcr_.absTask)
             if not self.HasLcCompFRC(pcr_.eLcCompID, atask_=pcr_.absTask):
                 self.__eBitMask = _eOldBitMask
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_008).format(3, pcr_.paramsCurStateStr)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return False
 
             if not _bClone:
                 pcr_.fatalError._UpdateErrorImpact(_EErrorImpact.eNoImpactByFrcLinkage)
-
-
 
         _frcRec = self.__firstFrcRecord
         if self.hasLcAnyFailureState:
             if _frcRec is None:
                 self.__eBitMask = _eOldBitMask
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_012).format(4, pcr_.paramsCurStateStr)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return False
         elif _frcRec is not None:
             self.__eBitMask = _eOldBitMask
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_012).format(5, pcr_.paramsCurStateStr)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return False
 
         _LcFailure._SetCurrentLcState(self.ToString(), self.lcFrcView)
@@ -997,35 +941,35 @@ class _LcStateImpl(_LcState):
     def __PreCheckSetRequest(self, eLcCompID_: _ELcCompID, bStartStopFailFlag_: [bool, None], frcError_: _FatalEntry =None, atask_: _AbstractTask =None) -> _TransReqPreCheckResult:
         if not isinstance(eLcCompID_, _ELcCompID):
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_013).format(type(eLcCompID_).__name__)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return None
 
         a3 = _ELcStateTransReq._ConvertFromLcCompID(eLcCompID_, bStartStopFailFlag_=bStartStopFailFlag_)
         if a3 is None:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_011).format(
                 eLcCompID_.compactName, eLcCompID_.value)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return None
 
         a5 = _FwTDbEngine.GetText(_EFwTextID.eLcStateImpl_UpdateLcState_PreCheckSetRequest_FmtStr_01).format(
             hex(self.__eBitMask), eLcCompID_.compactName, str(bStartStopFailFlag_), a3.compactName, type(frcError_).__name__, type(atask_).__name__)
         a6 = a5 + _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_012).format(self)
 
-        if not ((atask_ is None) or (isinstance(atask_, _AbstractTask) and (atask_.taskBadge is not None))):
+        if not ((atask_ is None) or (isinstance(atask_, _AbstractTask) and atask_.isValid)):
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_014).format(1, a5)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
             return None
 
         if a3.isFailureTransitionRequest:
             if (bStartStopFailFlag_ is not None) or (not isinstance(frcError_, _FatalEntry)) or frcError_.hasNoErrorImpact:
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_014).format(2, a5)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return None
 
         else:
             if not (isinstance(bStartStopFailFlag_, bool) and (frcError_ is None)):
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_014).format(3, a5)
-                _LcStateImpl._RaiseException(_errMsg)
+                _LcStateImpl.__RaiseException(_errMsg)
                 return None
 
         a8      = _LcStateImpl.__Enum2RelatedFailedBitFlag(a3, eLcCompID_)
@@ -1098,7 +1042,7 @@ class _LcStateImpl(_LcState):
 
         if res is None:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_009).format(1, eLcSTReq_.compactName, eLcCompID_.compactName)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
         return res, _resInv
 
     @staticmethod
@@ -1107,23 +1051,18 @@ class _LcStateImpl(_LcState):
 
         if eLcSTReq_ == _ELcStateTransReq.eLcStarted or eLcSTReq_ == _ELcStateTransReq.eLcStopped or eLcSTReq_ == _ELcStateTransReq.eLcFailed:
             res = _ELcStateFlag.ebfLcFailed
-
         elif eLcSTReq_ == _ELcStateTransReq.eTMgrStarted or eLcSTReq_ == _ELcStateTransReq.eTMgrStopped or eLcSTReq_ == _ELcStateTransReq.eTMgrFailed:
             res = _ELcStateFlag.ebfTMgrFailed
-
         elif eLcSTReq_ == _ELcStateTransReq.eFwCompStarted or eLcSTReq_ == _ELcStateTransReq.eFwCompStopped or eLcSTReq_ == _ELcStateTransReq.eFwCompFailed:
             res = _ELcStateFlag.ebfFwMainFailed if _bMain else _ELcStateFlag.ebfFwCompFailed
-
         elif eLcSTReq_ == _ELcStateTransReq.eXTaskStarted or eLcSTReq_ == _ELcStateTransReq.eXTaskStopped or eLcSTReq_ == _ELcStateTransReq.eXTaskFailed:
             res = _ELcStateFlag.ebfMainXTaskFailed if _bMain else _ELcStateFlag.ebfXTaskFailed
-
         elif eLcSTReq_ == _ELcStateTransReq.eMiscCompStarted or eLcSTReq_ == _ELcStateTransReq.eMiscCompStopped or eLcSTReq_ == _ELcStateTransReq.eMiscCompFailed:
             res = _ELcStateFlag.ebfMiscCompFailed
-
         else:
             res = None
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_009).format(2, eLcSTReq_.compactName, eLcCompID_.compactName)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
         return res
 
     @staticmethod
@@ -1132,28 +1071,23 @@ class _LcStateImpl(_LcState):
 
         if eLcSTReq_ == _ELcStateTransReq.eLcStarted or eLcSTReq_ == _ELcStateTransReq.eLcStopped or eLcSTReq_ == _ELcStateTransReq.eLcFailed:
             res = _ELcStateFlag.ebfLcStopped
-
         elif eLcSTReq_ == _ELcStateTransReq.eTMgrStarted or eLcSTReq_ == _ELcStateTransReq.eTMgrStopped or eLcSTReq_ == _ELcStateTransReq.eTMgrFailed:
             res =  _ELcStateFlag.ebfTMgrStopped
-
         elif eLcSTReq_ == _ELcStateTransReq.eFwCompStarted or eLcSTReq_ == _ELcStateTransReq.eFwCompStopped or eLcSTReq_ == _ELcStateTransReq.eFwCompFailed:
             res =  _ELcStateFlag.ebfFwMainStopped if _bMain else _ELcStateFlag.ebfFwCompStopped
-
         elif eLcSTReq_ == _ELcStateTransReq.eXTaskStarted or eLcSTReq_ == _ELcStateTransReq.eXTaskStopped or eLcSTReq_ == _ELcStateTransReq.eXTaskFailed:
             res =  _ELcStateFlag.ebfMainXTaskStopped if _bMain else _ELcStateFlag.ebfXTaskStopped
-
         elif eLcSTReq_ == _ELcStateTransReq.eMiscCompStarted or eLcSTReq_ == _ELcStateTransReq.eMiscCompStopped or eLcSTReq_ == _ELcStateTransReq.eMiscCompFailed:
             res =  _ELcStateFlag.ebfMiscCompStopped
-
         else:
             res =None
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcStateImpl_TextID_009).format(3, eLcSTReq_.compactName, eLcCompID_.compactName)
-            _LcStateImpl._RaiseException(_errMsg)
+            _LcStateImpl.__RaiseException(_errMsg)
         return res
 
     @staticmethod
-    def _RaiseException(xcpMsg_):
+    def __RaiseException(xcpMsg_):
         if vlogif._IsVSystemExitEnabled():
             raise SystemExit(xcpMsg_)
         else:
-            vlogif._LogOEC(True, -1565)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00413)

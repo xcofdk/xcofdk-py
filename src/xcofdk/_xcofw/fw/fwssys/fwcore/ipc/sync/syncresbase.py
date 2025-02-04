@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum      import Enum
 from enum      import unique
 from threading import RLock            as _PyRLock
@@ -22,6 +21,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresguard import _SyncResourcesG
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk               import taskmgr
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject         import _AbstractSlotsObject
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _SyncResourceBase(_AbstractSlotsObject):
 
@@ -62,7 +62,7 @@ class _SyncResourceBase(_AbstractSlotsObject):
         elif eSyncResType_ == _SyncResourceBase._ESyncResType.eBoundedSemaphore:
             self.__resLck = _PyBoundedSemaphore(initialCount_)
         else:
-            vlogif._LogOEC(True, -1246)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00172)
             return
         self.__ctr    = initialCount_
         self.__eType  = eSyncResType_
@@ -221,9 +221,7 @@ class _SyncResourceBase(_AbstractSlotsObject):
         pass
 
     def _CleanUp(self):
-        if not self._isValid:
-            pass
-        else:
+        if self._isValid:
             self.__eType = None
 
             _myLck = self.__apiLck
@@ -242,7 +240,7 @@ class _SyncResourceBase(_AbstractSlotsObject):
         elif not _SyncResourceBase._IsSyncResGuardEnabled():
             pass
         elif (syncPeer_ is not None) and not isinstance(syncPeer_, _SyncResourceBase):
-            vlogif._LogOEC(True, -1247)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00173)
         else:
             _srg  = _SyncResourcesGuard._GetInstance()
             _tid  = None

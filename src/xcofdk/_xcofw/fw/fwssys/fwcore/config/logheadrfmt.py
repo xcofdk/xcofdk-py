@@ -7,9 +7,7 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject import _ProtectedAbstractSlotsObject
-
 
 class _LogHeaderFormat(_ProtectedAbstractSlotsObject):
     __slots__ = [ '__uniqueID' , '__timestamp' , '__taskName'  , '__taskID'  , '__funcName'
@@ -17,20 +15,21 @@ class _LogHeaderFormat(_ProtectedAbstractSlotsObject):
                 , '__errImp'   , '__execPhase'
                 ]
 
-    def __init__( self, ppass_ : int, bFW_ : bool, bDbg_ : bool):
+    def __init__( self, ppass_ : int, bFW_ : bool, bRelMode_ : bool):
         super().__init__(ppass_)
-        self.__euNum     = bFW_ and bDbg_
-        self.__errImp    = bFW_ and bDbg_
+        _bDbgMode = not bRelMode_
+        self.__euNum     = bFW_ and _bDbgMode
+        self.__errImp    = bFW_ and _bDbgMode
         self.__taskID    = False
-        self.__lineNo    = bFW_ and bDbg_
-        self.__rbyinfo   = True
-        self.__uniqueID  = bFW_ and bDbg_
+        self.__lineNo    = bFW_ and _bDbgMode
+        self.__rbyinfo   = bFW_ and _bDbgMode
+        self.__uniqueID  = bFW_ and _bDbgMode
         self.__taskName  = True
-        self.__funcName  = bFW_ and bDbg_
-        self.__fileName  = bFW_ and bDbg_
-        self.__callstack = bFW_ and bDbg_
+        self.__funcName  = bFW_ and _bDbgMode
+        self.__fileName  = bFW_ and _bDbgMode
+        self.__callstack = bFW_ and _bDbgMode
         self.__timestamp = True
-        self.__execPhase = bFW_ and bDbg_
+        self.__execPhase = bFW_ and _bDbgMode
 
     @staticmethod
     def CreateFwLogHeaderFormat(ppass_ : int, bFW_ : bool, bRelMode_ : bool):
@@ -139,7 +138,7 @@ class _LogHeaderFormat(_ProtectedAbstractSlotsObject):
 
     @staticmethod
     def __CreateFwLogHeaderFormat(ppass_, bFW_ : bool, bRelMode_ : bool):
-        res = _LogHeaderFormat(ppass_, bFW_, not bRelMode_ )
+        res = _LogHeaderFormat(ppass_, bFW_, bRelMode_ )
         if not res._isValid:
             res = None
         return res

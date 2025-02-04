@@ -7,19 +7,19 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 from enum import IntFlag
+
+from xcofdk.fwapi.xtask.xtaskprofile import XTaskProfile
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                    import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskprfbase import _XTaskProfileBase
 from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask             import _EBitMask
 
-from xcofdk.fwapi.xtask.xtaskprofile import XTaskProfile
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _XTaskProfileExt(XTaskProfile):
 
@@ -45,7 +45,6 @@ class _XTaskProfileExt(XTaskProfile):
         def IsTaskPrfFlagSet(tprfBM_: IntFlag, tprfBF_):
             return _EBitMask.IsEnumBitFlagSet(tprfBM_, tprfBF_)
 
-
     __slots__ = [ '__bmExt' ]
 
     def __init__(self, xtProfile_ : XTaskProfile =None, bMainXT_ =False):
@@ -56,10 +55,10 @@ class _XTaskProfileExt(XTaskProfile):
             pass
         elif not (isinstance(xtProfile_, XTaskProfile) and xtProfile_.isValid):
             self._CleanUp()
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileExt_TextID_001).format(type(xtProfile_).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00186, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileExt_TextID_001).format(type(xtProfile_).__name__))
         elif XTaskProfile._AssignProfile(self, xtProfile_) is None:
             self._CleanUp()
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileExt_TextID_002).format(type(xtProfile_).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00187, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileExt_TextID_002).format(type(xtProfile_).__name__))
 
         if bMainXT_ != self.isMainTask:
             _XTaskProfileBase._SetMainXTask(self, bMainXT_)

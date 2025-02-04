@@ -7,12 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 from enum import unique
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _ELogLevel
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
 
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwcfgdefines                import _ESubSysID
@@ -20,7 +17,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.config.logheadrfmt                 import _L
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwSSysConfigBase
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwStartupPolicy
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwStartupConfig
-
 
 class _SSConfigLogging(_FwSSysConfigBase):
 
@@ -111,17 +107,18 @@ class _SSConfigLogging(_FwSSysConfigBase):
     def __CreateLogHeaderFormat(self):
         _bRelMode = self.fwStartupConfig._isReleaseModeEnabled
 
-        _fwLHdrFmt_ = _LogHeaderFormat.CreateFwLogHeaderFormat(self._myPPass, True, _bRelMode)
-        if _fwLHdrFmt_ is None:
+        _fwLHdrFmt = _LogHeaderFormat.CreateFwLogHeaderFormat(self._myPPass, True, _bRelMode)
+        if _fwLHdrFmt is None:
             return False
-        _fwLHdrFmt_._Update(timestamp_=self.fwStartupConfig._isUserLogTimestampEnabled)
+        _cs = None if not _bRelMode else self.fwStartupConfig._isUserLogCallstackEnabled
+        _fwLHdrFmt._Update(timestamp_=self.fwStartupConfig._isUserLogTimestampEnabled, callstack_=_cs)
 
-        _userLHdrFmt_ = _LogHeaderFormat.CreateFwLogHeaderFormat(self._myPPass, False, _bRelMode)
-        if _userLHdrFmt_ is None:
+        _userLHdrFmt = _LogHeaderFormat.CreateFwLogHeaderFormat(self._myPPass, False, _bRelMode)
+        if _userLHdrFmt is None:
             return False
-        _bCallStack = self.userLogLevel.value >= _ELogLevel.eDebug.value
-        _userLHdrFmt_._Update(timestamp_=self.fwStartupConfig._isUserLogTimestampEnabled, callstack_=_bCallStack)
+        _cs = self.fwStartupConfig._isUserLogCallstackEnabled
+        _userLHdrFmt._Update(timestamp_=self.fwStartupConfig._isUserLogTimestampEnabled, callstack_=_cs)
 
-        self.__fwLHdrFmt   = _fwLHdrFmt_
-        self.__userLHdrFmt = _userLHdrFmt_
+        self.__fwLHdrFmt   = _fwLHdrFmt
+        self.__userLHdrFmt = _userLHdrFmt
         return True

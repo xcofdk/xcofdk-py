@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsghdrimpl import _XMsgHeaderImpl
 
@@ -18,7 +17,6 @@ from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
 from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
 from xcofdk.fwapi.xmsg.xpayload   import XPayload
-
 
 class _XMsgImpl(_MessageIF):
     __slots__ = [ '__hdr' , '__uid' , '__pld' ]
@@ -38,11 +36,9 @@ class _XMsgImpl(_MessageIF):
             self.__uid = uid_
             self.__pld = payld_
 
-
     @property
     def isValid(self) -> bool:
         return (self.__hdr is not None) and self.__hdr.isValid
-
 
     @property
     def uniqueID(self) -> int:

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging             import vlogif
@@ -20,15 +19,18 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge   import _TaskBadge
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate   import _TaskState
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _ETaskExecutionPhaseID
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject      import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask       import _EBitMask
+from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask      import _EBitMask
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _FwIntFlag
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
+from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 @unique
 class _ELcCeaseTLBState(_FwIntEnum):
     eNone              = 0
-    eAbortingCease     = 85490
+    eEndingCease       = 85490
     eRFTPrepareCeasing = 85491
     eEnterCeasing      = 85492
     ePreShutdownPhase  = 85493
@@ -64,9 +66,8 @@ class _ELcCeaseTLBState(_FwIntEnum):
         return self == _ELcCeaseTLBState.eDeceased
 
     @property
-    def isAbortingCease(self):
-        return self == _ELcCeaseTLBState.eAbortingCease
-
+    def isEndingCease(self):
+        return self == _ELcCeaseTLBState.eEndingCease
 
 @unique
 class _ELcCeaseGateFlag(_FwIntFlag):
@@ -122,7 +123,6 @@ class _ELcCeaseGateFlag(_FwIntFlag):
     @staticmethod
     def IsLcCeaseGateFlagSet(eLcCeaseGateBitMask_: _FwIntFlag, eLcCeaseGateBitFlag_):
         return _EBitMask.IsEnumBitFlagSet(eLcCeaseGateBitMask_, eLcCeaseGateBitFlag_)
-
 
 class _TlbAlarmStatus(_AbstractSlotsObject):
     __slots__ = [ '__bChangedLSA' , '__ffCtrLSA' , '__ctrLSA' , '__diffLSA' ]
@@ -180,10 +180,6 @@ class _TlbAlarmStatus(_AbstractSlotsObject):
         self.__ffCtrLSA    = 0 if _bAlarmStatusChanged else self.__ffCtrLSA+1
         self.__bChangedLSA = _bAlarmStatusChanged
 
-    def _AddLSAlaramReport(self, taskUniqueName_ : str, lsaReportStr_ : str) -> str:
-        return None
-
-
 class _LcStaticTLB(_AbstractSlotsObject):
 
     __slots__ = ['__tskBadge' , '__execPrf' , '__bXuTsk' , '__bMainXuTsk']
@@ -205,7 +201,7 @@ class _LcStaticTLB(_AbstractSlotsObject):
                 _xprf.CleanUp()
 
             self.CleanUp()
-            vlogif._LogOEC(True, -1514)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00420)
             return
 
         self.__execPrf    = _xprf
@@ -256,7 +252,6 @@ class _LcStaticTLB(_AbstractSlotsObject):
     @property
     def __isInvalid(self):
         return self.__tskBadge is None
-
 
 class _LcDynamicTLB(_AbstractSlotsObject):
 
@@ -318,7 +313,7 @@ class _LcDynamicTLB(_AbstractSlotsObject):
         return self.__tskSt
 
     @property
-    def eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
+    def eTaskXPhase(self) -> _ETaskExecutionPhaseID:
         return self.__exexPh
 
     @property
@@ -337,11 +332,10 @@ class _LcDynamicTLB(_AbstractSlotsObject):
                      , execPhase_  : _ETaskExecutionPhaseID =None
                      , tskState_   : _TaskState._EState      =None
                      , bCleanedUp_ : bool                   =None):
-        if self.isCleanedUp:
-            pass
-        elif self.isLcShutdownEnabled:
+        if self.isCleanedUp or self.isLcShutdownEnabled:
             pass
         else:
+
             if tskState_ is not None:
                 self.__tskSt = tskState_
             if euRNumber_ is not None:
@@ -352,7 +346,7 @@ class _LcDynamicTLB(_AbstractSlotsObject):
                 self.__bCleanedUp = bCleanedUp_
             self.__utime = _PyDateTime.now()
 
-    def _CreateCeaseTLB(self, mtxData_: _Mutex, bAborting_: bool):
+    def _CreateCeaseTLB(self, mtxData_: _Mutex, bEnding_: bool):
         if self.isCleanedUp:
             res = None
         else:
@@ -362,7 +356,7 @@ class _LcDynamicTLB(_AbstractSlotsObject):
             elif _lcm.isDummyMonitor:
                 res = None
             else:
-                res = _lcm._CreateCeaseTLB(self.__tlbStat.taskBadge.taskID, mtxData_, bAborting_)
+                res = _lcm._CreateCeaseTLB(self.__tlbStat.taskBadge.taskID, mtxData_, bEnding_)
         return res
 
     @staticmethod
@@ -406,21 +400,20 @@ class _LcDynamicTLB(_AbstractSlotsObject):
     def __isInvalid(self):
         return (_LcDynamicTLB.__theLcmImpl is None) or (self.__tlbStat is None)
 
-
 class _LcCeaseTLB(_AbstractSlotsObject):
 
     __slots__ = [ '__tlbStat' , '__mtxData' , '__eCState' , '__caCtr' , '__eCGBM' , '__utime' ]
     __theLcmImpl = None
 
-    def __init__(self, lcStatTLB_: _LcStaticTLB, mtxData_ : _Mutex, bAborting_ : bool):
+    def __init__(self, lcStatTLB_: _LcStaticTLB, mtxData_ : _Mutex, bEnding_ : bool):
         super().__init__()
         self.__caCtr   = 0
         self.__eCGBM   = _ELcCeaseGateFlag.ebfNone
         self.__utime   = _PyDateTime.now()
         self.__mtxData = mtxData_
         self.__tlbStat = lcStatTLB_
-        if bAborting_:
-            self.__eCState = _ELcCeaseTLBState.eAbortingCease
+        if bEnding_:
+            self.__eCState = _ELcCeaseTLBState.eEndingCease
         else:
             self.__eCState = _ELcCeaseTLBState.eRFTPrepareCeasing
 
@@ -436,7 +429,7 @@ class _LcCeaseTLB(_AbstractSlotsObject):
         if self.__isInvalid:
             return False
         with self.__mtxData:
-            return self.__eCState.isCeasing and not (self.__eCState.isAbortingCease or not _LcCeaseTLB.__theLcmImpl.isCoordinatedShutdownRunning)
+            return self.__eCState.isCeasing and not (self.__eCState.isEndingCease or not _LcCeaseTLB.__theLcmImpl.isCoordinatedShutdownRunning)
 
     @property
     def isDeceased(self) -> bool:
@@ -446,11 +439,11 @@ class _LcCeaseTLB(_AbstractSlotsObject):
             return self.__eCState.isDeceased
 
     @property
-    def isAbortingCease(self) -> bool:
+    def isEndingCease(self) -> bool:
         if self.__isInvalid:
             return False
         with self.__mtxData:
-            return self.__eCState.isAbortingCease
+            return self.__eCState.isEndingCease
 
     @property
     def isLcShutdownEnabled(self) -> bool:
@@ -490,28 +483,22 @@ class _LcCeaseTLB(_AbstractSlotsObject):
     def updateTime(self) -> _PyDateTime:
         return self.__utime
 
-    def HopToNextCeaseState(self, bAborting_ =False):
-        if self.__isInvalid:
-            pass
-        else:
+    def HopToNextCeaseState(self, bEnding_ =False):
+        if not  self.__isInvalid:
             with self.__mtxData:
-                if self.__eCState.isDeceased:
-                    pass
-                else:
-                    self.UpdateCeaseState(bAborting_)
-                    if self.__eCState.isAbortingCease:
+                if not self.__eCState.isDeceased:
+                    self.UpdateCeaseState(bEnding_)
+                    if self.__eCState.isEndingCease:
                         self.__eCState = _ELcCeaseTLBState.eDeceased
                     else:
                         self.__eCState = _ELcCeaseTLBState(self.__eCState.value+1)
 
-    def UpdateCeaseState(self, bAborting_ : bool):
-        if self.__isInvalid:
-            pass
-        else:
+    def UpdateCeaseState(self, bEnding_ : bool):
+        if not self.__isInvalid:
             with self.__mtxData:
                 self.__utime = _PyDateTime.now()
-                if bAborting_:
-                    self.__eCState = _ELcCeaseTLBState.eAbortingCease
+                if bEnding_:
+                    self.__eCState = _ELcCeaseTLBState.eEndingCease
 
     def IncrementCeaseAliveCounter(self) -> int:
         if self.__isInvalid:
@@ -628,10 +615,7 @@ class _LcCeaseTLB(_AbstractSlotsObject):
     def __isInvalid(self):
         return (_LcCeaseTLB.__theLcmImpl is None) or (self.__tlbStat is None)
 
-
 class _LcTLB(_AbstractSlotsObject):
-
-
 
     __slots__ = [ '__sw' , '__tskInst' , '__tlbDyn' , '__tlbCease' , '__tlbAS']
 
@@ -728,13 +712,11 @@ class _LcTLB(_AbstractSlotsObject):
         self.__tlbCease = lcCeaseTLB_
 
     def _UpdateTLB(self, bCeaseMode_ : bool, lsaReportStr_ : str =None) -> str:
-
         if self.__isInvalid:
             return None
 
         if bCeaseMode_:
             return lsaReportStr_
-
 
         _td = self.__tlbDyn
 
@@ -757,10 +739,6 @@ class _LcTLB(_AbstractSlotsObject):
             _lsaCtr, _diffTS = 0, 0
 
         self.__tlbAS._UpdateLSA(_lsaCtr, _diffTS)
-        if lsaReportStr_ is None:
-            pass
-        else:
-            lsaReportStr_ = self.__tlbAS._AddLSAlaramReport(self.lcStaticTLB.taskBadge.taskUniqueName, lsaReportStr_)
         return lsaReportStr_
 
     def _ToString(self, *args_, **kwargs_):
@@ -795,7 +773,6 @@ class _LcTLB(_AbstractSlotsObject):
     @property
     def __isInvalid(self):
         return self.__sw is None
-
 
 class _LcDummyDynamicTLB(_LcDynamicTLB):
     __slots__ = []

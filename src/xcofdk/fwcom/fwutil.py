@@ -11,6 +11,10 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
+from typing import Union
+
+from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
+
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapibase import _FwApiBase
 
 
@@ -52,6 +56,25 @@ def IsLcFailureFree() -> bool:
     """
     return _FwApiBase.FwApiIsLcErrorFree()
 
+
+def IsXTaskRunning(xtaskUID_ : Union[int, EPreDefinedMessagingID]) -> bool:
+    """
+    Returns:
+    ----------
+        True if passed in task is in running state, False otherwise.
+
+    Parameters:
+    -------------
+        - xtaskUID_ :
+          unique task ID or the pre-defined alias ID of the task to checked for.
+
+    See:
+    -----
+        - XTask.isRunning
+        - XTask.xtaskUniqueID
+        - EPreDefinedMessagingID.MainTask
+    """
+    return _FwApiBase.FwApiIsXTaskRunning(xtaskUID_)
 
 def GetXcofdkVersion() -> str:
     """

@@ -7,15 +7,14 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import os
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging   import logif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.util import _Util
+from xcofdk._xcofw.fw.fwssys.fwcore.logging      import logif
+from xcofdk._xcofw.fw.fwssys.fwcore.base.util    import _Util
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _FSUtil:
     __slots__ = []
@@ -110,7 +109,7 @@ class _FSUtil:
         if os.path.isdir(dirPath_):
             if not ignoreExists_:
                 if bThrowx_:
-                    logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FSUtil_TextID_001).format(dirPath_))
+                    logif._LogBadUseEC(_EFwErrorCode.FE_00078, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FSUtil_TextID_001).format(dirPath_))
                 return False
             else:
                 return True
@@ -119,6 +118,6 @@ class _FSUtil:
         except BaseException as xcp:
             if bThrowx_:
                 myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FSUtil_TextID_002).format(dirPath_, str(xcp))
-                logif._LogSysException(myMsg, xcp, logif._GetFormattedTraceback())
+                logif._LogSysExceptionEC(_EFwErrorCode.FE_00011, myMsg, xcp, logif._GetFormattedTraceback())
             return False
         return True

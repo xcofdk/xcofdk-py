@@ -7,28 +7,25 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from collections import Counter as _Counter
 from threading   import RLock as _PyRLock
 
+from xcofdk._xcofw.fw.fwssys.fwcore.logging                import vlogif
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines     import _ELogType
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines     import _ELogLevel
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines     import _LogUniqueID
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logconfig      import _LoggingConfig
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logconfig      import _LoggingUserConfig
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logentry       import _LogEntry
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logexception   import _LogException
 from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil          import _StopWatch
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartupconfig import _FwStartupConfig
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject          import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes      import SyncPrint
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging              import vlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines   import _ELogType
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines   import _ELogLevel
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines   import _LogUniqueID
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logconfig    import _LoggingConfig
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logconfig    import _LoggingUserConfig
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logentry     import _LogEntry
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logexception import _LogException
-
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _LogIFImplHelper(_AbstractSlotsObject):
-
     __slots__ = [
          '__firstFatalLog'  ,  '__subSeqXcp'      ,  '__lastCreatedLE'
       ,  '__counter'        ,  '__pendingTaskID'  ,  '__apiLck'
@@ -38,7 +35,6 @@ class _LogIFImplHelper(_AbstractSlotsObject):
     ]
 
     __bStoreErrorEntriesOnly = True
-
 
     def __init__(self, startupCfg_ : _FwStartupConfig):
         super().__init__()
@@ -67,7 +63,7 @@ class _LogIFImplHelper(_AbstractSlotsObject):
 
         if _bMisMatch:
             self.CleanUp()
-            vlogif._LogOEC(True, -1076)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00462)
             return
 
         self.__fwSCfg = startupCfg_
@@ -138,10 +134,10 @@ class _LogIFImplHelper(_AbstractSlotsObject):
     def SetupConfig(self, bRelMode_ : bool =None, bDieMode_: bool = None, bXcpMode_: bool = None
                    , eLogLevel_: _ELogLevel = None, bOutputRedirection_: bool = None):
         if self.__logConf is not None:
-            vlogif._LogOEC(True, -1077)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00463)
             return
         if (eLogLevel_ is not None) and not isinstance(eLogLevel_, _ELogLevel):
-            vlogif._LogOEC(True, -1078)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00464)
             return
 
         _logCfgInst = _LoggingConfig.GetInstance(bCreate_=False)
@@ -154,13 +150,9 @@ class _LogIFImplHelper(_AbstractSlotsObject):
         _bLogConfOK = _bLogConfOK and vlogif._IsFwExceptionModeEnabled() == self.__logConf.exceptionMode
 
         if not _bLogConfOK:
-            msg = 'logConf=(dm:{}, xm:{}, rm:{}) vs. vlogif=(dm:{}, xm:{}, rm:{})'.format(
-                str(self.__logConf.dieMode), str(self.__logConf.exceptionMode), str(self.__logConf.releaseMode)
-                , str(vlogif._IsFwDieModeEnabled()), str(vlogif._IsFwExceptionModeEnabled()), str(vlogif._IsReleaseModeEnabled()))
-            msg = '[LC][LogIF] Mismatch of logging config: {})'.format(msg)
             self.__logConf.CleanUp()
             self.__logConf = None
-            vlogif._LogOEC(True, -1079)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00465)
 
     def UnlockApi(self, bFullUnlock_ =False):
         self.LockApi(bLock_=False, bFullUnlock_=bFullUnlock_)
@@ -181,21 +173,18 @@ class _LogIFImplHelper(_AbstractSlotsObject):
             self.__apiLck.release()
 
     def AddLogEntry(self, le_ : _LogEntry, doAddOnly_ =False):
-
         if (le_ is None) or ( not le_.isValid):
-            vlogif._LogOEC(True, -1080)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00466)
         else:
-            bIA = le_.eLogType.isNonError and _LogIFImplHelper.__bStoreErrorEntriesOnly
-            if not bIA:
-                if le_.isFreeLog or doAddOnly_:
-                    pass
-                else:
+            _bIA = le_.eLogType.isNonError and _LogIFImplHelper.__bStoreErrorEntriesOnly
+            if not _bIA:
+                if not (le_.isFreeLog or doAddOnly_):
                     le_._Adapt(uniqueID_=_LogUniqueID._GetNextUniqueID())
                 self.__lstLogs.append(le_)
 
     def Flush(self, buf_, endLine_=None):
         if (self.logConf is not None) and self.logConf.outputRedirection:
-            vlogif._LogOEC(True, -1081)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00467)
             return
 
         _le = buf_
@@ -205,7 +194,7 @@ class _LogIFImplHelper(_AbstractSlotsObject):
             _le = None
             buf_ = str(buf_)
 
-        bAC = (_le is not None) and _le.eLogType.isNonError and _LogIFImplHelper.__bStoreErrorEntriesOnly
+        _bAC = (_le is not None) and _le.eLogType.isNonError and _LogIFImplHelper.__bStoreErrorEntriesOnly
 
         if _le is None:
             pass
@@ -216,7 +205,7 @@ class _LogIFImplHelper(_AbstractSlotsObject):
                     endLine_ = ''
 
         SyncPrint.Print(buf_, endLine_=endLine_)
-        if bAC:
+        if _bAC:
             _le.CleanUp()
 
     def UpdateMaxLogTime(self, bErrorLogTime_ =False, bRestart_ =False) -> int:
@@ -321,5 +310,4 @@ class _LogIFImplHelper(_AbstractSlotsObject):
                 self.__lstLogs[_ii] = None
                 _ee.CleanUp()
             self.__lstLogs.clear()
-
         self.__pendingTaskID = None

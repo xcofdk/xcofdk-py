@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import vlogif
@@ -21,9 +20,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObjec
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _ETernaryOpResult
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _ERunnableType(_FwIntEnum):
@@ -86,12 +86,10 @@ class _ERunnableType(_FwIntEnum):
             res = _ELcCompID.eMiscComp
         return res
 
-
 @unique
 class _EFwcID(_FwIntEnum):
     eFwMain       = _ERunnableType.eFwMainRbl.value
     eFwDispatcher = _ERunnableType.eFwDsprRbl.value
-    eTimerManager = _ERunnableType.eTmrMgrRbl.value
 
     @property
     def isFwMain(self):
@@ -101,14 +99,8 @@ class _EFwcID(_FwIntEnum):
     def isFwDispatcher(self):
         return self ==   _EFwcID.eFwDispatcher
 
-    @property
-    def isTimerManager(self):
-        return self ==   _EFwcID.eTimerManager
-
-
 @unique
 class _ERunProgressID(_FwIntEnum):
-
     eReadyToRun          = 220
     eExecuteSetupDone    = 221
     eExecuteRunDone      = 222
@@ -135,7 +127,6 @@ class _ERunProgressID(_FwIntEnum):
     def isRunDone(self):
         return self == _ERunProgressID.eRunDone
 
-
 @unique
 class _ERunnableExecutionStepID(_FwIntEnum):
 
@@ -149,7 +140,6 @@ class _ERunnableExecutionStepID(_FwIntEnum):
     eCustomManagedInternalQueue_By_AutoManagedExternalQueue  = 3828
     eAutoManagedInternalQueue_By_RunExecutable               = 3829
     eAutoManagedInternalQueue_By_AutoManagedExternalQueue    = 3830
-
 
 @unique
 class _ERunnableApiID(_FwEnum):
@@ -171,7 +161,6 @@ class _ERunnableApiID(_FwEnum):
     @property
     def functionName(self):
         return _CommonDefines._CHAR_SIGN_UNDERSCORE + self.compactName
-
 
 @unique
 class _ERunnableApiFuncTag(_FwIntFlag):
@@ -303,7 +292,6 @@ class _ERunnableApiFuncTag(_FwIntFlag):
     def RemoveApiFuncTag(eApiMask_: _FwIntFlag, eApiFuncTag_ : _FwIntFlag):
         return _EBitMask.RemoveEnumBitFlag(eApiMask_, eApiFuncTag_)
 
-
 class _ARunnableApiGuide(_AbstractSlotsObject):
     __slots__ = [
         '__rbl'
@@ -330,7 +318,6 @@ class _ARunnableApiGuide(_AbstractSlotsObject):
     ]
 
     def __init__(self, rbl_, excludedRblM_ : _ERunnableApiFuncTag):
-
         self.__rbl             = rbl_
         self.__eApiMask        = None
         self.__eExclApiMask    = None
@@ -358,13 +345,13 @@ class _ARunnableApiGuide(_AbstractSlotsObject):
         _exclApiFuncs = None
         if excludedRblM_ is not None:
             if not isinstance(excludedRblM_, _ERunnableApiFuncTag):
-                vlogif._LogOEC(True, -1228)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00148)
                 self.CleanUp()
                 return
 
             _exclApiFuncs = _EBitMask.GetIntegerBitFlagsList(excludedRblM_)
             if _exclApiFuncs is None:
-                vlogif._LogOEC(True, -1229)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00148)
                 self.CleanUp()
                 return
             if len(_exclApiFuncs) == 0:
@@ -389,11 +376,11 @@ class _ARunnableApiGuide(_AbstractSlotsObject):
             self.__eApiMask = _ERunnableApiFuncTag.AddApiFuncTag(self.__eApiMask, member)
 
             if   member == _ERunnableApiFuncTag.eRFTRunExecutable:             self.runExecutable             = _apiFunc
-            elif member == _ERunnableApiFuncTag.eRFTSetUpExecutable:             self.setUpRunnable             = _apiFunc
+            elif member == _ERunnableApiFuncTag.eRFTSetUpExecutable:           self.setUpRunnable             = _apiFunc
             elif member == _ERunnableApiFuncTag.eRFTProcessExternalMsg:        self.procExternalMsg           = _apiFunc
             elif member == _ERunnableApiFuncTag.eRFTProcessInternalMsg:        self.procInternalMsg           = _apiFunc
             elif member == _ERunnableApiFuncTag.eRFTOnTimeoutExpired:          self.onTimeoutExpired          = _apiFunc
-            elif member == _ERunnableApiFuncTag.eRFTTearDownExecutable:          self.tearDownRunnable          = _apiFunc
+            elif member == _ERunnableApiFuncTag.eRFTTearDownExecutable:        self.tearDownRunnable          = _apiFunc
             elif member == _ERunnableApiFuncTag.eRFTProcessExternalQueue:      self.procExternalQueue         = _apiFunc
             elif member == _ERunnableApiFuncTag.eRFTProcessInternalQueue:      self.procInternalQueue         = _apiFunc
             elif member == _ERunnableApiFuncTag.eRFTOnRunProgressNotification: self.onRunProgressNotification = _apiFunc
@@ -404,7 +391,7 @@ class _ARunnableApiGuide(_AbstractSlotsObject):
             elif member == _ERunnableApiFuncTag.eRFTProcFwcErrorHandlerCallback: self.procFwcErrorHandlerCallback = _apiFunc
 
             else:
-                vlogif._LogOEC(True, -1230)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00150)
                 self.__eApiMask     = None
                 self.__eExclApiMask = None
                 self.CleanUp()
@@ -658,23 +645,3 @@ class _ARunnableApiGuide(_AbstractSlotsObject):
             _myTxt = _myTxt.rstrip()
             res   += _CommonDefines._CHAR_SIGN_NEWLINE + _myTxt
         return res
-
-
-@unique
-class _ERunnableExecutionContextID(_FwIntEnum):
-    eDontCare     = 400
-    eRun          = 433
-    eProcIntQueue = 435
-    eProcExtQueue = 437
-
-    @property
-    def isDontCare(self):
-        return self == _ERunnableExecutionContextID.eDontCare
-
-    @property
-    def isRun(self):
-        return self == _ERunnableExecutionContextID.eRun
-
-    @property
-    def isProcessingQueue(self):
-        return self.value > _ERunnableExecutionContextID.eRun.value

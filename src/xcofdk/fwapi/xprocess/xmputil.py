@@ -190,4 +190,7 @@ class XMPUtil:
             framework, alongside a few more related information.
         """
         return _XMPUtilImpl._MPCurrentStartMethodAsString()
+    # ------------------------------------------------------------------------------
+    #END Interface - MP read-only access to process start method
+    # ------------------------------------------------------------------------------
 #END class XMPUtil

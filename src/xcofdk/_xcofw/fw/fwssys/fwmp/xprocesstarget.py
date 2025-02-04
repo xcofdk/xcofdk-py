@@ -7,11 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 from enum import unique
 from enum import IntEnum
-
 
 from sys import exit as _PyExitByMainThread
 
@@ -20,7 +18,6 @@ from xcofdk.fwcom.xmpdefs import ChildProcessResultData
 
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.fwrtetoken  import _FwRteToken
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.fwrtedataex import _FwRteDataExchange
-
 
 @unique
 class _EProcessTargetExitCodeID(IntEnum):
@@ -77,11 +74,8 @@ class _EProcessTargetExitCodeID(IntEnum):
     def isWriteRteTokenError(self):
         return self == _EProcessTargetExitCodeID.eErrorExitCode_WriteRteToken
 
-
 class _XProcessTarget:
     __slots__ = [ '__hprocTgt' ]
-
-    __bPRINT_INFO = True
 
     def __init__(self, hpTarget_):
         self.__hprocTgt = hpTarget_
@@ -89,17 +83,12 @@ class _XProcessTarget:
     def __call__(self, rteDataExchange_ : _FwRteDataExchange, *args_, **kwargs_):
         return self.__CallChildProcessTarget(rteDataExchange_)
 
-
     def isValid(self):
         return self.__hprocTgt is not None
 
-
     @staticmethod
     def __PrintInfo(info_ : str):
-        if not _XProcessTarget.__bPRINT_INFO:
-            pass
-        else:
-            print(info_)
+        print(info_)
 
     def __CallChildProcessTarget(self, rteDataExchange_ : _FwRteDataExchange):
         if not self.isValid:
@@ -108,7 +97,6 @@ class _XProcessTarget:
         _rteDataEx = rteDataExchange_
         if not (isinstance(_rteDataEx, _FwRteDataExchange) and _rteDataEx.isValid):
             _PyExitByMainThread(_EProcessTargetExitCodeID.eErrorExitCode_RteDataDes.value)
-
 
         if not _rteDataEx.AttchToChildProcess():
             _XProcessTarget.__PrintInfo(f'[XPTgt] {_rteDataEx.currentWarningMessage}')

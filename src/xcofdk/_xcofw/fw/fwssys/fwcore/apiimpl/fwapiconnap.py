@@ -7,12 +7,10 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from threading import RLock as _PyRLock
 
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject import _ProtectedAbstractSlotsObject
-
 
 class _FwApiConnectorAP:
 
@@ -24,10 +22,28 @@ class _FwApiConnectorAP:
         pass
 
     @staticmethod
-    def _APGetXTask(xuUniqueID_ : int =0):
-        if xuUniqueID_ == 0:
+    def _APIsFwApiConnected():
+        if _FwApiConnectorAP.__theConnAccessLck is None: return False
+        with _FwApiConnectorAP.__theConnAccessLck:
+            return _FwApiConnectorAP.__theFwCN is not None
+
+    @staticmethod
+    def _APIsLcErrorFree() -> bool:
+        return _LcFailure.IsLcErrorFree() if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN._FwCNIsLcErrorFree()
+
+    @staticmethod
+    def _APIsLcShutdownEnabled() -> bool:
+        return False if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN._FwCNIsLcShutdownEnabled()
+
+    @staticmethod
+    def _APIsXTaskRunning(xtUID_ : int) -> bool:
+        return False if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN._FwCNIsXTaskRunning(xtUID_)
+
+    @staticmethod
+    def _APGetXTask(xtUID_ : int =0):
+        if xtUID_ == 0:
             return _FwApiConnectorAP._APGetCurXTask()
-        return None if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN.FwCNGetXTask(xuUniqueID_)
+        return None if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN.FwCNGetXTask(xtUID_)
 
     @staticmethod
     def _APGetCurXTask():
@@ -42,25 +58,13 @@ class _FwApiConnectorAP:
         return False if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN.FwCNJoinXcoFW()
 
     @staticmethod
-    def _APIsLcErrorFree() -> bool:
-        return _LcFailure.IsLcErrorFree() if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN._FwCNIsLcErrorFree()
-
-    @staticmethod
-    def _APIsFwApiConnected():
-        if _FwApiConnectorAP.__theConnAccessLck is None: return False
-        with _FwApiConnectorAP.__theConnAccessLck:
-            return _FwApiConnectorAP.__theFwCN is not None
-
-    @staticmethod
     def _APSetFwApiConnector(fwConnecctor_ : _ProtectedAbstractSlotsObject, connAccessLck_ : _PyRLock):
         if connAccessLck_ is not None:
             if _FwApiConnectorAP.__theConnAccessLck is None:
                 _FwApiConnectorAP.__theConnAccessLck = connAccessLck_
 
         _accessLck = _FwApiConnectorAP.__theConnAccessLck
-        if _accessLck is None:
-            pass
-        else:
+        if _accessLck is not None:
             with _accessLck:
                 _FwApiConnectorAP.__theFwCN = fwConnecctor_
                 if fwConnecctor_ is None:

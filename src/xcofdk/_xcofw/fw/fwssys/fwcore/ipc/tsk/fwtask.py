@@ -7,48 +7,43 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
+from xcofdk._xcofw.fw.fwssys.fwcore.logging                 import logif
+from xcofdk._xcofw.fw.fwssys.fwcore.logging                 import vlogif
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception    import _XcoExceptionRoot
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn import _XTaskConnector
+from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil           import _TimeAlert
+from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif         import _CallableIF
+from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout           import _Timeout
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnable       import _AbstractRunnable
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore      import _BinarySemaphore
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex          import _Mutex
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresguard   import _SyncResourcesGuard
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask           import _AbstractTask
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile     import _ExecutionProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop         import _EATaskOperationID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop         import _ATaskOperationPreCheck
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge       import _TaskBadge
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror       import _TaskError
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror       import _TaskErrorExtended
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskprofile     import _TaskProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate       import _TaskState
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _PyThread
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _ETaskType
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _EFwApiBookmarkID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _ETaskResourceFlag
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _ETaskApiContextID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _ETaskExecutionPhaseID
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines            import _ELcCompID
+from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb          import _LcCeaseTLB
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile          import _AbstractProfile
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging               import logif
-from xcofdk._xcofw.fw.fwssys.fwcore.logging               import vlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception  import _XcoExceptionRoot
-from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil         import _TimeAlert
-from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif       import _CallableIF
-from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout         import _Timeout
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.err.euerrhandler  import _EuErrorHandler
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnable     import _AbstractRunnable
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore    import _BinarySemaphore
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex        import _Mutex
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresguard import _SyncResourcesGuard
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines          import _ELcCompID
-from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb        import _LcCeaseTLB
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile        import _AbstractProfile
-
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask       import _AbstractTask
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile import _ExecutionProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop     import _EATaskOperationID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop     import _ATaskOperationPreCheck
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge   import _TaskBadge
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror   import _TaskError
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror   import _TaskErrorExtended
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskprofile import _TaskProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate   import _TaskState
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _PyThread
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _TaskUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _ETaskType
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _EFwApiBookmarkID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _ETaskResourceFlag
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _ETaskExecutionPhaseID
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-
-
 class _FwTask(_AbstractTask):
-
-    __bERROR_HANDLING_ENABLED = False
 
     __slots__ = [ '__mtxApi' , '__mtxData' , '__tskProfile' , '__rbl' , '__semSS' , '__bAutocreatedTP' ]
 
@@ -174,16 +169,11 @@ class _FwTask(_AbstractTask):
                 self.CleanUp()
                 return
 
-        if _FwTask.__bERROR_HANDLING_ENABLED:
-            _EuErrorHandler._SetUpEuEH(self, self.__mtxData)
-            if self._isForeignErrorListener is None:
-                self.CleanUp()
-                return
-
         _rbl._SetDrivingTask(self)
         if _rbl._drivingTask is None:
             self.CleanUp()
             return
+
         if self.__tskProfile.isAutoStartEnclosedPyThreadEnabled:
             self.__StartPyThread()
 
@@ -207,11 +197,11 @@ class _FwTask(_AbstractTask):
 
         if taskPrf_ is not None:
             if (not taskPrf_.isValid) or taskPrf_.isEnclosingPyThread:
-                vlogif._LogOEC(False, -3009)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00013)
                 return None
         elif taskProfileAttrs_ is not None:
             if _TaskProfile._ATTR_KEY_ENCLOSED_PYTHREAD in taskProfileAttrs_:
-                vlogif._LogOEC(False, -3010)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00014)
                 return None
 
         res = _FwTask( taskPrf_=taskPrf_
@@ -241,12 +231,12 @@ class _FwTask(_AbstractTask):
 
         if taskPrf_ is not None:
             if not (taskPrf_.isValid and taskPrf_.isEnclosingPyThread):
-                vlogif._LogOEC(False, -3011)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00015)
                 return None
         elif taskProfileAttrs_ is not None:
             if enclosedPyThread_ is None:
                 if not _AbstractProfile._ATTR_KEY_ENCLOSED_PYTHREAD in taskProfileAttrs_:
-                    vlogif._LogOEC(False, -3012)
+                    vlogif._LogOEC(False, _EFwErrorCode.VUE_00016)
                     return None
 
         res = _FwTask( taskPrf_=taskPrf_
@@ -263,7 +253,6 @@ class _FwTask(_AbstractTask):
             res.CleanUp()
             res = None
         return res
-
 
     @property
     def _isInvalid(self) -> bool:
@@ -287,7 +276,7 @@ class _FwTask(_AbstractTask):
 
     @property
     def _executionProfile(self) -> _ExecutionProfile:
-        return None if self.__rbl is None else self.__rbl.executionProfile
+        return None if self.__rbl is None else self.__rbl._executionProfile
 
     @property
     def _euRNumber(self) -> int:
@@ -299,12 +288,17 @@ class _FwTask(_AbstractTask):
         else:
             return self._euRNum
 
-    @property
-    def _eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
+    def _GetTaskXPhase(self) -> _ETaskExecutionPhaseID:
         if self._isInvalid:
             return _ETaskExecutionPhaseID.eNone
         with self.__mtxData:
-            return self._tskEPhase
+            return self._tskXPhase
+
+    def _GetTaskApiContext(self) -> _ETaskApiContextID:
+        if self._isInvalid:
+            return _ETaskApiContextID.eDontCare
+        with self.__mtxData:
+            return self._tskApiCtx
 
     def _IncEuRNumber(self) -> int:
         if self._isInvalid or (self.__rbl is None):
@@ -315,12 +309,12 @@ class _FwTask(_AbstractTask):
         else:
             return _AbstractTask._IncEuRNumber(self)
 
-    def _PropagateLcProxy(self):
+    def _PropagateLcProxy(self, lcProxy_ =None):
         if self._isInvalid:
             return
         with self.__mtxData:
-            if self._lcProxy is not None:
-                self.__rbl._SetLcProxy(self._lcProxy)
+            if self._PcIsLcProxySet():
+                self.__rbl._PcSetLcProxy(self if lcProxy_ is None else lcProxy_)
 
     def _GetLcCompID(self) -> _ELcCompID:
         if self._isInvalid or (self.__rbl is None) or self.__rbl._isInvalid:
@@ -330,16 +324,16 @@ class _FwTask(_AbstractTask):
     def _StartTask(self, semStart_ : _BinarySemaphore =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None) -> bool:
         if self._isInvalid:
             return False
-        if not self._lcProxy.isLcOperable:
+        if not self._PcIsLcOperable():
             return False
 
         with self.__mtxApi:
             if self.isEnclosingPyThread:
                 if semStart_ is not None:
-                    vlogif._LogOEC(True, -1293)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00196)
                     return False
             elif not isinstance(semStart_, _BinarySemaphore):
-                vlogif._LogOEC(True, -1294)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00197)
                 return False
 
             _oppc = tskOpPreCheck_
@@ -387,7 +381,7 @@ class _FwTask(_AbstractTask):
             if _prvBid is not None:
                 curTask_._SetFwApiBookmark(_EFwApiBookmarkID.eXTaskApiBeginActionStart)
 
-            self._SetTaskExecPhase(_ETaskExecutionPhaseID.eFwHandling)
+            self._SetTaskXPhase(_ETaskExecutionPhaseID.eFwHandling)
             self.linkedPyThread.start()
 
             if _prvBid is not None:
@@ -405,19 +399,17 @@ class _FwTask(_AbstractTask):
                         _tnid = self.linkedPyThread.native_id
                     self.taskBadge._UpdateRuntimeIDs(threadUID_=_tuid, threadNID_=_tnid)
 
-        if not res:
-            pass
-        elif not self.isDone:
+        if res and not self.isDone:
             if self.__rbl.isMainXTaskRunnable:
-                if not self._lcProxy.hasLcAnyFailureState:
+                if not self._PcHasLcAnyFailureState():
                     _lcCompID = self.__rbl._eRunnableType.toLcCompID
-                    self._lcProxy._SetLcOperationalState(_lcCompID, True, atask_=self)
+                    self._PcSetLcOperationalState(_lcCompID, True, self)
         return True
 
     def _RestartTask(self, semStart_ : _BinarySemaphore =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None) -> bool:
         if self._isInvalid:
             return False
-        vlogif._LogOEC(True, -1295)
+        vlogif._LogOEC(True, _EFwErrorCode.VFE_00198)
         return False
 
     def _StopTask(self, semStop_ : _BinarySemaphore =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None) -> bool:
@@ -427,13 +419,13 @@ class _FwTask(_AbstractTask):
         with self.__mtxApi:
             if self.isEnclosingPyThread:
                 if semStop_ is not None:
-                    vlogif._LogOEC(True, -1296)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00199)
                     return False
             elif (semStop_ is not None) and not isinstance(semStop_, _BinarySemaphore):
-                vlogif._LogOEC(True, -1297)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00200)
                 return False
             elif self.__startStopSem is not None:
-                vlogif._LogOEC(True, -1298)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00201)
                 return False
 
             _oppc = tskOpPreCheck_
@@ -481,6 +473,7 @@ class _FwTask(_AbstractTask):
         return True
 
     def _JoinTask(self, timeout_ : _Timeout =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ : _AbstractTask =None) -> bool:
+
         if self._isInvalid or (self.linkedPyThread is None):
             return False
         if timeout_ is not None:
@@ -488,12 +481,6 @@ class _FwTask(_AbstractTask):
                 return False
             elif timeout_.isInfiniteTimeout:
                 timeout_ = None
-
-        _myLogPrefix = self.__logPrefix
-        if (self.__rbl is None) or self.__rbl._isInvalid or not self.__rbl.isXTaskRunnable:
-            _midPart = 'task ' + self.taskUniqueName
-        else:
-            _midPart = 'xtask ' + self.__rbl._xtaskInst.xtaskName
 
         if (self._lcDynTLB is not None) and self._lcDynTLB.isCoordinatedShutdownRunning:
             return False
@@ -519,7 +506,7 @@ class _FwTask(_AbstractTask):
             try:
                 self.__resourceTimer.Stop()
             except (BaseException, RuntimeError) as xcp:
-                vlogif._LogOEC(False, -3013)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00017)
 
         res                    = False
         _prvBid                = None
@@ -578,10 +565,9 @@ class _FwTask(_AbstractTask):
                     continue
 
         except _XcoExceptionRoot as xcp:
-            pass
-
+            pass 
         except KeyboardInterrupt:
-            pass
+            pass 
         except BaseException as xcp:
             _xcpCaught = xcp
 
@@ -590,17 +576,16 @@ class _FwTask(_AbstractTask):
                 curTask_._SetFwApiBookmark(_prvBid)
 
             if _xcpCaught is not None:
-                logif._LogUnhandledXcoBaseXcp(_xcpCaught)
+                logif._LogUnhandledXcoBaseXcpEC(_EFwErrorCode.FE_00019, _xcpCaught)
 
         if not res:
             if _bCoordShutdownRunning:
-                pass
+                pass 
             elif timeout_ is not None:
-                vlogif._LogOEC(False, -3014)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00018)
             else:
-                vlogif._LogOEC(False, -3015)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00019)
         return res
-
 
     def _ToString(self, *args_, **kwargs_):
         return _AbstractTask._ToString(self)
@@ -649,6 +634,7 @@ class _FwTask(_AbstractTask):
             return None
 
         with self._tstMutex:
+
             if eNewState_.isFailed:
                 if not (res._isFailedByApiExecutionReturn or eNewState_._isFailedByApiExecutionReturn):
                     if self.__rbl._hasExecutionApiFunctionReturnedAbort:
@@ -656,13 +642,13 @@ class _FwTask(_AbstractTask):
                         eNewState_ = _tstate
 
             if eNewState_ == res:
-                pass
+                pass 
             else:
                 _xtc      = self._execConn
                 _lcCompID = self._GetLcCompID()
 
                 if _xtc is None:
-                    pass
+                    pass 
                 else:
                     if eNewState_._isFailedByApiExecutionReturn:
                         self.__rbl._CheckNotifyLcFailure()
@@ -670,7 +656,7 @@ class _FwTask(_AbstractTask):
                 res = _AbstractTask._SetGetTaskState(self, eNewState_)
 
                 if res != eNewState_:
-                    vlogif._LogOEC(True, -1299)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00202)
 
                 elif _xtc is None:
                     pass
@@ -681,23 +667,23 @@ class _FwTask(_AbstractTask):
                         if eNewState_.isFailed:
                             pass
                         elif self.__rbl.isMainXTaskRunnable:
-                            if not self._lcProxy.HasLcCompFRC(_lcCompID, self):
-                                self._lcProxy._SetLcOperationalState(_lcCompID, False, atask_=self)
+                            if not self._PcHasLcCompAnyFailureState(_lcCompID, self):
+                                self._PcSetLcOperationalState(_lcCompID, False, self)
             return res
 
-    def _CreateCeaseTLB(self, bAborting_ =False) -> _LcCeaseTLB:
+    def _CreateCeaseTLB(self, bEnding_ =False) -> _LcCeaseTLB:
         if self._isInvalid or (self.__rbl is None):
             res = None
         else:
-            res = self.__rbl._CreateCeaseTLB(bAborting_=bAborting_)
+            res = self.__rbl._CreateCeaseTLB(bEnding_=bEnding_)
         return res
 
     def _RunThread(self):
         if not self.isStarted:
-            vlogif._LogOEC(True, -1300)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00203)
             return
         if self.isEnclosingPyThread:
-            vlogif._LogOEC(True, -1301)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00204)
             return
 
         with self.__mtxData:
@@ -723,7 +709,7 @@ class _FwTask(_AbstractTask):
         self.__rbl._Run(_semSS, *self.taskProfile.args, **self.taskProfile.kwargs)
 
         if self.taskBadge is None:
-            vlogif._LogOEC(True, -1302)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00205)
             return
 
         if self.isAborting:
@@ -734,7 +720,6 @@ class _FwTask(_AbstractTask):
         _srg = _SyncResourcesGuard._GetInstance()
         if _srg is not None:
             _srg.ReleaseAcquiredSyncResources(self.taskID)
-
 
     @property
     def __logPrefix(self):
@@ -763,28 +748,26 @@ class _FwTask(_AbstractTask):
     def __StartPyThread(self):
 
         if not self.linkedPyThread.is_alive():
-            vlogif._LogOEC(False, -3016)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00020)
             return
-        elif not _TaskUtil.IsCurPyThread(self.linkedPyThread):
-            vlogif._LogOEC(False, -3017)
+        if not _TaskUtil.IsCurPyThread(self.linkedPyThread):
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00021)
             return
 
         self._CheckSetTaskState(_TaskState._EState.eRunning)
 
         _AbstractTask.CreateLcTLB(self)
 
-        self._SetTaskExecPhase(_ETaskExecutionPhaseID.eFwHandling)
+        self._SetTaskXPhase(_ETaskExecutionPhaseID.eFwHandling)
 
         self.__rbl._Run(None, *self.taskProfile.args, **self.taskProfile.kwargs)
 
         if self.taskBadge is None:
-            vlogif._LogOEC(True, -1303)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00206)
             return
 
-        if self.isAborting:
-            self._CheckSetTaskState(_TaskState._EState.eFailed)
-        else:
-            self._CheckSetTaskState(_TaskState._EState.eDone)
+        _ts = _TaskState._EState.eFailed if self.isAborting else _TaskState._EState.eDone
+        self._CheckSetTaskState(_ts)
 
     def __EvaluateCtorParams( self
                             , taskPrf_                    : _TaskProfile       =None
@@ -814,13 +797,13 @@ class _FwTask(_AbstractTask):
 
         if not isinstance(_myTpy, _TaskProfile):
             _valid = False
-            vlogif._LogOEC(True, -1304)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00207)
         elif not (_myTpy.isValid and _myTpy.runnable is not None):
             _valid = False
-            vlogif._LogOEC(True, -1305)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00208)
         elif _myTpy.isEnclosingPyThread and not _myTpy.enclosedPyThread.is_alive():
             _valid = False
-            vlogif._LogOEC(True, -1306)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00209)
 
         if not _valid:
             if (_myTpy is not None) and taskPrf_ is None:

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
@@ -18,22 +17,20 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry   import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _XcoExceptionRoot
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _XcoException
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util            import _Util
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines         import _LcConfig
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxy           import _LcProxy
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex       import _Mutex
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge    import _TaskBadge
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror    import _TaskError
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyclient     import _LcProxyClient
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _ETernaryOpResult
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _CommonDefines
 
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex     import _Mutex
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge  import _TaskBadge
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskerror  import _TaskError
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.err.euerrorbin import _EuErrorBin
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.err.euerrorbin import _EuFEBinTable
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+from xcofdk._xcofw.fw.fwssys.fwerrh.euerrorbin   import _EuErrorBin
+from xcofdk._xcofw.fw.fwssys.fwerrh.euerrorbin   import _EuFEBinTable
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EErrorHandlerCallbackID(_FwIntEnum):
@@ -74,9 +71,7 @@ class _EErrorHandlerCallbackID(_FwIntEnum):
     def isAbortTaskDueToFatalError(self):
         return self == _EErrorHandlerCallbackID.eAbortTaskDueToFatalError
 
-
 class _EuErrorHandler(_LcProxyClient):
-
 
     __slots__  = [ '__mtxApiEH' , '__mtxData' , '__eeBin' , '__feeBin' ]
     __bIGONRE_FOREGIN_USER_ERRORS       = True
@@ -95,13 +90,12 @@ class _EuErrorHandler(_LcProxyClient):
                                  , eCallbackID_           : _EErrorHandlerCallbackID
                                  , curFatalError_         : _FatalEntry               =None
                                  , lstForeignFatalErrors_ : list                     =None) -> _ETernaryOpResult:
-        vlogif._LogOEC(True, -1460)
+        vlogif._LogOEC(True, _EFwErrorCode.VFE_00487)
         return _ETernaryOpResult.Abort()
 
     @property
     def _isForeignErrorListener(self):
         return None if self.__mtxApiEH is None else self.__myTaskBadge.hasForeignErrorListnerTaskRight
-
 
     @property
     def _curOwnError(self):
@@ -114,7 +108,6 @@ class _EuErrorHandler(_LcProxyClient):
             return res
 
     def _AddEuError(self, euEEntry_ : _ErrorEntry) -> bool:
-
         try:
             if self.__mtxApiEH is None:
                 _opr = _EuErrorBin._EErrBinOpResult.eErrBinOpResultInvalidObject
@@ -130,16 +123,16 @@ class _EuErrorHandler(_LcProxyClient):
                 if _bFErr:
                     with self.__mtxData:
                         _opr = self.__AddForeignErrorEntry(euEEntry_, forceOperation_=False)
+
                 else:
                     with self.__mtxApiEH:
                         _opr = self.__SetOwnErrorEntry(euEEntry_, forceOperation_=False)
             res = _opr.isErrBinOpResultSuccess
             if not res:
                 if not _opr.isErrBinOpResultDuplicateInsertionError:
-                    pass
+                    pass 
                 else:
                     res = True
-
         except KeyboardInterrupt as xcp:
             res = False
         except BaseException as xcp:
@@ -147,28 +140,25 @@ class _EuErrorHandler(_LcProxyClient):
         return res
 
     def _ProcEuErrors(self, bCheckForFatalErrorsOnly_ =False) -> _ETernaryOpResult:
-
         if self.__mtxApiEH is None:
             return _ETernaryOpResult.Abort()
 
         with (self.__mtxApiEH):
-            _myLcPxy    = self.__myLcProxy
-            _myTskBadge = self.__myTaskBadge
-
-            _bAborting       = self.isAborting
-            _bInvalidPxy     = _myLcPxy is None
+            _bAborting       = self.__isAborting
+            _myTskBadge      = self.__myTaskBadge
+            _bInvalidPxy     = not self._PcIsLcProxySet()
             _bInvalidBadge   = _myTskBadge is None
-            _bSomeLcFailure  = _myLcPxy.hasLcAnyFailureState
-            _bPxyUnavailable = not _myLcPxy.isLcProxyAvailable
+            _bSomeLcFailure  = self._PcHasLcAnyFailureState()
+            _bPxyUnavailable = self._PcIsLcProxyModeShutdown()
             _bUnexpectedCall = _bInvalidBadge or _bInvalidPxy or _bAborting or _bPxyUnavailable
 
             if _bUnexpectedCall or _bSomeLcFailure:
                 if _bUnexpectedCall:
                     _callbackID = _EErrorHandlerCallbackID.eAbortTaskDueToUnexpectedCall
-                    vlogif._LogOEC(True, -1461)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00488)
 
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_EuErrorHandler_TextID_001).format(self.__myUniqueName)
-                    _myFE = logif._CreateLogImplError(_errMsg)
+                    _myFE = logif._CreateLogImplErrorEC(_EFwErrorCode.FE_00025, _errMsg)
                     res = self._ProcErrorHandlerCallback(_callbackID, curFatalError_=_myFE)
                 else:
                     res = _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
@@ -194,7 +184,6 @@ class _EuErrorHandler(_LcProxyClient):
                     _callbackID = _EErrorHandlerCallbackID.eAbortTaskDueToDieError
                     return self._ProcErrorHandlerCallback(_callbackID, curFatalError_=_curOwnErr)
 
-
                 if _curOwnErr.eErrorImpact.isCausedByFatalError:
                     if _myTskBadge.isFwMain:
                         _callbackID = _EErrorHandlerCallbackID.eProcessFwMainFatalError
@@ -204,16 +193,13 @@ class _EuErrorHandler(_LcProxyClient):
                     return self._ProcErrorHandlerCallback(_callbackID, curFatalError_=_curOwnErr)
 
                 self.__eeBin.ClearCurError()
-
                 return _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
 
-
-
             if not _myTskBadge.hasForeignErrorListnerTaskRight:
-                vlogif._LogOEC(True, -1462)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00489)
                 return _ETernaryOpResult.Abort()
             elif self._GetStoredFFEsList() is None:
-                vlogif._LogOEC(True, -1463)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00490)
                 return _ETernaryOpResult.Abort()
 
             _bProcFErrList = (_pendingFErrList is not None) or (len(self._GetStoredFFEsList()) > 0)
@@ -226,11 +212,10 @@ class _EuErrorHandler(_LcProxyClient):
             return res
 
     def _ProcUnhandledXcp(self, xcp_: _XcoExceptionRoot):
-
         if self.__mtxApiEH is None:
             return False
         if not isinstance(xcp_, _XcoExceptionRoot):
-            vlogif._LogOEC(True, -1464)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00491)
             return False
 
         _myXcoXcp = None if xcp_.isXTaskException else xcp_
@@ -238,16 +223,16 @@ class _EuErrorHandler(_LcProxyClient):
             _myXcoXcp = None
 
         if not (xcp_.isXTaskException or (_myXcoXcp is not None)):
-            vlogif._LogOEC(True, -1465)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00492)
             return False
         elif (_myXcoXcp is not None) and not (_myXcoXcp.isXcoBaseException or _myXcoXcp.isLogException or _myXcoXcp.isDieException):
-            vlogif._LogOEC(True, -1466)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00493)
             return False
 
         if xcp_.isXTaskException:
             _myFE = logif._GetCurrentXTaskErrorEntry(xcp_.uniqueID)
             if _myFE is None:
-                vlogif._LogOEC(True, -1467)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00494)
                 return False
             _myXcpUID   = _myFE.uniqueID
             _myXcpTName = _myFE.taskName
@@ -262,25 +247,25 @@ class _EuErrorHandler(_LcProxyClient):
             _curOwnErr = self._curOwnError
 
             if (_myXcoXcp is not None) and _myXcoXcp.taskID != self.__myTaskBadge.taskID:
-                vlogif._LogOEC(True, -1468)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00495)
                 return False
             if _curOwnErr is None:
-                vlogif._LogOEC(True, -1469)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00496)
                 return False
             if _curOwnErr.uniqueID == _myXcpUID:
                 return True
             if _curOwnErr.isFatalError:
                 return True
 
-            vlogif._LogOEC(True, -1470)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00497)
             return False
 
-        logif._LogUnhandledXcoBaseXcp(_myXcoXcp)
+        logif._LogUnhandledXcoBaseXcpEC(_EFwErrorCode.FE_00018, _myXcoXcp)
         return True
 
     def _SetUpEuEH(self, mtxApi_ : _Mutex):
         if self.__mtxApiEH is not None:
-            vlogif._LogOEC(True, -1471)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00498)
         if not _Util.IsInstance(mtxApi_, _Mutex, bThrowx_=True):
             return
 
@@ -288,13 +273,13 @@ class _EuErrorHandler(_LcProxyClient):
         _tb = getattr(self, _FwTDbEngine.GetText(_EFwTextID.ePreDefinedMethod_TaskBadge), None)
         _te = getattr(self, _FwTDbEngine.GetText(_EFwTextID.ePreDefinedMethod_TaskError), None)
         if _tb is None:
-            vlogif._LogOEC(True, -1472)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00499)
             return
         if _te is None:
-            vlogif._LogOEC(True, -1473)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00500)
             return
         if _rn is None:
-            vlogif._LogOEC(True, -1474)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00501)
             return
 
         _feeBin    = None
@@ -314,9 +299,7 @@ class _EuErrorHandler(_LcProxyClient):
 
     def _ToString(self, *args_, **kwargs_):
         res = None
-        if self.__mtxApiEH is None:
-            pass
-        else:
+        if self.__mtxApiEH is not  None:
             with self.__mtxApiEH:
                 _midPart = _CommonDefines._CHAR_SIGN_DASH if self.__eeBin is None else self.__eeBin.ToString()
                 res      = _FwTDbEngine.GetText(_EFwTextID.eEuErrorHandler_ToString_01).format(self.__myTaskBadge.taskUniqueName, _midPart)
@@ -340,6 +323,10 @@ class _EuErrorHandler(_LcProxyClient):
             self.__mtxApiEH = None
 
     @property
+    def __isAborting(self) -> bool:
+        return True if self.__mtxApiEH is None else self.isAborting
+
+    @property
     def __myTaskBadge(self) -> _TaskBadge:
         return None if self.__mtxApiEH is None else self.taskBadge
 
@@ -349,20 +336,17 @@ class _EuErrorHandler(_LcProxyClient):
 
     @property
     def __myUniqueName(self):
-        return type(self).__name__ if self.__myTaskBadge is None else self.__myTaskBadge.taskUniqueName
+        _tskBadge = self.__myTaskBadge
+        return type(self).__name__ if _tskBadge is None else _tskBadge.taskUniqueName
 
     @property
     def __myEuRNumber(self) -> int:
         return None if self.__mtxApiEH is None else self.euRNumber
 
-    @property
-    def __myLcProxy(self) -> _LcProxy:
-        return None if self.__mtxApiEH is None else self._lcProxy
-
     def __SetOwnErrorEntry(self, ownErrorEntry_ : _ErrorEntry, forceOperation_ =False) -> _EuErrorBin._EErrBinOpResult:
         res = _EuErrorBin._EErrBinOpResult.eErrBinOpResultInvalidObject
         if ownErrorEntry_.isInvalid:
-            pass
+            pass 
         else:
             if self.__eeBin is None:
                 eeBin = _EuErrorBin(ownErrorEntry_.taskID, ownErrorEntry_.taskID, self.__mtxApiEH, ownErrorEntry_)
@@ -379,7 +363,7 @@ class _EuErrorHandler(_LcProxyClient):
         if self.__feeBin is None:
 
             res = _EuErrorBin._EErrBinOpResult.eErrBinOpResultImplError
-            vlogif._LogOEC(True, -1475)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00502)
         else:
             res = self.__feeBin.AddForeginErrorEntry(foreignErrorEntry_, force_=forceOperation_)
         return res
@@ -414,7 +398,7 @@ class _EuErrorHandler(_LcProxyClient):
                 elif self.__myTaskError.currentErrorUniqueID != self.__eeBin.currentError.uniqueID:
                     _bMisMatch = True
             if _bMisMatch:
-                vlogif._LogOEC(True, -1476)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00503)
 
                 if _bEmptyTE:
                     _bEmptyEeBin = True
@@ -424,7 +408,6 @@ class _EuErrorHandler(_LcProxyClient):
                 else:
                     _bAllEmpty, _bEmptyEeBin = False, False
                     self.__SetOwnErrorEntry(self.__myTaskError._currentErrorEntry)
-
         return _bAllEmpty, _bEmptyEeBin, _pendingFErrList
 
     def __ProcForeignErrors(self, pendingFErrList_ : list) -> _ETernaryOpResult:
@@ -443,12 +426,12 @@ class _EuErrorHandler(_LcProxyClient):
                 res = self._ProcErrorHandlerCallback(_callbackID, lstForeignFatalErrors_=None)
             else:
                 res = _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
-
             return res
 
         if _numStored > 0:
             if len(_lstNew) != _numStored:
                 _bSameList = False
+
             else:
                 _bSameList = True
                 for _ee in _lstStoredFFEs:
@@ -464,7 +447,6 @@ class _EuErrorHandler(_LcProxyClient):
 
             if not _bSameList:
                 _lstStoredFFEs.clear()
-                pass
             else:
                 _lstNew.clear()
                 _lstNew = None

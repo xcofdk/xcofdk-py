@@ -7,12 +7,10 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _LogErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _XTaskErrorBase:
     __slots__ = [ '__uid' , '__em' , '__ec' , '__bFE' , '__bDE' ]

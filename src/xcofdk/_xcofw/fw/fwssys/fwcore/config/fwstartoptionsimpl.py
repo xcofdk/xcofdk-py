@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 from enum import unique
 
@@ -15,20 +14,23 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging                import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.fwargparser       import _FwArgParser
 from xcofdk._xcofw.fw.fwssys.fwcore.base.fwargparser       import _ParsedNamespace
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartuppolicy import _FwStartupPolicy
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate         import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject         import _ProtectedAbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes      import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes      import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EFwStartOptionID(_FwIntEnum):
     eUserLogLevel               = 0
     eUserDisableLogTimestamp    = auto()
     eUserDisableLogHighlighting = auto()
-
+    eUserEnableLogCallstack     = auto()
+    eSuppressStartPreamble      = auto()
 
 class _FwStartOptionSpec:
     __slots__ = [ '__name' , '__help' , '__default' , '__bSpd' , '__choices' ]
@@ -39,7 +41,6 @@ class _FwStartOptionSpec:
         self.__help    = help_
         self.__default = default_
         self.__choices = None
-
 
     @property
     def isSupported(self):
@@ -69,11 +70,7 @@ class _FwStartOptionSpec:
     def optionChoices(self, choices_):
         self.__choices = choices_
 
-
 class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
-
-    __ME = True
-
     __USAGE               = None
     __PARSER              = None
     __ALL_OPT_UNSUPPORTED = None
@@ -120,11 +117,11 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
         if _FwStartOptionsImpl.__ALL_OPT_NAME_TABLE is not None:
             _FwStartOptionsImpl.__ALL_OPT_NAME_TABLE.clear()
 
-        _FwStartOptionsImpl.__USAGE = None
+        _FwStartOptionsImpl.__USAGE  = None
         _FwStartOptionsImpl.__PARSER = None
+        _FwStartOptionsImpl.__ALL_OPT_SPEC_TABLE  = None
+        _FwStartOptionsImpl.__ALL_OPT_NAME_TABLE  = None
         _FwStartOptionsImpl.__ALL_OPT_UNSUPPORTED = None
-        _FwStartOptionsImpl.__ALL_OPT_SPEC_TABLE = None
-        _FwStartOptionsImpl.__ALL_OPT_NAME_TABLE = None
 
     @staticmethod
     def _GetUsage() -> str:
@@ -138,7 +135,6 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
     def _isValid(self):
         return self.__pns is not None
 
-
     @property
     def _userLogLevel(self) -> str:
         return None if not self._isValid else self.__pns.log_level
@@ -150,6 +146,14 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
     @property
     def _isUserLogHighlightingDisabled(self) -> bool:
         return False if not self._isValid else self.__pns.disable_log_highlighting
+
+    @property
+    def _isUserLogCallstackEnabled(self) -> bool:
+        return False if not self._isValid else self.__pns.enable_log_callstack
+
+    @property
+    def _isSuppressStartPreambleEnabled(self) -> bool:
+        return False if not self._isValid else self.__pns.suppress_start_preamble
 
     @property
     def _isUserDieModeDisabled(self) -> bool:
@@ -185,7 +189,7 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
 
     @property
     def _isReleaseModeEnabled(self) -> bool:
-        return False
+        return True
 
     @property
     def _isReleaseModeDisabled(self) -> bool:
@@ -193,7 +197,7 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
 
     @property
     def _isIgnoreEvnVarsEnabled(self) -> bool:
-        return False
+        return True
 
     @property
     def _isIgnoreUserConfigFileEnabled(self) -> bool:
@@ -212,27 +216,11 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
             return None
 
         res  = 'FW start options:\n'
-        res += '  {:<25s} : {:<s}\n'.format('ignoreEnvVars'        , str(self._isIgnoreEvnVarsEnabled))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += '  {:<25s} : {:<s}\n'.format('ignoreUserConfig'     , str(self._isIgnoreUserConfigFileEnabled))
-        res += '  {:<25s} : {:<s}\n'.format('userConfigFile'       , str(self._userConfigFile))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += '  {:<25s} : {:<s}\n'.format('ignoreFwCustomConfig' , str(self._isIgnoreFwCustomConfigFileEnabled))
-        res += '  {:<25s} : {:<s}\n'.format('fwCustomConfigFile'   , str(self._fwwCustomConfigFile))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += '  {:<25s} : {:<s}\n'.format('fwDieMode'            , str(not self._isFwDieModeDisabled))
-        res += '  {:<25s} : {:<s}\n'.format('fwXcpMode'            , str(not self._isFwExceptionModeDisabled))
-        res += '  {:<25s} : {:<s}\n'.format('fwLogLevel'           , self._fwLogLevel)
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += '  {:<25s} : {:<s}\n'.format('userDieMode'          , str(not self._isUserDieModeDisabled))
-        res += '  {:<25s} : {:<s}\n'.format('userXcpMode'          , str(not self._isUserExceptionModeDisabled))
-        res += '  {:<25s} : {:<s}\n'.format('userLogLevel'         , str(self._userLogLevel))
-        res += '  {:<25s} : {:<s}\n'.format('suppressFwWarnings'   , str(self._isUserSuppressFwWarningsEnabled))
-        res += '  {:<25s} : {:<s}\n'.format('userLogTimestamp'     , str(not self._isUserLogTimestampDisabled))
-        res += '  {:<25s} : {:<s}\n'.format('userLogHighlighting'  , str(not self._isUserLogHighlightingDisabled))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += '  {:<25s} : {:<s}\n'.format('enableReleaseMode'    , str(self._isReleaseModeEnabled))
-        res += '  {:<25s} : {:<s}\n'.format('disableReleaseMode'   , str(self._isReleaseModeDisabled))
+        res += '  {:<25s} : {:<s}\n'.format('userLogLevel'          , str(self._userLogLevel))
+        res += '  {:<25s} : {:<s}\n'.format('userLogTimestamp'      , str(not self._isUserLogTimestampDisabled))
+        res += '  {:<25s} : {:<s}\n'.format('userLogHighlighting'   , str(not self._isUserLogHighlightingDisabled))
+        res += '  {:<25s} : {:<s}\n'.format('userLogCallstack'      , str(not self._isUserLogCallstackEnabled))
+        res += '  {:<25s} : {:<s}\n'.format('suppressStartPreamble' , str(not self._isSuppressStartPreambleEnabled))
         res += _CommonDefines._CHAR_SIGN_NEWLINE
         return res
 
@@ -243,17 +231,13 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
         self.__pns     = None
         self.__lstOpts = None
 
-
-    @staticmethod
-    def __IsME():
-        return _FwStartOptionsImpl.__ME
-
     @staticmethod
     def __GetFwProgName():
         res = _FwTDbEngine.GetText(_EFwTextID.eFwStartOptionsImpl_ParserProgName)
         if res is None:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(601)
-            vlogif._LogOEC(True, -1621)
+            _errCode = _EFwErrorCode.FE_LCSF_006
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
+            vlogif._LogOEC(True, _errCode)
         return res
 
     @staticmethod
@@ -272,8 +256,9 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
     def __AddOptionSpec(optID_ : _EFwStartOptionID, bSupported_ : bool, helpID_: _EFwTextID, default_ =None) -> dict:
         _nameTbl = _FwStartOptionsImpl.__ALL_OPT_NAME_TABLE
         if _nameTbl is None:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(602)
-            vlogif._LogOEC(True, -1622)
+            _errCode = _EFwErrorCode.FE_LCSF_007
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
+            vlogif._LogOEC(True, _errCode)
             return None
 
         if (default_ is not None) and isinstance(default_, _EFwTextID):
@@ -291,7 +276,7 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
     def __ValidateStartOptions(startOptions_ : list) -> list:
         if startOptions_ is not None:
             if not isinstance(startOptions_, list):
-                vlogif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_097).format(type(startOptions_).__name__))
+                vlogif._XLogErrorEC(_EFwErrorCode.UE_00188, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_097).format(type(startOptions_).__name__))
                 return None
 
         res = []
@@ -299,7 +284,7 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
         if startOptions_ is not None:
             for _ee in startOptions_:
                 if not (isinstance(_ee, str) and len(_ee.strip()) > 0):
-                    vlogif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_098).format(startOptions_))
+                    vlogif._XLogErrorEC(_EFwErrorCode.UE_00189, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_098).format(startOptions_))
                     return None
 
                 _ee = _ee.strip()
@@ -341,8 +326,9 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
         res = _FwArgParser(_progName, argumentDefault_=None, bAddHelp_=False, bExitOnError_=False)
         if not res.isErrorFree:
             res = None
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(603)
-            vlogif._LogOEC(True, -1623)
+            _errCode = _EFwErrorCode.FE_LCSF_008
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
+            vlogif._LogOEC(True, _errCode)
         else:
             for _ee in _lstAD:
                 _name = _ee.pop('name')
@@ -373,7 +359,7 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
             res = _parser.Parse(startOptions_)
         except Exception as xcp:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_092).format(xcp)
-            vlogif._XLogError(_errMsg)
+            vlogif._XLogErrorEC(_EFwErrorCode.UE_00190, _errMsg)
         finally:
             _SOPT_STR = _CommonDefines._CHAR_SIGN_DASH if len(startOptions_) < 1 else _CommonDefines._CHAR_SIGN_SPACE.join(startOptions_)
 
@@ -384,13 +370,9 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
                 else:
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_096).format(_SOPT_STR, _parser.errorMessage, _FwStartOptionsImpl._GetUsage())
                     _parser.ClearError()
-                vlogif._XLogError(_errMsg)
-            elif (not _FwStartOptionsImpl.__IsME()) and res.enable_release_mode and res.disable_release_mode:
-                res = None
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_091).format(_SOPT_STR, _FwStartOptionsImpl._GetUsage())
-                vlogif._LogOEC(False, -3034)
+                vlogif._XLogErrorEC(_EFwErrorCode.UE_00191, _errMsg)
             else:
-                if not bRelMode_:
+                if not (bRelMode_ or (len(startOptions_)<1)):
                     _FwArgParser.PrintNamespace(res)
 
         return res
@@ -401,8 +383,9 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
             return _FwStartOptionsImpl.__ALL_OPT_SPEC_TABLE
 
         if not (isinstance(startupPolicy_, _FwStartupPolicy) and startupPolicy_.isValid):
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(605)
-            vlogif._LogOEC(True, -1624)
+            _errCode = _EFwErrorCode.FE_LCSF_009
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
+            vlogif._LogOEC(True, _errCode)
             return None
 
         _GT  = _FwTDbEngine.GetText
@@ -412,6 +395,8 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
               _EID.eUserLogLevel.value               : _GT(_EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserLogLevel)
             , _EID.eUserDisableLogTimestamp.value    : _GT(_EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserDisableLogTimestamp)
             , _EID.eUserDisableLogHighlighting.value : _GT(_EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserDisableLogHighlighting)
+            , _EID.eUserEnableLogCallstack           : _GT(_EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserEnableLogCallstack)
+            , _EID.eSuppressStartPreamble            : _GT(_EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_SuppressStartPreamble)
         }
         _FwStartOptionsImpl.__ALL_OPT_NAME_TABLE = _allON
 
@@ -420,6 +405,8 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
         res  = _AOS( _EID.eUserLogLevel                , True  , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserLogLevel                ,  _EFwTextID.eMisc_LogLevel_Info )
         res  = _AOS( _EID.eUserDisableLogTimestamp     , True  , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserDisableLogTimestamp     ,  False )
         res  = _AOS( _EID.eUserDisableLogHighlighting  , True  , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserDisableLogHighlighting  ,  False )
+        res  = _AOS( _EID.eUserEnableLogCallstack      , True  , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserEnableLogCallstack      ,  False )
+        res  = _AOS( _EID.eSuppressStartPreamble       , True  , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_SuppressStartPreamble       ,  False )
 
         _FwStartOptionsImpl.__GetOptionSpec(_EID.eUserLogLevel).optionChoices = _GT(_EFwTextID.eFwStartOptionsImpl_ArgSpec_Choices_UserLogLevel).split()
 
@@ -428,4 +415,3 @@ class _FwStartOptionsImpl(_ProtectedAbstractSlotsObject):
             _allUnsupported = None
         _FwStartOptionsImpl.__ALL_OPT_UNSUPPORTED = _allUnsupported
         return res
-

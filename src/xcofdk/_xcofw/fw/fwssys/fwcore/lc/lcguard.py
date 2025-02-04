@@ -7,12 +7,10 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask      import _AbstractTask
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines       import _ELcCompID
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstate         import _LcState
-
 
 class _LcGuard(_LcState):
 

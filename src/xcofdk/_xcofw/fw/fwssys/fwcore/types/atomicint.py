@@ -7,15 +7,14 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from threading import RLock as _PyRLock
 
-from xcofdk._xcofw.fwadapter                  import rlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.util import _Util
+from xcofdk._xcofw.fwadapter                     import rlogif
+from xcofdk._xcofw.fw.fwssys.fwcore.base.util    import _Util
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _AtomicInteger(object):
 
@@ -33,7 +32,7 @@ class _AtomicInteger(object):
             val = value_
         elif getattr(value_, _FwTDbEngine.GetText(_EFwTextID.eMisc_Value), None) is None:
             val = None
-            rlogif._LogOEC(True, -1041)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00420)
         else:
             _Util.IsInstance(value_.value, int, bThrowx_=True)
             self.__bAttr = True
@@ -59,7 +58,7 @@ class _AtomicInteger(object):
 
     def Increment(self):
         if self.__bAttr:
-            rlogif._LogOEC(True, -1042)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00421)
 
         with self.__lock:
             self.__value += 1
@@ -67,7 +66,7 @@ class _AtomicInteger(object):
 
     def Decrement(self):
         if self.__bAttr:
-            rlogif._LogOEC(True, -1043)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00422)
 
         with self.__lock:
             self.__value -= 1
@@ -125,7 +124,7 @@ class _AtomicInteger(object):
 
     def __Compare(self, other_):
         if other_ is None:
-            rlogif._LogOEC(True, -1044)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00423)
             return -2
 
         otherValueAttr = getattr(other_, _FwTDbEngine.GetText(_EFwTextID.eMisc_Value), None)

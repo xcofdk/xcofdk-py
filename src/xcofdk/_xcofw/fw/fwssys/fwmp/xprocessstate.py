@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 from multiprocessing import Process as _PyProcess
 
@@ -17,7 +16,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObje
 from xcofdk._xcofw.fw.fwssys.fwcore.types.atomicint    import _AtomicInteger
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex     import _Mutex
-
 
 class _XProcessState(_AbstractSlotsObject):
     @unique
@@ -162,9 +160,7 @@ class _XProcessState(_AbstractSlotsObject):
             return _curSt
 
     def _CleanUp(self):
-        if self.__isInvalid:
-            pass
-        else:
+        if not self.__isInvalid:
             if self.__bAutoCreatedMtx:
                 self.__mtxApi.CleanUp()
             self.__aiState.CleanUp()

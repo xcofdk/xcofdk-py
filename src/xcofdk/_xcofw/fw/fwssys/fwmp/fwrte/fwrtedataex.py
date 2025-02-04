@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 from enum import unique
 from enum import IntEnum
@@ -15,7 +14,6 @@ from enum import IntEnum
 from xcofdk.fwcom.xmpdefs import ChildProcessResultData
 
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.fwrteseed import _FwRteSeed
-
 
 class _FwRteDataExchange:
 
@@ -62,10 +60,11 @@ class _FwRteDataExchange:
 
         if self.__st == _FwRteDataExchange._ERteDataState.eInit:
             res = '{}\n\t{}\n\t#args={} , #kwargs_={}'.format(_pref, self.__childRteSeed, len(self.__args), len(self.__kwargs))
+
         else:
             res = '{}\n\tchild process: {}\n\tparent process: {}'.format(_pref, self.__childRteSeed, self.__parentRteSeed)
-        return res
 
+        return res
 
     @property
     def isValid(self):
@@ -74,7 +73,6 @@ class _FwRteDataExchange:
     @property
     def isAttchToChildProcess(self):
         return self.isValid and (self.__st == _FwRteDataExchange._ERteDataState.eAttachedToChild)
-
 
     @property
     def childRteSeed(self) -> _FwRteSeed:
@@ -112,7 +110,6 @@ class _FwRteDataExchange:
     def currentWarningMessage(self) -> str:
         return self.__wngMsg
 
-
     def AttchToChildProcess(self) -> bool:
         if not self.isValid:
             return False
@@ -127,3 +124,4 @@ class _FwRteDataExchange:
             self.__st = _FwRteDataExchange._ERteDataState.eAttachedToChild
             self.__parentRteSeed = _parentRteSeed
         return _parentRteSeed is not None
+

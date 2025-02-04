@@ -7,10 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _LogUtil
-
 
 def _XIsDieModeEnabled():
     return logif._IsUserDieModeEnabled()
@@ -33,18 +31,17 @@ def _XLogWarning(msg_):
 def _XLogError(msg_):
     _XLogErrorEC(msg_, None, _LogUtil.GetCallstackLevelOffset()+3)
 def _XLogErrorEC(msg_, errCode_ =None, callstackLevelOffset_ =None):
-    logif._XLogErrorEC(msg_, errCode_, callstackLevelOffset_)
+    logif._XLogErrorEC(errCode_, msg_, callstackLevelOffset_, bECSM_=True)
 
 def _XLogFatal(msg_):
     _XLogFatalEC(msg_, None, _LogUtil.GetCallstackLevelOffset()+3)
 def _XLogFatalEC(msg_, errCode_ =None, callstackLevelOffset_ =None):
-    logif._XLogFatalEC(msg_, errCode_, callstackLevelOffset_)
+    logif._XLogFatalEC(errCode_, msg_, callstackLevelOffset_, bECSM_=True)
 
 def _XLogException(msg_, xcp_):
-    _XLogExceptionEC(msg_, None, xcp_, _LogUtil.GetCallstackLevelOffset()+1)
+    _XLogExceptionEC(msg_, None, xcp_, _LogUtil.GetCallstackLevelOffset()+3)
 def _XLogExceptionEC(msg_, errCode_, xcp_, callstackLevelOffset_ =None):
-    logif._XLogSysExceptionEC(msg_, errCode_, xcp_, callstackLevelOffset_=callstackLevelOffset_)
-
+    logif._XLogSysExceptionEC(errCode_, msg_, xcp_, callstackLevelOffset_=callstackLevelOffset_, bECSM_=True)
 
 def _XIsErrorFree() -> bool:
     return logif._GetCurrentXTaskError() is None
@@ -62,11 +59,10 @@ def _XClearCurrentError() -> bool:
 def _XSetError(msg_):
     _XSetErrorEC(msg_, None, _LogUtil.GetCallstackLevelOffset()+3)
 def _XSetErrorEC(msg_, errCode_ =None, callstackLevelOffset_ =None):
-    logif._SetErrorEC(msg_, errCode_, callstackLevelOffset_)
+    logif._SetXErrorEC(errCode_, msg_, callstackLevelOffset_)
 
 def _XSetFatalError(msg_):
     _XSetFatalErrorEC(msg_, None, _LogUtil.GetCallstackLevelOffset()+3)
 def _XSetFatalErrorEC(msg_, errCode_ =None, callstackLevelOffset_ =None):
-    logif._SetFatalErrorEC(msg_, errCode_, callstackLevelOffset_)
-
+    logif._SetXFatalErrorEC(errCode_, msg_, callstackLevelOffset_)
 

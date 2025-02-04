@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import pickle as _PyPickle
 from os                            import getpid       as _PyGetPID
 from multiprocessing.shared_memory import SharedMemory as _PySharedMemory
@@ -15,10 +14,7 @@ from datetime                      import datetime     as _PyDateTime
 
 from xcofdk.fwcom.xmpdefs import EXPMPreDefinedID
 
-
-
 class _FwRteToken:
-
 
     __bPRINT_MSG                 = False
     __TOKEN_HEADER_SIZE          = None
@@ -29,13 +25,10 @@ class _FwRteToken:
     __MIN_TOKEN_PAYLOAD_SIZE     = None
     __DEFAULT_TOKEN_PAYLOAD_SIZE = None
 
-
-
     __slots__ = []
 
     def __init__(self):
         pass
-
 
     @staticmethod
     def GetMinPayloadSize():
@@ -129,7 +122,6 @@ class _FwRteToken:
             shm_.close()
             shm_.unlink()
 
-
     @staticmethod
     def __IsTokenAvailable(tokeName_ : str) -> bool:
         try:
@@ -218,7 +210,6 @@ class _FwRteToken:
             shm_.close()
             return False
 
-
         _hdr = _FwRteToken.__TOKEN_HEADER_OFFSET + _dumpPldLen
         try:
             _dumpHdr = _PyPickle.dumps(_hdr)
@@ -234,14 +225,11 @@ class _FwRteToken:
             shm_.close()
             return False
 
-
         _dumpToken    = bytearray(_dumpHdr + _dumpPld)
         _dumpTokenLen = len(_dumpToken)
 
-
         shm_.buf[:_dumpTokenLen] = _dumpToken
         shm_.close()
-
 
         del _dumpToken
         del _dumpHdr
@@ -268,7 +256,6 @@ class _FwRteToken:
             _FwRteToken.CloseUnlinkToken(shm_)
             return _failedRes
 
-
         _hdrLen = _FwRteToken.__TOKEN_HEADER_SIZE
         _hdrDump = bytes(_buf[:_hdrLen])
         try:
@@ -281,7 +268,6 @@ class _FwRteToken:
             _FwRteToken.CloseUnlinkToken(shm_)
             return _failedRes
 
-
         _pldLen = _hdr - _FwRteToken.__TOKEN_HEADER_OFFSET
         if _bufLen < (_hdrLen+_pldLen):
             if not bIgnoreError_:
@@ -290,7 +276,6 @@ class _FwRteToken:
             return _failedRes
 
         _FwRteToken.__PrintMsg(f'RTE token {_tokenName}: Trying to de-serialize token payload: bufSize={_bufLen} , headerLen={_hdrLen} , payloadLen={_pldLen}')
-
 
         _bDesFailed, _pld = False, None
 
@@ -311,9 +296,7 @@ class _FwRteToken:
 
     @staticmethod
     def __PrintMsg(msg_ : str, bForce_ =False):
-        if not _FwRteToken.__bPRINT_MSG:
-            pass
-        else:
+        if _FwRteToken.__bPRINT_MSG:
             print(f'[RteIpcT] {msg_}')
 
     @staticmethod
@@ -382,5 +365,4 @@ class _FwRteToken:
             del _tmp
 
         return _FwRteToken.__TOKEN_HEADER_SIZE
-
 

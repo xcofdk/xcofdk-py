@@ -7,10 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import sys
 import threading
-
 
 class _SystemResources:
 

@@ -38,7 +38,7 @@ def LoadTests():
 
 class TCRunMain(TestCase):
     def __init__(self):
-        TestCase.__init__(self, methodName='RunMain')
+        super().__init__(methodName='RunMain')
 
     def RunMain(self):
         print()

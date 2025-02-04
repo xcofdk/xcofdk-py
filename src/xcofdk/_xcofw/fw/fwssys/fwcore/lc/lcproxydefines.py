@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable import _AbstractExecutable
@@ -18,7 +17,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject       import _AbstractSlotsObj
 from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask       import _EBitMask
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _FwEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _FwIntFlag
-
 
 @unique
 class _ELcShutdownRequest(_FwEnum):
@@ -37,7 +35,6 @@ class _ELcShutdownRequest(_FwEnum):
     @property
     def isShutdown(self):
         return self == _ELcShutdownRequest.eShutdown
-
 
 @unique
 class _ELcOpModeBitFlag(_FwIntFlag):
@@ -101,7 +98,6 @@ class _ELcOpModeBitFlag(_FwIntFlag):
     @staticmethod
     def RemoveBitFlag(eOmBitMask_ : _FwIntFlag, eOmBitFlag_):
         return _EBitMask.RemoveEnumBitFlag(eOmBitMask_, eOmBitFlag_)
-
 
 class _TaskInfo(_AbstractSlotsObject):
     __slots__ = [ '__taskInst' , '__mtxErrImp' ]
@@ -169,8 +165,8 @@ class _TaskInfo(_AbstractSlotsObject):
         return None if self._isInvalid else self.__taskInst.euRNumber
 
     @property
-    def eTaskExecPhase(self):
-        return _ETaskExecutionPhaseID.eNone if self._isInvalid else self.__taskInst.eTaskExecPhase
+    def eTaskXPhase(self):
+        return _ETaskExecutionPhaseID.eNone if self._isInvalid else self.__taskInst.eTaskXPhase
 
     @property
     def _isInvalid(self):
@@ -187,7 +183,6 @@ class _TaskInfo(_AbstractSlotsObject):
         if (_ti is None) or (_ti.taskBadge is None):
             return False
 
-
         return _ti.linkedPyThread.is_alive()
 
     @property
@@ -201,12 +196,11 @@ class _TaskInfo(_AbstractSlotsObject):
         self.__taskInst  = None
         self.__mtxErrImp = None
 
-
 class _ProxyInfo(_AbstractSlotsObject):
 
     __slots__ = [ '__ctInfo' , '__fwmInfo' ]
 
-    def __init__(self, curTaskInst_ : _AbstractTask, fwMainTaskInfo_ : _TaskInfo):
+    def __init__(self, curTaskInst_ : _AbstractTask, fwMainTaskInfo_ : _TaskInfo, bIgnoreCeaseMode_ =True):
         self.__ctInfo  = None
         self.__fwmInfo = None
         super().__init__()
@@ -225,6 +219,11 @@ class _ProxyInfo(_AbstractSlotsObject):
             self.CleanUp()
         elif (self.__fwmInfo is not None) and not self.__fwmInfo._isResponsive:
             self.CleanUp()
+        elif not bIgnoreCeaseMode_:
+            if curTaskInst_.isInLcCeaseMode:
+                self.CleanUp()
+            elif (self.__fwmInfo is not None) and self.__fwmInfo._taskInst.isInLcCeaseMode:
+                self.CleanUp()
 
     @property
     def curTaskInfo(self) -> _TaskInfo:

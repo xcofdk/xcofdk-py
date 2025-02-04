@@ -9,7 +9,8 @@
 
 
 """
-Package 'xcofdk.fwapi.xmsg' provides blabla...
+Package 'xcofdk.fwapi.xmsg' provides framework's public API for the subsystem
+of messaging.
 """
 
 # ------------------------------------------------------------------------------

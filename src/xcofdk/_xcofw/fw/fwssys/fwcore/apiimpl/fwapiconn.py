@@ -7,17 +7,14 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from threading import RLock as _PyRLock
 
 from xcofdk.fwapi.xtask import XTask
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging             import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate      import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject      import _ProtectedAbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconnap import _FwApiConnectorAP
-
 
 class _FwApiConnector(_ProtectedAbstractSlotsObject):
 
@@ -28,10 +25,10 @@ class _FwApiConnector(_ProtectedAbstractSlotsObject):
         self.__bAvailable = False
         super().__init__(ppass_)
 
-    def FwCNGetXTask(self, xuUniqueID_ : int =0) -> XTask:
+    def FwCNGetXTask(self, xtUID_ : int =0) -> XTask:
         if not self._FwCNIsFwApiAvailable():
             return None
-        return self._GetCurXTask() if xuUniqueID_==0 else self._GetXTask(xuUniqueID_)
+        return self._GetCurXTask() if xtUID_==0 else self._GetXTask(xtUID_)
 
     def FwCNGetCurXTask(self) -> XTask:
         if not self._FwCNIsFwApiAvailable():
@@ -58,6 +55,16 @@ class _FwApiConnector(_ProtectedAbstractSlotsObject):
         if not self._FwCNIsFwApiAvailable():
             return _LcFailure.IsLcErrorFree()
         return self._IsLcErrorFree()
+
+    def _FwCNIsLcShutdownEnabled(self) -> bool:
+        if not self._FwCNIsFwApiAvailable():
+            return False
+        return self._IsLcShutdownEnabled()
+
+    def _FwCNIsXTaskRunning(self, xtUID_ : int) -> bool:
+        if not self._FwCNIsFwApiAvailable():
+            return False
+        return self._IsXTaskRunning(xtUID_)
 
     def _FwCNPublishFwApiConnector(self, bDisconnect_ =False, disconnectSleepTimespanMS_ =None):
         if self.__fwApiLck is None:

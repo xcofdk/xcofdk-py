@@ -7,11 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _EXcoXcpType
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _XcoException
-
 
 class _DieException(_XcoException):
 

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from collections import Counter as _Counter
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines   import _ELogLevel
@@ -26,10 +25,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _EColorCode
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _TextStyle
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import SyncPrint
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _VFatalError:
     __slots__ = [ '__uid' , '__errMsg' , '__errCode' ]
@@ -69,7 +68,6 @@ class _VFatalError:
         self.__errMsg  = None
         self.__errCode = None
 
-
 class _VSystemExit(_XcoException):
 
     def __init__(self, uniqueID_, xcpMsg_ : str, errCode_ : int =None):
@@ -102,15 +100,12 @@ class _VSystemExit(_XcoException):
 
     def _Clone(self):
         res = None
-        if self.eExceptionType is None:
-            pass
-        else:
-            res = _VSystemExit(self.uniqueID, self.message)
+        if self.eExceptionType is not None:
+            res = _VSystemExit(self.uniqueID, self.message, self.__errCode)
             if res.eExceptionType is None:
                 res.CleanUp()
                 res = None
         return res
-
 
 class _VLoggingImpl:
     _VANILLA_LOG_PREFIX = None
@@ -164,7 +159,6 @@ class _VLoggingImpl:
     def _isVSystemExistEnabled(self):
         return _LoggingConfig.GetInstance()._isVSystemExistEnabled if self.__vsysexitEnabled is None else self.__vsysexitEnabled
 
-
     @property
     def _counter(self):
         return self.__counter
@@ -203,7 +197,6 @@ class _VLoggingImpl:
             self.__ffe     = None
             self.__numLogs = 0
         return res
-
 
 def _IsFwDieModeEnabled():
     return _VLoggingImpl._IsFwDieModeEnabled()
@@ -258,62 +251,38 @@ def _LogWarning(msg_):
 def _XLogWarning(msg_):
     _VPrint(_ELogType.XWNG, msg_, None)
 
-def _LogError(msg_):
-    _LogErrorEC(msg_)
-def _LogErrorEC(msg_, errCode_ =None):
+def _LogErrorEC(errCode_, msg_ =None):
     _VPrint(_ELogType.ERR, msg_, errCode_)
-def _XLogError(msg_):
-    _XLogErrorEC(msg_)
-def _XLogErrorEC(msg_, errCode_ =None):
-    _VPrint(_ELogType.XERR, msg_, errCode_)
+def _XLogErrorEC(errCode_, msg_ =None, bECSM_ =False):
+    _VPrint(_ELogType.XERR, msg_, errCode_, bForce_=False, bECSM_=bECSM_)
 
-def _LogNotSupported(msg_):
-    _LogNotSupportedEC(msg_)
-def _LogNotSupportedEC(msg_, errCode_ =None):
+def _LogNotSupportedEC(errCode_, msg_ =None):
     _VPrint(_ELogType.ERR_NOT_SUPPORTED_YET, msg_, errCode_)
-def _XLogNotSupported(msg_):
-    _XLogNotSupportedEC(msg_)
-def _XLogNotSupportedEC(msg_, errCode_ =None):
+def _XLogNotSupportedEC(errCode_, msg_ =None):
     _VPrint(_ELogType.XERR_NOT_SUPPORTED_YET, msg_, errCode_)
 
-def _LogFatal(msg_):
-    _LogFatalEC(msg_)
-def _LogFatalEC(msg_, errCode_ =None):
+def _LogFatalEC(errCode_, msg_ =None):
     _VPrint(_ELogType.FTL, msg_, errCode_)
-def _XLogFatal(msg_):
-    _XLogFatalEC(msg_)
-def _XLogFatalEC(msg_, errCode_ =None):
-    _VPrint(_ELogType.XFTL, msg_, errCode_)
+def _XLogFatalEC(errCode_, msg_ =None, bECSM_ =False):
+    _VPrint(_ELogType.XFTL, msg_, errCode_, bForce_=False, bECSM_=bECSM_)
 
-def _LogBadUse(msg_):
-    _LogBadUseEC(msg_)
-def _LogBadUseEC(msg_, errCode_ =None):
+def _LogBadUseEC(errCode_, msg_ =None):
     _VPrint(_ELogType.FTL_BAD_USE, msg_, errCode_)
 
-def _LogImplError(msg_):
-    _LogImplErrorEC(msg_)
-def _LogImplErrorEC(msg_, errCode_ =None):
+def _LogImplErrorEC(errCode_, msg_ =None):
     _VPrint(_ELogType.FTL_IMPL_ERR, msg_, errCode_)
 
-def _LogNotImplemented(msg_):
-    _LogNotImplementedEC(msg_)
-def _LogNotImplementedEC(msg_, errCode_ =None):
+def _LogNotImplementedEC(errCode_, msg_ =None):
     _VPrint(_ELogType.FTL_NOT_IMPLEMENTED_YET, msg_, errCode_)
 
-def _LogSysError(msg_):
-    _LogSysErrorEC(msg_)
-def _LogSysErrorEC(msg_, errCode_ =None):
+def _LogSysErrorEC(errCode_, msg_ =None):
     _VPrint(_ELogType.FTL_SYS_OP_ERR, msg_, errCode_)
 
-def _LogSysException(msg_):
-    _LogSysExceptionEC(msg_)
-def _LogSysExceptionEC(msg_, errCode_ =None):
-    _VPrint(_ELogType.FTL_SYS_OP_XCP, msg_, errCode_)
+def _LogSysExceptionEC(errCode_, msg_ =None, bECSM_ =False):
+    _VPrint(_ELogType.FTL_SYS_OP_XCP, msg_, errCode_, bForce_=False, bECSM_=bECSM_)
 
 def _PrintException(anyXcp_):
-    if anyXcp_ is None:
-        pass
-    else:
+    if anyXcp_ is not None:
         _myMsg = _FwTDbEngine.GetText(_EFwTextID.eVLogIF_PrintException_FmtStr_01).format(type(anyXcp_).__name__, str(anyXcp_))
         _VPrint(None, _myMsg, None)
 
@@ -360,6 +329,8 @@ def _LogOEC(bFatal_ , errCode_):
     _fmtID = _EFwTextID.eMisc_VLogIF_AutoGeneratedFatalError if bFatal_ else _EFwTextID.eMisc_VLogIF_AutoGeneratedUserError
     _myMsg = _FwTDbEngine.GetText(_fmtID)
     if _myMsg is not None:
+        if isinstance(errCode_, _EFwErrorCode):
+            errCode_ = errCode_.toSInt
         _myMsg = _myMsg.format(errCode_)
         if bFatal_:
             _VPrint(_ELogType.FTL, _myMsg, None, bForce_=True)
@@ -394,7 +365,7 @@ def _HighlightText(txt_ : str, eLogType_ : _ELogType):
         res = _TextStyle.ColorText(txt_, _cc)
     return res
 
-def _VPrint(eLogType_ : _ELogType, msg_, errCode_, bForce_ =False):
+def _VPrint(eLogType_ : _ELogType, msg_, errCode_, bForce_ =False, bECSM_ =False):
     if _VLoggingImpl._VANILLA_LOG_PREFIX is None:
         _VLoggingImpl._VANILLA_LOG_PREFIX = _FwTDbEngine.GetText(_EFwTextID.eMisc_VLogIF_VanillaLogPrefix)
 
@@ -409,7 +380,7 @@ def _VPrint(eLogType_ : _ELogType, msg_, errCode_, bForce_ =False):
         msg = _VLoggingImpl._VANILLA_LOG_PREFIX + msg_
         SyncPrint.Print(msg)
         return
-    elif not _VLoggingImpl.IsLogLevelEnabled(eLogType_):
+    if not _VLoggingImpl.IsLogLevelEnabled(eLogType_):
         return
 
     _eLogTypeGrpID = _LogUtil.GetLogTypeGroup(eLogType_)
@@ -417,10 +388,33 @@ def _VPrint(eLogType_ : _ELogType, msg_, errCode_, bForce_ =False):
 
     if eLogType_ == _ELogType.FREE:
         _outMsg = _CommonDefines._STR_EMPTY
+        if msg_ is None:
+            msg_ = _CommonDefines._STR_EMPTY
     else:
-        _ts      = _LogUtil.GetLogTimestamp()
-        _grpName = _ELogType(_eLogTypeGrpID.value*-1).name if _bFwApiLog else _eLogTypeGrpID.compactName
+        if msg_ is None:
+            msg_ = _CommonDefines._CHAR_SIGN_DASH
 
+        if errCode_ is not None:
+            if isinstance(errCode_, _EFwErrorCode):
+                errCode_ = errCode_.toSInt
+
+            if _LogErrorCode.IsAnonymousErrorCode(errCode_):
+                errCode_ = None
+            elif _LogErrorCode.IsInvalidErrorCode(errCode_):
+                _LogWarning(_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Logging_001).format(str(errCode_)))
+                errCode_ = None
+            elif eLogType_.isFwApiLogType:
+                if not _LogErrorCode.IsValidApiErrorCode(errCode_):
+                    if bECSM_:
+                        _LogWarning(_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Logging_002).format(errCode_))
+            elif not _LogErrorCode.IsValidFwErrorCode(errCode_):
+                _LogWarning(_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Logging_003).format(errCode_))
+
+        _grpName = _ELogType(_eLogTypeGrpID.value*-1).name if _bFwApiLog else _eLogTypeGrpID.compactName
+        if errCode_ is not None:
+            _grpName = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_011).format(_grpName, errCode_)
+
+        _ts = _LogUtil.GetLogTimestamp()
         if not _bFwApiLog:
             _outMsg = _FwTDbEngine.GetText(_EFwTextID.eVLogIF_VPrint_FmtStr_01).format(_ts, _grpName)
             if eLogType_ != _eLogTypeGrpID:
@@ -435,18 +429,8 @@ def _VPrint(eLogType_ : _ELogType, msg_, errCode_, bForce_ =False):
     if _myMsg is not None:
         if not isinstance(_myMsg, str):
             _myMsg = str(_myMsg)
-    if errCode_ is not None:
-        if not _LogErrorCode.IsAnonymousErrorCode(errCode_):
-            if errCode_!= _LogErrorCode.GetInvalidErrorCode():
-                _myTxt = _FwTDbEngine.GetText(_EFwTextID.eVLogIF_VPrint_FmtStr_02).format(str(errCode_))
-                if _myMsg is None:
-                    _myMsg = _myTxt
-                else:
-                    _myMsg = f'{_myTxt} {_myMsg}'
 
-    if _myMsg is None:
-        pass
-    elif len(_outMsg) == 0:
+    if len(_outMsg) == 0:
         _outMsg = _myMsg
     else:
         _outMsg += _CommonDefines._CHAR_SIGN_SPACE + _myMsg
@@ -476,3 +460,4 @@ def _VPrint(eLogType_ : _ELogType, msg_, errCode_, bForce_ =False):
         if not _bFwApiLog:
             if vinst._isVSystemExistEnabled:
                 _VSystemExit.RaiseException(_uid, _outMsg, errCode_=errCode_)
+

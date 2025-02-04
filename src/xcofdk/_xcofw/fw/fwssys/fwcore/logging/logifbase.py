@@ -7,9 +7,7 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _ELogType
-
 
 class _LogIFBase:
 
@@ -47,5 +45,4 @@ class _LogIFBase:
 
     def _ClearCurrentXTaskError(self) -> bool:
         pass
-
 

@@ -7,21 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-from enum import Enum
-from enum import unique
+from enum   import Enum
+from enum   import unique
+from typing import Union as _PyUnion
 
 from xcofdk.fwapi.xtask.xtaskerror import XTaskException
-from xcofdk.fwapi.xtask.xtaskerror import _XTaskExceptionBase
-
-from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil             import _KpiLogBook
-from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartupconfig    import _FwStartupConfig
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate            import _ELcKpiID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxy                import _LcProxy
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines         import _ProxyInfo
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil          import _AutoEnclosedThreadsBag
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject             import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes         import _CommonDefines
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                 import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.vlogif          import _VSystemExit
@@ -31,9 +21,9 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines      import _ELogType
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines      import _LogUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines      import _EErrorImpact
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines      import _ELogifOperationOption
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines      import _LogErrorCode
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.errorentry      import _ErrorEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logentry        import _LogEntry
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry      import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logifbase       import _LogIFBase
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logifimplhelper import _LogIFImplHelper
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.dieexception    import _DieException
@@ -47,13 +37,22 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging.logexception    import _LogException
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logexception    import _LogExceptionSystemOpXCP
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception    import _XcoExceptionRoot
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception    import _XcoBaseException
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception    import _XTaskExceptionBase
+from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil           import _KpiLogBook
+from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartupconfig  import _FwStartupConfig
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate          import _ELcKpiID
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxy              import _LcProxy
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyclient        import _LcProxyClient
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines       import _ProxyInfo
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _AutoEnclosedThreadsBag
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes       import _CommonDefines
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-
-
-class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
+class _LogIFImpl(_LcProxyClient, _LogIFBase):
 
     @unique
     class _EDieExceptionTarget(Enum):
@@ -71,7 +70,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         , _ELogType.XFTL_SYS_OP_XCP         : _LogExceptionSystemOpXCP
     }
 
-    __slots__ = [ '__helper' , '__lcpxy' ]
+    __slots__ = [ '__helper' ]
     __dieXcpTarget = None
 
     def __init__( self
@@ -82,19 +81,19 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                 , bOutputRedirection_ : bool             =None
                 , lcpxy_              : _LcProxy         =None
                 , startupCfg_         : _FwStartupConfig =None):
-        self.__lcpxy  = None
         self.__helper = None
 
-        _AbstractSlotsObject.__init__(self)
+        _LcProxyClient.__init__(self)
         _LogIFBase.__init__(self)
 
         if _LogIFBase._theInstance is not None:
             self.__DoCleanUp(bSkipVLogCleanup_=True)
-            vlogif._LogOEC(True, -1048)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00437)
             return
-        if (lcpxy_ is not None) and not (isinstance(lcpxy_, _LcProxy) and lcpxy_.isLcProxyAvailable):
+
+        if (lcpxy_ is not None) and not isinstance(lcpxy_, _LcProxy) :
             self.__DoCleanUp(bSkipVLogCleanup_=True)
-            vlogif._LogOEC(True, -1049)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00438)
             return
 
         self.__helper = _LogIFImplHelper(startupCfg_=startupCfg_)
@@ -110,12 +109,12 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         if _LogIFImpl.__dieXcpTarget is not None:
             if _LogIFImpl.__dieXcpTarget != _LogIFImpl._EDieExceptionTarget.eFwMain:
                 self.__DoCleanUp(bSkipVLogCleanup_=True)
-                vlogif._LogOEC(True, -1050)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00439)
                 return
         else:
             _LogIFImpl.__dieXcpTarget = _LogIFImpl._EDieExceptionTarget.eFwMain
 
-        self.__lcpxy = lcpxy_
+        self._PcSetLcProxy(lcpxy_)
 
         _xcpCaught = None
         try:
@@ -131,7 +130,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         finally:
             if _xcpCaught is not None:
                 self.__DoCleanUp(bSkipVLogCleanup_=True)
-                vlogif._LogOEC(True, -1051)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00440)
             else:
                 _supKpi = _KpiLogBook._GetStartupKPI()
                 if _supKpi is not None:
@@ -151,8 +150,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
 
     @property
     def isDieModeEnabled(self) -> bool:
-        if not self.isValid: return False
-        else: return self.__helper.logConf.dieMode
+        return False if not self.isValid else self.__helper.logConf.dieMode
 
     @property
     def isExceptionModeEnabled(self) -> bool:
@@ -229,11 +227,11 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         _psMsg += _statMsg
 
         if bPrintFFL_:
-            tmp  = _FwTDbEngine.GetText(_EFwTextID.eLogIFImpl_PrintSummary_FmtStr_06).format(self.__helper.firstFatalLog)
-            tmp += _FwTDbEngine.GetText(_EFwTextID.eLogIFImpl_PrintSummary_FmtStr_07)
-            tmp  = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT} '.join(tmp.split(_CommonDefines._CHAR_SIGN_NEWLINE))
+            _tmp  = _FwTDbEngine.GetText(_EFwTextID.eLogIFImpl_PrintSummary_FmtStr_06).format(self.__helper.firstFatalLog)
+            _tmp += _FwTDbEngine.GetText(_EFwTextID.eLogIFImpl_PrintSummary_FmtStr_07)
+            _tmp  = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT} '.join(_tmp.split(_CommonDefines._CHAR_SIGN_NEWLINE))
 
-            _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT}\n{_LARGER_THAN_SHORT} {tmp}{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT}'
+            _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT}\n{_LARGER_THAN_SHORT} {_tmp}{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT}'
             _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_statMsg}'
 
         _myMsg  = None
@@ -275,7 +273,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
     def _SetupLoggingConfig(bRelMode_ : bool =None, bDieMode_ : bool =None, bXcpMode_ : bool =None
                           , eLogLevel_ : _ELogLevel =None, bOutputRedirection_ : bool =None):
         if _LogIFBase._theInstance is not None:
-            vlogif._LogOEC(True, -1052)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00441)
         else:
             _LogIFBase._theInstance = _LogIFImpl(
                 bRelMode_=bRelMode_, bDieMode_=bDieMode_, bXcpMode_=bXcpMode_, eLogLevel_=eLogLevel_, bOutputRedirection_=bOutputRedirection_)
@@ -306,18 +304,17 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             self._PrintSummary(bPrintFFL_=True, bLcCall_=True)
         self.__DoCleanUp()
 
+        _LcProxyClient._CleanUp(self)
+        _LogIFBase.CleanUp(self)
+
     def _ClearLogHistory(self):
         if not self.isReleaseModeEnabled:
             _statMsg = vlogif._PrintVSummary(bPrint_=False)
         else:
             _statMsg = None
-        vlogif._LogFree('[LogIF] Clearing complete vlog/log history...\n')
         vlogif._ClearLogHistory()
         if self.__helper is not None:
             self.__helper._ClearLogHistory()
-
-        if _statMsg is not None:
-            vlogif._LogFree('[LogIF] Cleared history:\n\t{}\n'.format(_statMsg))
 
     def _AddLog( self, eLogType_ : _ELogType
                , msg_                  =None
@@ -327,12 +324,10 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                , callstackLevelOffset_ =None
                , unhandledXcoBaseXcp_  =None
                , eLogifOpOption_       =None):
-
         if self.__helper is None:
             return None
 
-        _le         = None
-        _curPxyInfo = None
+        _le = None
 
         if eLogifOpOption_ is None:
             eLogifOpOption_ = _ELogifOperationOption.eDontCare
@@ -342,11 +337,11 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
 
         if unhandledXcoBaseXcp_ is not None:
             if (not isinstance(unhandledXcoBaseXcp_, _XcoBaseException)) or (unhandledXcoBaseXcp_.uniqueID is None):
-                vlogif._LogOEC(True, -1053)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00442)
                 return None
 
         if not isinstance(eLogType_, _ELogType):
-            vlogif._LogOEC(True, -1054)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00443)
             return None
 
         _curLL       = self.__helper.fwStartupConfig._userLogLevel if eLogType_.isFwApiLogType else self.eLogLevel
@@ -373,16 +368,15 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                 vlogif._VPrint(eLogType_, msg_, errCode_)
                 return None
 
-        if (self.__lcpxy is None) or _bProcCurThrd:
-            pass
+        if not (self._PcIsLcProxySet() and not _bProcCurThrd):
+            _curPxyInfo = None
         else:
-            _curPxyInfo = self.__lcpxy.curProxyInfo
+            _curPxyInfo = self._PcGetCurProxyInfo()
 
         if _curPxyInfo is None :
             if not _bCreateLogOnly:
                 if self.__helper.pendingTaskID is not None:
                     self.__helper.SetPendingTaskID(None)
-
 
                 vlogif._VPrint(eLogType_, msg_, errCode_)
                 return None
@@ -420,26 +414,31 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             self.__helper.UpdateMaxLogTime()
             return None
 
-        _bALWAYS_IGNORE = False
-        if _bALWAYS_IGNORE:
-            if _curPxyInfo.curTaskInfo.taskBadge.isAutoEnclosed:
-                _le._UpdateErrorImpact(eErrImpact_=_EErrorImpact.eNoImpactByAutoEnclosedThreadOwnership)
+        _bIN = (_curPxyInfo.fwMainInfo is not None) and _curPxyInfo.fwMainInfo.isInLcCeaseMode
+        _ti  = _curPxyInfo.curTaskInfo._taskInst
+        _mp  = _CommonDefines._CHAR_SIGN_DASH
 
-                self.__helper.UpdateMaxLogTime()
-                return None
+        if _bIN:
+            pass 
+        elif _curPxyInfo.curTaskInfo.isAutoEnclosed:
+            _bIN = True
+        elif _curPxyInfo.curTaskInfo.isInLcCeaseMode:
+            _bIN = True
 
-        if _curPxyInfo.curTaskInfo.isInLcCeaseMode or ((_curPxyInfo.fwMainInfo is not None) and _curPxyInfo.fwMainInfo.isInLcCeaseMode):
+        if _bIN:
             if _le.isFatalError and _le.hasErrorImpact:
-                _myTskInst = _curPxyInfo.curTaskInfo._taskInst
-                _lcCompID  = _myTskInst.GetLcCompID()
+                _lcCompID = _ti.GetLcCompID()
+
                 if _lcCompID is None:
-                    vlogif._LogOEC(True, -1055)
-                elif self.__lcpxy.HasLcCompFRC(_lcCompID, atask_=_myTskInst):
-                    pass
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00444)
+                elif self._PcHasLcCompAnyFailureState(_lcCompID, atask_=_ti):
+                    pass 
+                elif self._PcHasLcAnyFailureState():
+                    pass 
                 else:
                     _errImp = _EErrorImpact.eImpactByDieError if self.isDieModeEnabled else _EErrorImpact.eImpactByFatalError
                     _le._SetErrorImpact(_errImp)
-                    self.__lcpxy._NotifyLcFailure(_myTskInst.GetLcCompID(), _le, atask_=_myTskInst)
+                    self._PcNotifyLcFailure(_ti.GetLcCompID(), _le, atask_=_ti)
             else:
                 self.__helper.Flush(_le)
 
@@ -451,7 +450,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             return None
 
         self.__helper.SetPendingTaskID(_curPxyInfo.curTaskInfo.taskID)
-        res = self.__ProcessErrorLog(_le, _curPxyInfo, bXuLog_=eLogType_.isFwApiLogType, bUnhandledXcoBaseXcp_=unhandledXcoBaseXcp_ is not None, eLogifOpOption_=eLogifOpOption_)
+        res = self.__ProcessErrorLog(_le, _curPxyInfo, bXtLog_=eLogType_.isFwApiLogType, bUnhandledXcoBaseXcp_=unhandledXcoBaseXcp_ is not None, eLogifOpOption_=eLogifOpOption_)
 
         self.__helper.UpdateMaxLogTime(bErrorLogTime_=True)
         return res
@@ -460,7 +459,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         if self.__helper is None:
             return None
 
-        _curPxyInfo = None if self.__lcpxy is None else self.__lcpxy.curProxyInfo
+        _curPxyInfo = self._PcGetCurProxyInfo()
         if _curPxyInfo is None:
             return None
 
@@ -480,7 +479,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         if not isinstance(xuErrUniqueID_, int):
             return None
 
-        _curPxyInfo = None if self.__lcpxy is None else self.__lcpxy.curProxyInfo
+        _curPxyInfo = self._PcGetCurProxyInfo()
         if (_curPxyInfo is None) or (_curPxyInfo.curTaskInfo is None) or _curPxyInfo.curTaskInfo.isInLcCeaseMode:
             if _curPxyInfo is not None:
                 _curPxyInfo.CleanUp()
@@ -489,10 +488,10 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         _te = _curPxyInfo.curTaskInfo.taskError
         res = None if _te is None else _te._currentErrorEntry
         if res is None:
-            vlogif._LogOEC(True, -1056)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00445)
         elif res.uniqueID != xuErrUniqueID_:
             res = None
-            vlogif._LogOEC(True, -1057)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00446)
 
         _curPxyInfo.CleanUp()
         return res
@@ -501,7 +500,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         if self.__helper is None:
             return False
 
-        _curPxyInfo = None if self.__lcpxy is None else self.__lcpxy.curProxyInfo
+        _curPxyInfo = self._PcGetCurProxyInfo()
         if _curPxyInfo is None:
             return False
 
@@ -518,7 +517,6 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             res = _xtc._ClearCurrentError()
         return res
 
-
     @property
     def __isInvalid(self):
         return True if self.__helper is None else self.__helper.logConf is None
@@ -529,8 +527,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
 
     @staticmethod
     def __NotifyCheckTaskError(curPxyInfo_ : _ProxyInfo, taskError_, errEntry_ : _ErrorEntry, bFTE_ : bool):
-        _bConsumed = taskError_._OnErrorNotification(errEntry_)
-        return _bConsumed
+        return taskError_._OnErrorNotification(errEntry_)
 
     @staticmethod
     def __NotifyTaskError(errEntry_ : _ErrorEntry, curPxyInfo_ : _ProxyInfo, errEvalCurTask_, errEvalFwMain_):
@@ -550,7 +547,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                 _bDoNotifCurTask = True
 
         if not res:
-            pass
+            pass 
         else:
             if errEvalFwMain_ is None:
                 errEntry_._SetErrorImpact(errEvalCurTask_)
@@ -567,8 +564,9 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         if (_LogIFBase._theInstance is not None) and (id(self) == id(_LogIFBase._theInstance)):
             _LogIFBase._theInstance = None
 
+        self._PcSetLcProxy(None, bForceUnset_=True)
+
         self.__helper.CleanUp()
-        self.__lcpxy  = None
         self.__helper = None
 
         if not bSkipVLogCleanup_:
@@ -578,19 +576,19 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                          , curPxyInfo_           : _ProxyInfo
                          , eLogTypeGrp_          : _ELogType
                          , eLogType_             : _ELogType
-                         , msg_                  =None
-                         , errCode_              : int =None
-                         , sysOpXcp_             =None
-                         , xcpTraceback_         =None
-                         , callstackLevelOffset_ =None
-                         , unhandledXcoBaseXcp_  =None
-                         , eLogifOpOption_       =_ELogifOperationOption.eDontCare
+                         , msg_                                                 =None
+                         , errCode_              : _PyUnion[int, _EFwErrorCode] =None
+                         , sysOpXcp_                                            =None
+                         , xcpTraceback_                                        =None
+                         , callstackLevelOffset_                                =None
+                         , unhandledXcoBaseXcp_                                 =None
+                         , eLogifOpOption_                                      =_ELogifOperationOption.eDontCare
                          ):
         _bCreateLogOnly = eLogifOpOption_.isCreateLogOnly
 
         if curPxyInfo_ is None:
             if not _bCreateLogOnly:
-                vlogif._LogOEC(True, -1058)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00447)
                 return None, None
 
         if unhandledXcoBaseXcp_ is not None:
@@ -601,9 +599,22 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         _bLockApi = eLogTypeGrp_.isError
         if _bLockApi: self.__helper.LockApi()
 
+        if isinstance(errCode_, _EFwErrorCode):
+            errCode_ = errCode_.toSInt
+        if errCode_ is not None:
+            if _LogErrorCode.IsAnonymousErrorCode(errCode_):
+                errCode_ = None
+            elif _LogErrorCode.IsInvalidErrorCode(errCode_):
+                self._AddLog(_ELogType.WNG, msg_=_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Logging_001).format(str(errCode_)))
+            elif eLogType_.isFwApiLogType:
+                if not _LogErrorCode.IsValidApiErrorCode(errCode_):
+                    if eLogifOpOption_.isStrictEcMatch:
+                        self._AddLog(_ELogType.WNG, msg_=_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Logging_002).format(errCode_))
+            elif not _LogErrorCode.IsValidFwErrorCode(errCode_):
+                self._AddLog(_ELogType.WNG, msg_=_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Logging_003).format(errCode_))
 
-        _le        = None
-        _caughtXcp = False
+        _le         = None
+        _bCaughtXcp = False
 
         _curTskInfo = None if curPxyInfo_ is None else curPxyInfo_.curTaskInfo
         _tid        = None if _curTskInfo is None else _curTskInfo.taskID
@@ -619,26 +630,28 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                                   , xcpTraceback_=xcpTraceback_, callstackLevelOffset_=callstackLevelOffset_
                                   , euRNum_=None if _curTskInfo is None else _curTskInfo.euRNumber)
         except BaseException as _xcp:
-            _caughtXcp = True
-            _LogUtil._RaiseException(_xcp)
+            if isinstance(_xcp, _VSystemExit):
+                pass 
+            else:
+                _bCaughtXcp = True
+                _LogUtil._RaiseException(_xcp)
         finally:
-            if _caughtXcp or _le is None:
+            if _bCaughtXcp or _le is None:
                 if curPxyInfo_ is not None:
                     curPxyInfo_.CleanUp()
                 if _bLockApi: self.__helper.UnlockApi()
 
-                if _caughtXcp:
+                if _bCaughtXcp:
                     pass
                 else:
                     return None, None
 
         if _le.isError:
             if _curTskInfo is not None:
-                _le._Adapt(eTaskExecPhaseID_=_curTskInfo.eTaskExecPhase)
+                _le._Adapt(eTaskExecPhaseID_=_curTskInfo.eTaskXPhase)
                 _le._SetTaskInstance(tskInst_=_curTskInfo._taskInst)
 
         if _bCreateLogOnly:
-
             if _le.isFatalError:
                 if _bCreateLogOnly:
                     _le._SetErrorImpact(_EErrorImpact.eImpactByFatalErrorDueToExecApiReturn if eLogifOpOption_.isCreateLogOnlyDueToExecApiAbort else _EErrorImpact.eImpactByFatalError)
@@ -655,19 +668,19 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             return None, _le
 
         if curPxyInfo_ is None:
-            vlogif._LogOEC(True, -1059)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00448)
             return None, None
 
         if self.__helper.pendingTaskID is not None:
             if eLogifOpOption_.isSetErrorOnly:
                 curPxyInfo_.CleanUp()
-                vlogif._LogOEC(True, -1060)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00449)
                 if _bLockApi: self.__helper.UnlockApi()
                 return None, None
 
             elif _tid != self.__helper.pendingTaskID:
                 curPxyInfo_.CleanUp()
-                vlogif._LogOEC(True, -1061)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00450)
                 if _bLockApi: self.__helper.UnlockApi()
                 return None, None
 
@@ -678,7 +691,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                 return None, None
 
         elif self.__helper.subSeqXcp is not None:
-            vlogif._LogOEC(True, -1062)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00451)
             curPxyInfo_.CleanUp()
             if _bLockApi: self.__helper.UnlockApi()
             return None, None
@@ -710,6 +723,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                     return None, None
 
                 else:
+
                     if _le.isFatalError:
                         _curTEE._UpdateErrorImpact(_EErrorImpact.eNoImpactByLogTypePrecedence)
                     else:
@@ -727,12 +741,11 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                         self.__helper.Flush(_shortMsg)
                         if _bLockApi: self.__helper.UnlockApi()
                         return None, None
-
         else:
             curPxyInfo_.CleanUp()
             if eLogifOpOption_.isSetErrorOnly:
                 if _bLockApi: self.__helper.UnlockApi()
-                vlogif._LogOEC(True, -1063)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00452)
             else:
                 self.__helper.Flush(_le)
                 if _bLockApi: self.__helper.UnlockApi()
@@ -746,7 +759,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
 
         if eLogType_._absoluteValue >= _ELogType.FTL.value:
             if eLogTypeGrpID_ != _ELogType.FTL:
-                vlogif._LogOEC(True, -1064)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00453)
                 return None
 
             _xcpCls = _LogIFImpl.__logExceptionClassMap[eLogType_]
@@ -777,24 +790,6 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             _le.CleanUp()
             return None
 
-        if _le.isError:
-            if not isinstance(_le, _ErrorEntry):
-                tmp = str(_le)
-                _le.CleanUp()
-                vlogif._LogOEC(True, -1065)
-                return None
-            elif isinstance(_le, _FatalEntry):
-                if _le._enclosedByLogException is None:
-                    tmp = str(_le)
-                    _le.CleanUp()
-                    vlogif._LogOEC(True, -1066)
-                    return None
-            elif _le._enclosedByLogException is not None:
-                tmp = str(_le)
-                _le.CleanUp()
-                vlogif._LogOEC(True, -1067)
-                return None
-
         self.__helper.counter[eLogTypeGrpID_._absoluteValue] += 1
         self.__helper.AddLogEntry(_le)
         return _le
@@ -805,11 +800,10 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         _tname    = None
         _bXTask = False if self.isReleaseModeEnabled else None
 
-        if self.__lcpxy is None:
+        if not self._PcIsLcProxySet():
             pass
         else:
-            _tmgr = self.__lcpxy.taskManager
-
+            _tmgr = self._PcGetTaskMgr()
             if _tmgr is None:
                 pass
             else:
@@ -826,7 +820,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             self.__helper.AddLogEntry(_le)
         return _le
 
-    def __ProcessErrorLog(self, errEntry_ : _ErrorEntry, curPxyInfo_, bXuLog_ : bool, bUnhandledXcoBaseXcp_ =False, eLogifOpOption_ =_ELogifOperationOption.eDontCare):
+    def __ProcessErrorLog(self, errEntry_ : _ErrorEntry, curPxyInfo_, bXtLog_ : bool, bUnhandledXcoBaseXcp_ =False, eLogifOpOption_ =_ELogifOperationOption.eDontCare):
 
         _eevFM = None
         _eevCT = None
@@ -849,7 +843,6 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
             _xcpCaught = _xcp
         except BaseException as _xcp:
             _xcpCaught = _XcoBaseException(_xcp, tb_=_LogUtil._GetFormattedTraceback(), taskID_=curPxyInfo_.curTaskInfo.taskID)
-
 
         _bCTAE = curPxyInfo_.curTaskInfo.taskBadge.isAutoEnclosed
 
@@ -874,18 +867,16 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                 errEntry_._UpdateErrorImpact(_EErrorImpact.eNoImpactByOperationFailureSetError)
 
         elif errEntry_.hasNoErrorImpact:
-            pass
+            pass 
         elif eLogifOpOption_.isSetErrorOnly or bUnhandledXcoBaseXcp_:
             if _ssXcp is not None:
                 _ssXcp.CleanUp()
         elif not _eevCT.isCausedByExceptionMode:
             if _ssXcp is not None:
                 _ssXcp.CleanUp()
-
             self.__helper.Flush(errEntry_)
-
         else:
-            res = self.__RaiseException(errEntry_._enclosedByLogException, _eevCT, bXuLog_, _bCTAE, subSeqXcp_=_ssXcp)
+            res = self.__RaiseException(errEntry_._enclosedByLogException, _eevCT, bXtLog_, _bCTAE, subSeqXcp_=_ssXcp)
         return res
 
     def __EvaluateErrorLog(self, errEntry_, curPxyInfo_):
@@ -893,7 +884,7 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         _eevCT, _eevFM = None, None
 
         if not _LogIFImpl.__IsDieXcpTargetMainTask():
-            vlogif._LogOEC(True, -1068)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00454)
             return _eevCT, _eevFM
 
         _fwmInfo = curPxyInfo_.fwMainInfo
@@ -901,33 +892,29 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         if errEntry_.isFatalError:
 
             if self.isDieXcpModeEnabled:
-
                 if _fwmInfo is None:
                     if not curPxyInfo_.curTaskInfo.taskBadge.hasDieXcpTargetTaskRight:
-                        vlogif._LogOEC(True, -1069)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00455)
                     else:
                         _eevCT = _EErrorImpact.eImpactByDieException
                 else:
                     _eevCT = _EErrorImpact.eImpactByDieException
 
                     if not _fwmInfo.taskBadge.hasDieExceptionDelegateTargetTaskRight:
-                        vlogif._LogOEC(True, -1070)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00456)
                     else:
                         _eevFM = _EErrorImpact.eImpactByDieException
-
             elif self.isExceptionModeEnabled:
                 _eevCT = _EErrorImpact.eImpactByLogException
 
                 if _fwmInfo is not None:
                     if _fwmInfo.taskBadge.hasErrorObserverTaskRight:
                         _eevFM = _EErrorImpact.eImpactByLogException
-
             elif self.isDieModeEnabled:
                 _eevCT = _EErrorImpact.eImpactByDieError
 
                 if _fwmInfo is not None:
                     _eevFM = _EErrorImpact.eImpactByDieError
-
             else:
                 _eevCT = _EErrorImpact.eImpactByFatalError
 
@@ -942,38 +929,36 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                     _eevFM = _EErrorImpact.eImpactByUserError
 
         if _eevCT is None:
-            vlogif._LogOEC(True, -1071)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00457)
             _eevCT, _eevFM = None, None
         elif (_fwmInfo is not None) and (_eevFM is None):
             _eevCT = None
-            vlogif._LogOEC(True, -1072)
-
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00458)
         return _eevCT, _eevFM
 
-    def __RaiseException(self, logXcp_ : _LogException, eevCurTask_ : _EErrorImpact, bXuLog_ : bool, bCurTaskAutoEnclosed_ : bool, subSeqXcp_ =None):
+    def __RaiseException(self, logXcp_ : _LogException, eevCurTask_ : _EErrorImpact, bXtLog_ : bool, bCTAE_ : bool, subSeqXcp_ =None):
+
         if not isinstance(logXcp_, _LogException):
-            vlogif._LogOEC(True, -1073)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00459)
             return None
         if not (isinstance(eevCurTask_, _EErrorImpact) and eevCurTask_.isCausedByExceptionMode):
-            vlogif._LogOEC(True, -1074)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00460)
             return None
-
 
         if subSeqXcp_ is not None:
             logXcp_ = _LogExceptionNestedError(logXcp_, subSeqXcp_)
 
         res          = None
-        _bRaiseXtXcp = bXuLog_
+        _bRaiseXtXcp = bXtLog_
 
         if not _bRaiseXtXcp:
-            _myFE = logXcp_._enclosedFatalEntry
-            _bRaiseXtXcp = _myFE.eTaskExecPhase.isXTaskExecution
+            _bRaiseXtXcp = logXcp_._enclosedFatalEntry.eTaskXPhase.isXTaskExecution
 
         if eevCurTask_.isCausedByDieMode:
 
             if eevCurTask_ == _EErrorImpact.eImpactByDieException:
-                if bCurTaskAutoEnclosed_:
-                    pass
+                if bCTAE_:
+                    pass 
                 elif _bRaiseXtXcp:
                     _xtXcpBase = _XTaskExceptionBase(uid_=logXcp_.uniqueID, xm_=logXcp_.message, ec_=logXcp_.errorCode, tb_=logXcp_.traceback, cst_=logXcp_.callstack, bDieXcp_=True, clone_=None)
                     res = XTaskException(_xtXcpBase)
@@ -982,9 +967,9 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
         else:
 
             if eevCurTask_ != _EErrorImpact.eImpactByLogException:
-                pass
+                pass 
             else:
-                if bCurTaskAutoEnclosed_:
+                if bCTAE_:
                     self.__helper.Flush(logXcp_)
                 elif _bRaiseXtXcp:
                     _xtXcpBase = _XTaskExceptionBase(uid_=logXcp_.uniqueID, xm_=logXcp_.message, ec_=logXcp_.errorCode, tb_=logXcp_.traceback, cst_=logXcp_.callstack, bDieXcp_=False, clone_=None)
@@ -992,17 +977,14 @@ class _LogIFImpl(_AbstractSlotsObject, _LogIFBase):
                 else:
                     res = logXcp_
 
-        if (res is None) and bCurTaskAutoEnclosed_:
+        if (res is None) and bCTAE_:
             return None
 
-        _bOK =        isinstance(res, XTaskException)
+        _bOK =         isinstance(res, XTaskException)
         _bOK = _bOK or isinstance(res, _LogException)
         _bOK = _bOK or isinstance(res, _DieException)
         _bOK = _bOK or isinstance(res._enclosedLogException, _LogException)
         if not _bOK:
-            vlogif._LogOEC(True, -1075)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00461)
             return None
-
         return res
-
-

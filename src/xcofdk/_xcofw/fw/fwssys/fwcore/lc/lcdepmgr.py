@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                         import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logconfig               import _LoggingDefaultConfig
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception            import _XcoExceptionRoot
@@ -21,13 +20,18 @@ from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines                    import _ELcS
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate                  import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcguard                      import _LcGuard
 from xcofdk._xcofw.fw.fwssys.fwcore.ssdsupervisor                   import _SSDeputySupervisor
+from xcofdk._xcofw.fw.fwssys.fwcore.swpfm.sysinfo                   import _SystemInfo
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject                  import _ProtectedAbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes               import _TextStyle
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes               import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes               import _ETernaryOpResult
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
+from xcofdk._xcofwa.fwversion import _FwVersion
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _LcDepManager(_ProtectedAbstractSlotsObject):
 
@@ -43,28 +47,25 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
         self.__sscfgSupv = None
         self.__ssdepSupv = None
 
-        _iImplErr = None
-        _errMsg   = None
+        _errMsg    = None
+        _iImplErr  = None
         _xcpCaught = None
         try:
             super().__init__(ppass_)
 
             if _LcDepManager.__theLcDMImpl is not None:
-                _iImplErr = 501
-
+                _iImplErr = _EFwErrorCode.FE_LCSF_025
             elif not isinstance(suPolicy_, _FwStartupPolicy):
-                _iImplErr = 502
-
+                _iImplErr = _EFwErrorCode.FE_LCSF_026
             elif not isinstance(lcGuard_, _LcGuard):
-                _iImplErr = 503
+                _iImplErr = _EFwErrorCode.FE_LCSF_027
 
             if _iImplErr is not None:
                 self.CleanUpByOwnerRequest(ppass_)
 
-                _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
+                _LcFailure.CheckSetLcSetupFailure(_iImplErr)
                 if _errMsg is not None:
-                    vlogif._LogOEC(True, -1592)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00320)
                 return
 
             _lcDMH = _TimeUtil.GetHash(type(self).__name__)
@@ -85,15 +86,13 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
             self.__sscfgSupv = _SSConfigSupervisor(_lcDMH, suPolicy_, self.fwConfig.fwStartupConfig)
             if self.__sscfgSupv.subsystemID is None:
                 self.CleanUpByOwnerRequest(ppass_)
-                _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(504)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_028)
                 return
 
             self.__ssdepSupv = _SSDeputySupervisor(_lcDMH, self.__sscfgSupv)
             if self.__ssdepSupv.deputyID is None:
                 self.CleanUpByOwnerRequest(ppass_)
-                _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(505)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_029)
                 return
 
             _ures = self.UpdateLcScope(_ELcScope.ePreIPC)
@@ -103,17 +102,13 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
                     _ures = _ETernaryOpResult.Abort()
 
                     if suPolicy_.isReleaseModeEnabled:
-                        _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(506)
-                        _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
-
+                        _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_030)
                         if _errMsg is not None:
-                            vlogif._LogOEC(True, -1593)
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00321)
                     else:
-                        _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(507)
-                        _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
-
+                        _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_031)
                         if _errMsg is not None:
-                            vlogif._LogOEC(True, -1594)
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00322)
 
             if not _ures.isOK:
                 self.CleanUpByOwnerRequest(ppass_)
@@ -125,11 +120,11 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
             _xcpCaught = _XcoBaseException(xcp, tb_=vlogif._GetFormattedTraceback(), taskID_=None)
         finally:
             if _xcpCaught is not None:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_001).format(str(_xcpCaught))
                 self.CleanUpByOwnerRequest(ppass_)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_088)
 
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-                vlogif._LogOEC(True, -1595)
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_001).format(str(_xcpCaught))
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00323)
 
     @property
     def lcScope(self) -> _ELcScope:
@@ -161,57 +156,54 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
         _myLcState = self.__lcGuard._GetLcState(bypassApiLock_=True)
 
         if not isinstance(tgtScope_, _ELcScope):
-            _iImplErr = 521
-
+            _iImplErr = _EFwErrorCode.FE_LCSF_032
         elif _myLcState.isLcStopped:
-            _iImplErr = 522
-
+            _iImplErr = _EFwErrorCode.FE_LCSF_033
         elif abs(tgtScope_.lcTransitionalOrder - self.lcScope.lcTransitionalOrder) > 1:
-            _iImplErr = 523
-
+            _iImplErr = _EFwErrorCode.FE_LCSF_034
         elif _LcFailure.IsLcNotErrorFree() and not _LcFailure.IsConfigPhasePassed():
-            _iImplErr = -1
-
+            _iImplErr = 0
         elif _myLcState.hasLcAnyFailureState:
             if _myLcState.isLcFailed:
-                _iImplErr = 524
-
+                _iImplErr = _EFwErrorCode.FE_LCSF_035
             elif tgtScope_.lcTransitionalOrder > self.lcScope.lcTransitionalOrder:
-                _iImplErr = 525
+                _iImplErr = _EFwErrorCode.FE_LCSF_036
 
         if _iImplErr is not None:
-            if _iImplErr < 0:
+            if _iImplErr == 0:
                 res = _ETernaryOpResult.OK()
             else:
                 if not _LcFailure.IsSetupPhasePassed():
-                    _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_iImplErr)
 
                 if _badUseMsg is not None:
-                    vlogif._LogOEC(True, -1596)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00324)
                 res = _ETernaryOpResult.NOK()
             return res
 
-        res     = _ETernaryOpResult.OK()
-        _myXcp  = None
-        _errMsg = None
+        res      = _ETernaryOpResult.OK()
+        _myXcp   = None
+        _errMsg  = None
+        _errCode = None
         try:
             if not self.__ssdepSupv.SwitchLcScope(tgtScope_, self.lcScope, bForceReinject_=bForceReinject_, bFinalize_=bFinalize_):
-                res     = _ETernaryOpResult.NOK()
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_003).format(self.lcScope.compactName, tgtScope_.compactName)
+                res      = _ETernaryOpResult.NOK()
+                _errCode = _EFwErrorCode.FE_LCSF_090
+                _errMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_003).format(self.lcScope.compactName, tgtScope_.compactName)
         except _XcoExceptionRoot as xcp:
             _myXcp = xcp
         except BaseException as xcp:
             _myXcp = _XcoBaseException(xcp, tb_=vlogif._GetFormattedTraceback(), taskID_=None)
         finally:
             if _myXcp is not None:
-                res     = _ETernaryOpResult.NOK()
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_004).format(_myXcp)
+                res      = _ETernaryOpResult.NOK()
+                _errCode = _EFwErrorCode.FE_LCSF_091
+                _errMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_004).format(_myXcp)
 
         if not res.isOK:
             if not _LcFailure.IsSetupPhasePassed():
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-            vlogif._LogOEC(True, -1597)
+                _LcFailure.CheckSetLcSetupFailure(_errCode, errMsg_=_errMsg)
+            vlogif._LogOEC(True, _errCode)
         else:
             self.__lcScope = tgtScope_
         return res
@@ -246,28 +238,50 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
         return self.__lcDMH is None
 
     @staticmethod
+    def __GetPreamble():
+
+        _dlLong  = _CommonDefines._DASH_LINE_LONG
+        _dlShort = _CommonDefines._DASH_LINE_SHORT
+
+        _verstr = _SystemInfo._GetPythonVer()
+        _verstr = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_Python_Version).format(_verstr)
+
+        res = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble)
+        res = res.format(_dlLong, _dlShort, _dlShort, _FwVersion._GetVersionInfo(bShort_=False), _dlShort, _verstr, _dlShort, _dlLong)
+        return res
+
+    @staticmethod
     def __CreatePrerequisites(lcDMH_ : int, suPolicy_ : _FwStartupPolicy, startOptions_ : list) -> _FwStartOptionsImpl:
-        _sopt = None
+        _sopt     = None
+        _errCode  = None
+        _bPrintSP = True
 
         if not suPolicy_.isValid:
-            _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(511)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
-            vlogif._LogOEC(True, -1598)
+            _errCode = _EFwErrorCode.FE_LCSF_037
         else:
             _sopt = _FwStartOptionsImpl(lcDMH_, suPolicy_, [])
             if not _sopt._isValid:
                 _sopt.CleanUpByOwnerRequest(lcDMH_)
-                _sopt = None
-
-                _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(512)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
-                vlogif._LogOEC(True, -1599)
+                _sopt    = None
+                _errCode = _EFwErrorCode.FE_LCSF_038
             else:
+                _TextStyle._SetHighlightingMode(_sopt._isUserLogHighlightingDisabled)
+
                 _sopt.CleanUpByOwnerRequest(lcDMH_)
                 _sopt = _FwStartOptionsImpl(lcDMH_, suPolicy_, startOptions_=startOptions_)
                 if not _sopt._isValid:
                     _sopt.CleanUpByOwnerRequest(lcDMH_)
                     _sopt = None
+                elif _sopt._isSuppressStartPreambleEnabled:
+                    _bPrintSP = False
+
+                _TextStyle._SetHighlightingMode(_sopt._isUserLogHighlightingDisabled)
+
+        if _bPrintSP:
+            print(_LcDepManager.__GetPreamble())
+        if _errCode is not None:
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
+            vlogif._LogOEC(True, _errCode)
         return _sopt
 
     def __LoadConfig(self, lcDMH_ : int, suPolicy_ : _FwStartupPolicy, fwSOpt_ : _FwStartOptionsImpl) -> bool:
@@ -277,8 +291,9 @@ class _LcDepManager(_ProtectedAbstractSlotsObject):
             self.__fwCfg = None
 
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_002)
+                _errMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TextID_002).format()
+                _errCode = _EFwErrorCode._EFwErrorCode.FE_LCSF_089
 
-                _LcFailure.CheckSetLcSetupFailure(_errMsg)
-                vlogif._LogOEC(True, -1600)
+                _LcFailure.CheckSetLcSetupFailure(_errCode, errMsg_=_errMsg)
+                vlogif._LogOEC(True, _errCode)
         return self.__fwCfg is not None

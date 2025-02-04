@@ -16,6 +16,8 @@ import sys
 sys.path.extend(((_xcoRootPath := os.path.normpath(os.path.join(os.path.dirname(__file__), '../../../../..'))) not in sys.path) * [_xcoRootPath])
 
 # for demonstration purposes only
+from math      import pi             as _PI
+from math      import pow            as _POW
 from threading import current_thread as _PyCurThread
 
 from xcofdk             import fwapi
@@ -36,7 +38,7 @@ class AppMainTask(MainXTask):
             _tp = XTaskProfile.CreateSynchronousTaskProfile(aliasName_='appMainTask')
         else:
             _tp = XTaskProfile.CreateAsynchronousTaskProfile(aliasName_='appMainTask')
-        MainXTask.__init__(self, taskProfile_=_tp)
+        super().__init__(taskProfile_=_tp)
 
     @override
     def RunXTask(self) -> ETernaryCallbackResultID:
@@ -44,6 +46,12 @@ class AppMainTask(MainXTask):
         _msg  = f'Welcome to XCOFDK by {_msg} {self.xtaskAliasName}:'
         _msg += f'\n\tcurrent host thread : {_PyCurThread().name}'
         xlogif.LogInfo(_msg)
+
+        xlogif.LogInfo('Starting a few async. tasks for geometric calculation...')
+        _msg = GeomTask.CreateStartGeomPool()
+        xlogif.LogInfo(f'Done, result:{_msg}')
+
+        xlogif.LogInfo(f'Going to stop the run-phase of {self.xtaskAliasName}...')
         return ETernaryCallbackResultID.STOP
 #END class AppMainTask
 
@@ -54,7 +62,7 @@ class AppTask(XTask):
             _tp = XTaskProfile.CreateSynchronousTaskProfile(aliasName_='appTask')
         else:
             _tp = XTaskProfile.CreateAsynchronousTaskProfile(aliasName_='appTask')
-        XTask.__init__(self, taskProfile_=_tp)
+        super().__init__(taskProfile_=_tp)
 
     @override
     def RunXTask(self) -> ETernaryCallbackResultID:
@@ -62,19 +70,54 @@ class AppTask(XTask):
         _msg  = f'Welcome to XCOFDK by {_msg} {self.xtaskAliasName}:'
         _msg += f'\n\tcurrent host thread : {_PyCurThread().name}'
         xlogif.LogInfo(_msg)
+
+        xlogif.LogInfo('Starting a few async. tasks for geometric calculation...')
+        _msg = GeomTask.CreateStartGeomPool()
+        xlogif.LogInfo(f'Done, result:{_msg}')
+
+        xlogif.LogInfo(f'Going to stop the run-phase of {self.xtaskAliasName}...')
         return ETernaryCallbackResultID.STOP
 #END class AppTask
+
+
+class GeomTask(XTask):
+    def __init__(self, index_ : int):
+        self.geomCalc = 0
+        _tp = XTaskProfile.CreateAsynchronousTaskProfile(aliasName_=f'geomTask_{index_}')
+        super().__init__(taskProfile_=_tp)
+
+    @override
+    def RunXTask(self, radius_ : float, bCalcArea_ =False) -> ETernaryCallbackResultID:
+        self.geomCalc = _PI*_POW(radius_, 2) if bCalcArea_ else 2*_PI*radius_
+        return ETernaryCallbackResultID.STOP
+
+    @staticmethod
+    def CreateStartGeomPool(size_ : int =5) -> str:
+        _pool = [ GeomTask(ii) for ii in range(size_) ]
+        for ii in range(size_):
+            _tsk = _pool[ii]
+            _tsk.Start(1.7+ii, bCalcArea_=ii%2)
+
+        res, _FMT = '', '\n\t[{}] circle radius : {:<.2f}  ,  {:>12s} : {:<.4f}'
+        for ii in range(size_):
+            _tsk = _pool[ii]
+            _tsk.Join()
+            res += _FMT.format(_tsk.xtaskAliasName, 1.7+ii, 'enclosedArea' if ii%2 else 'perimeter', _tsk.geomCalc)
+        return res
+#END class GeomTask
 
 
 def Main(bSyncTask_ =False, bUseMainTask_ =True, fwStartOptions_ : list =None):
     """
     Entry point of a Python program demonstrating typical use of the framework
-    of XCOFDK by multithreaded applications.
-
-    Representing a quite simple example, it creates an application task serving
-    as its 'starting task' which is executed by the framework. Note that the
-    applicatiion may also opt to create and start additional tasks from within
-    this entry point, or at some time later from within its starting task.
+    of XCOFDK by multithreaded applications. Representing a quite simple
+    example:
+        - it creates application's main task with synchronous execution type,
+          which is executed by the framework from within program's entry point
+          'Main()', that is synchronously to program's 'MainThread',
+        - the main task, on the other hand, creates a few asynchronous tasks
+          each performing some geometric calculation for the passed arguments
+          when started.
 
     Parameters:
     -------------
@@ -118,14 +161,14 @@ def Main(bSyncTask_ =False, bUseMainTask_ =True, fwStartOptions_ : list =None):
 
 
 def _ScanCmdLine():
-    _lstFW_START_OPTIONS    = [ '--disable-log-timestamp' , '--disable-log-highlighting' ]
+    _lstFW_START_OPTIONS    = [ '--disable-log-timestamp' , '--disable-log-highlighting' , '--enable-log-callstack' ]
     _lstQUICK_START_OPTIONS = [ '--use-sync-task', '--no-main-task' ]
 
     _bSync, _bMain, _lstOptions = False, True, []
     for aa in sys.argv:
         if aa == '--help':
             _usage = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-            _usage = f'Usage:\n\t$> python3 -m {_usage} [--help] [--use-sync-task] [--no-main-task] [--disable-log-timestamp] [--disable-log-highlighting]'
+            _usage = f'Usage:\n\t$> python3 -m {_usage} [--help] [--use-sync-task] [--no-main-task] [--disable-log-timestamp] [--disable-log-highlighting] [--enable-log-callstack]'
             print(_usage)
             return None, None, None
 

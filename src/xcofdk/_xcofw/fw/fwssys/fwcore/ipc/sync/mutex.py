@@ -7,16 +7,15 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fwadapter                             import rlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.util            import _Util
 from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout        import _Timeout
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase import _SyncResourceBase
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil     import _TaskUtil
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _Mutex(_SyncResourceBase):
 
@@ -26,9 +25,7 @@ class _Mutex(_SyncResourceBase):
         self.__ownerID = None
         ic = 1 if take_ else 0
         super().__init__(_SyncResourceBase._ESyncResType.eMutex, initialCount_=ic)
-        if not self._isValid:
-            pass
-        else:
+        if self._isValid:
             self.__ownerID = _TaskUtil.GetInvalidTaskID()
 
     def __enter__(self):
@@ -77,10 +74,10 @@ class _Mutex(_SyncResourceBase):
             if self.__ownerID == _INVALID_TASK_ID:
                 return False
             if self.__ownerID != _TaskUtil.GetCurPyThreadRuntimeID():
-                rlogif._LogOEC(True, -1251)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00199)
                 return False
             if self._counter <= 0:
-                rlogif._LogOEC(True, -1252)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00632)
                 return False
             self._DecCounter()
             if self._counter == 0:
@@ -90,7 +87,7 @@ class _Mutex(_SyncResourceBase):
             self._resLock.release()
             res = True
         except RuntimeError as re:
-            rlogif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Mutex_TextID_001).format(self, str(re)))
+            rlogif._LogErrorEC(_EFwErrorCode.UE_00071, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Mutex_TextID_001).format(self, str(re)))
         return res
 
     @property
@@ -103,9 +100,7 @@ class _Mutex(_SyncResourceBase):
         return res
 
     def _CleanUp(self):
-        if not self._isValid:
-            pass
-        else:
+        if self._isValid:
             with self._apiLock:
                 if self.__ownerID == _TaskUtil.GetCurPyThreadRuntimeID():
                     _tryCount = self._counter

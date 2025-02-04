@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import inspect
 import os
 import sys
@@ -23,9 +22,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _EColorCode
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _TextStyle
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _LogEntry(_AbstractSlotsObject):
 
@@ -58,12 +58,12 @@ class _LogEntry(_AbstractSlotsObject):
     __ufmttagInclFuncName     = False
     __ufmttagInclFileName     = True
     __ufmttagInclLineNo       = True
-    __ufmttagInclCallstack    = True
+    __ufmttagInclCallstack    = False
     __ufmttagInclRaisedByInfo = True
     __ufmttagInclErrorImpact  = False
     __ufmttagInclTExecPhase   = False
 
-    def __init__( self, eLogType_, taskName_ : str =None, taskID_ =None
+    def __init__( self, eLogType_, taskName_ : str =None, taskID_ : int =None
                 , shortMsg_ : str =None, longMsg_ : str =None, inheritanceDepth_ =0
                 , callstackLevelOffset_ =None, cloneby_ =None, doSkipSetup_ =False
                 , euRNum_ =None, bXTaskTask_ =None):
@@ -88,7 +88,7 @@ class _LogEntry(_AbstractSlotsObject):
         elif cloneby_ is not None:
             if not isinstance(cloneby_, _LogEntry):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1045)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00433)
             elif not cloneby_.isValid:
                 pass
             else:
@@ -148,7 +148,6 @@ class _LogEntry(_AbstractSlotsObject):
     def isError(self):
         eGrpID = self.eTypeGroupID
         return False if eGrpID is None else eGrpID.isError
-
 
     @property
     def isUserError(self):
@@ -251,7 +250,6 @@ class _LogEntry(_AbstractSlotsObject):
 
     @property
     def taskID(self):
-
         return self.__taskID
 
     @property
@@ -298,7 +296,7 @@ class _LogEntry(_AbstractSlotsObject):
         return self._euRNumber
 
     @property
-    def eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
+    def eTaskXPhase(self) -> _ETaskExecutionPhaseID:
         return _ETaskExecutionPhaseID.eNone if self.__eTEPhase is None else self.__eTEPhase
 
     @property
@@ -383,7 +381,7 @@ class _LogEntry(_AbstractSlotsObject):
                           , includeFuncName_     =True
                           , includeFileName_     =True
                           , includeLineNo_       =True
-                          , includeCallstack_    =True
+                          , includeCallstack_    =False
                           , includeRaisedByInfo_ =True
                           , includeEuNum_        =None
                           , includeErrImp_       =None
@@ -473,7 +471,7 @@ class _LogEntry(_AbstractSlotsObject):
         return None
 
     def _Clone(self):
-        vlogif._LogOEC(False, -3001)
+        vlogif._LogOEC(False, _EFwErrorCode.VUE_00038)
         return None
 
     def _SetCleanUpPermission(self, bCleanupPermitted_ : bool):
@@ -483,7 +481,7 @@ class _LogEntry(_AbstractSlotsObject):
         self.CleanUp()
 
     def _Adapt( self, eLogType_ : _ELogType =None, shortMsg_ : str =None, uniqueID_ : int =None, bFlushed_ : bool =None
-              , bCleanupPermitted_ : bool =None, eTaskExecPhaseID_ : _ETaskExecutionPhaseID =None):
+              , bCleanupPermitted_ : bool =None, eTaskExecPhaseID_ : _ETaskExecutionPhaseID =None, taskName_ : str =None, taskID_ : int =None):
         if eLogType_ is not None:
             self.__eType = eLogType_
         if shortMsg_ is not None:
@@ -496,11 +494,14 @@ class _LogEntry(_AbstractSlotsObject):
             self._SetCleanUpPermission(bCleanupPermitted_)
         if eTaskExecPhaseID_ is not None:
             self.__eTEPhase = eTaskExecPhaseID_
+        if taskName_ is not None:
+            self.__taskName = taskName_
+        if taskID_ is not None:
+            self.__taskID = taskID_
 
     def _ToString(self, *args_, **kwargs_):
         _hdr = self.__GetHeader(bHighlight_=False)
-
-        res = _CommonDefines._STR_EMPTY if _hdr is None else _hdr
+        res  = _CommonDefines._STR_EMPTY if _hdr is None else _hdr
 
         if self.shortMessage is None or self.longMessage is None:
             if self.shortMessage is not None:
@@ -514,14 +515,10 @@ class _LogEntry(_AbstractSlotsObject):
         if _hdr is None:
             res = res.lstrip()
 
-        _bHIGHLIGHT = True
-        if _bHIGHLIGHT:
-            res = self.__HighlightText(res)
-
         if self.isError:
-            _bFwApiLogType     = self.eLogType.isFwApiLogType
-            _bInclCallstack    = _LogEntry.__ufmttagInclCallstack    if _bFwApiLogType else _LogEntry.__fmttagInclCallstack
-            _bInclRaisedByInfo = _LogEntry.__ufmttagInclRaisedByInfo if _bFwApiLogType else _LogEntry.__fmttagInclRaisedByInfo
+            _bUserLog = self.eLogType.isFwApiLogType
+            _bInclCallstack    = _LogEntry.__ufmttagInclCallstack    if _bUserLog else _LogEntry.__fmttagInclCallstack
+            _bInclRaisedByInfo = _LogEntry.__ufmttagInclRaisedByInfo if _bUserLog else _LogEntry.__fmttagInclRaisedByInfo
 
             if _bInclCallstack and (self.callstack is not None):
                 res += _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_01).format(self.callstack.rstrip())
@@ -539,6 +536,8 @@ class _LogEntry(_AbstractSlotsObject):
                 _nxcp = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}'.join(_nxcp)
                 _nxcp = _CommonDefines._CHAR_SIGN_TAB + _nxcp
                 res += _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_03).format(_nxcp.rstrip())
+
+        res = self.__HighlightText(res)
         return res
 
     def _CleanUp(self):
@@ -558,6 +557,7 @@ class _LogEntry(_AbstractSlotsObject):
 
     @staticmethod
     def __GetCallStackInfo(inheritanceDepth_ =0, callstackLevelOffset_ =None):
+        
         if callstackLevelOffset_ is None:
             callstackLevelOffset_ = _LogUtil.GetCallstackLevelOffset()
 
@@ -567,6 +567,7 @@ class _LogEntry(_AbstractSlotsObject):
         if (_cstack is None) or (len(_cstack) < 1):
             _frameIdx = None
         elif _frameIdx >= len(_cstack):
+            
             _frameIdx = None
 
         _frame    = None
@@ -575,9 +576,7 @@ class _LogEntry(_AbstractSlotsObject):
         _lineNo   = None
         _filePath = None
         _funcName = None
-        if _frameIdx is None:
-            pass
-        else:
+        if _frameIdx is not None:
             _frame, _filePath, _lineNo, _funcName, _lines, _index = _cstack[_frameIdx]
         return _filePath, _lineNo, _funcName
 
@@ -588,6 +587,7 @@ class _LogEntry(_AbstractSlotsObject):
         _cc = colorCode_
         if not _cc.isColor:
             if self.isError:
+                
                 _cc = _EColorCode.RED
             elif self.isKPI:
                 _cc = _EColorCode.BLUE
@@ -609,7 +609,7 @@ class _LogEntry(_AbstractSlotsObject):
             _bInclErrorImpact = _LogEntry.__ufmttagInclErrorImpact if _bFwApiLogType else _LogEntry.__fmttagInclErrorImpact
 
             if _bInclErrorImpact and (self.eErrorImpact is not None):
-                res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_011).format(_grpTypeName, self.eErrorImpact.value)
+                res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_011).format(_grpTypeName, '{0:03X}'.format(self.eErrorImpact.value))
             else:
                 res = _grpTypeName
 
@@ -649,7 +649,7 @@ class _LogEntry(_AbstractSlotsObject):
 
         _bUserLog = self.eLogType.isFwApiLogType
         if not _bUserLog:
-            _bUserLog = (self.eTaskExecPhase is not None) and not (self.eTaskExecPhase.isRunnableExecution or self.eTaskExecPhase.isFwHandling)
+            _bUserLog = (self.eTaskXPhase is not None) and not (self.eTaskXPhase.isRunnableExecution or self.eTaskXPhase.isFwHandling)
         if _bUserLog:
             _incUniqueID, _incTimestamp, _incTaskName, _incTaskID, _incFuncName, _incFileName, _incLineNo, \
                 _incCallstack, _incRaisedByInfo, _includeEuNum, _includeErrImp, _includeExecPhase = _LogEntry._GetUserFormatTags()
@@ -700,19 +700,19 @@ class _LogEntry(_AbstractSlotsObject):
             res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_022).format(_tstr)
 
         if _incTaskName or _incTaskID:
-            tmp = _CommonDefines._STR_EMPTY
+            _tmp = _CommonDefines._STR_EMPTY
 
             if _incTaskName:
-                tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006).format(self.taskName)
+                _tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006).format(self.taskName)
             if _incTaskID:
                 if _incTaskName:
-                    tmp += _CommonDefines._CHAR_SIGN_COLON
-                tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006).format(self.taskID)
+                    _tmp += _CommonDefines._CHAR_SIGN_COLON
+                _tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006).format(self.taskID)
             if _includeEuNum:
-                tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_018).format('-' if self.__euRNum is None else self.__euRNum)
+                _tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_018).format('-' if self.__euRNum is None else self.__euRNum)
             if self.isError and _includeExecPhase:
-                tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_019).format(self.eTaskExecPhase.value)
-            res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(tmp)
+                _tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_019).format(self.eTaskXPhase.value)
+            res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(_tmp)
 
         if _incFileName:
             if not _incLineNo:
@@ -737,6 +737,7 @@ class _LogEntry(_AbstractSlotsObject):
 
         if _incTaskName:
             if self.__taskName is None:
+                
                 _incTaskName = False
 
         if not _incTimestamp:
@@ -750,18 +751,18 @@ class _LogEntry(_AbstractSlotsObject):
             res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(self.__taskName)
         return res
 
-    def __SetupEntry( self, eLogType_, taskName_ : str =None, taskID_ =None, shortMsg_ : str =None, longMsg_ : str =None
+    def __SetupEntry( self, eLogType_, taskName_ : str =None, taskID_ : int =None, shortMsg_ : str =None, longMsg_ : str =None
                      , inheritanceDepth_ =0, callstackLevelOffset_ =None, euRNum_ =None, bXTaskTask_ =None):
         if not isinstance(eLogType_, _ELogType):
             self.CleanUp()
-            vlogif._LogOEC(True, -1046)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00434)
             return
 
         if taskName_ is None:
             pass
         elif not isinstance(taskName_, str):
             self.CleanUp()
-            vlogif._LogOEC(True, -1047)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00435)
             return
         else:
             taskName_ = taskName_.strip()

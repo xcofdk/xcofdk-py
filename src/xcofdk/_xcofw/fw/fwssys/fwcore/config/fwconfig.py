@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import os.path
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                   import vlogif
@@ -18,9 +17,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartuppolicy    import _FwStartupP
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject            import _ProtectedAbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes         import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _FwConfig(_ProtectedAbstractSlotsObject):
 
@@ -37,7 +37,7 @@ class _FwConfig(_ProtectedAbstractSlotsObject):
         self.__SetUpDirPaths(suPolicy_)
         if not self.isValid:
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._XLogFatal("[CFG] Failed to retrieve xco dir info.")
+            vlogif._XLogFatalEC(_EFwErrorCode.FE_00902, "[CFG] Failed to retrieve xco dir info.")
         else:
             self.__cfgStartup = _FwStartupConfig(ppass_, suPolicy_, fwSOpt_)
             if not self.__cfgStartup._isValid:
@@ -52,7 +52,6 @@ class _FwConfig(_ProtectedAbstractSlotsObject):
     @property
     def fwCoreDirPath(self) -> str:
         return self.__fwCoreDirPath
-
 
     @property
     def fwStartOptions(self) -> _FwStartOptionsImpl:
@@ -91,11 +90,11 @@ class _FwConfig(_ProtectedAbstractSlotsObject):
 
         _fwCoreDir = os.path.join(suPolicy_.xcofdkRootDir, _fwCoreRelPath)
         if not _FSUtil.IsExistingDir(_fwCoreDir):
-            vlogif._XLogFatal('[CFG] Non-existing fw core dir.')
+            vlogif._XLogFatalEC(_EFwErrorCode.FE_00903, '[CFG] Non-existing fw core dir.')
             return
 
         _fwConfigDir = _fwCoreDir if _FwConfig.__CFG_DIR_REL_PATH is None else os.path.join(_fwCoreDir, _FwConfig.__CFG_DIR_REL_PATH)
         if not _FSUtil.IsExistingDir(_fwConfigDir):
-            vlogif._XLogFatal('[CFG] Non-existing fw config dir.')
+            vlogif._XLogFatalEC(_EFwErrorCode.FE_00904, '[CFG] Non-existing fw config dir.')
             return
         self.__fwCoreDirPath = _fwCoreDir

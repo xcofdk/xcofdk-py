@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fwadapter                              import rlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.listutil         import _ListUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.base.strutil          import _StrUtil
@@ -21,6 +20,8 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _ETaskResourceF
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _ETaskRightFlag
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _PyThread
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
@@ -30,10 +31,7 @@ if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
     _FwQueue, _FwTimer, _TimerProfile = object, object, object
 else:
     from xcofdk._xcofw.fw.fwssys.fwmsg.disp.fwqueue import _FwQueue
-
-    if not _FwSubsystemCoding.IsSubsystemTimerManagerConfigured():
-        _FwTimer, _TimerProfile = object, object
-
+    _FwTimer, _TimerProfile = object, object
 
 class _TaskProfile(_AbstractProfile):
 
@@ -60,7 +58,6 @@ class _TaskProfile(_AbstractProfile):
 
     __bUSE_AUTO_GENERATED_TASK_NAMES_ONLY = True
 
-
     def __init__( self
                 , runnable_                   : _AbstractRunnable    =None
                 , taskName_                   : str                  =None
@@ -85,9 +82,7 @@ class _TaskProfile(_AbstractProfile):
         if self._GetProfileHandlersList() is None:
             if not _TaskProfile.__SetupProfileHandlersList():
                 _bError = True
-        if _bError:
-            pass
-        else:
+        if not _bError:
             if runnable_ is not None:
                 _dictAttrs[_RBL_KEY] = runnable_
             if taskName_ is not None:
@@ -117,11 +112,9 @@ class _TaskProfile(_AbstractProfile):
                             continue
 
                         _bError = True
-                        rlogif._LogOEC(True, -1370)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00289)
                         break
-        if _bError:
-            pass
-        else:
+        if not _bError:
             _sb   = None if _SB_KEY not in _dictAttrs else _dictAttrs[_SB_KEY]
             _rbl  = None if _RBL_KEY not in _dictAttrs else _dictAttrs[_RBL_KEY]
             _trm  = None if _TRM_KEY not in _dictAttrs else _dictAttrs[_TRM_KEY]
@@ -129,22 +122,22 @@ class _TaskProfile(_AbstractProfile):
 
             if _rbl is None:
                 _bError = True
-                rlogif._LogOEC(True, -1371)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00290)
             elif _rbl._eRunnableType is None:
                 _bError = True
-                rlogif._LogOEC(True, -1372)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00291)
             elif (_trm is not None) and not _ETaskRightFlag.IsValidTaskRightMask(_trm):
                 _bError = True
-                rlogif._LogOEC(True, -1373)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00292)
             elif (_resm is not None) and not isinstance(_resm, _ETaskResourceFlag):
                 _bError = True
-                rlogif._LogOEC(True, -1374)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00293)
             elif (_resm is not None) and _rbl._eRunnableType.isXTaskRunnable:
                 _bError = True
-                rlogif._LogOEC(True, -1375)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00294)
             elif (_sb is not None) and _rbl._eRunnableType.isXTaskRunnable:
                 _bError = True
-                rlogif._LogOEC(True, -1376)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00295)
             else:
                 if _trm is not None:
                     _dictAttrs[_TRM_KEY] = _trm
@@ -155,6 +148,7 @@ class _TaskProfile(_AbstractProfile):
                         _dictAttrs[_RESM_KEY] = _resm
                 if (_sb is None) and not _rbl._eRunnableType.isXTaskRunnable:
                     _dictAttrs[_SB_KEY] = True
+
         if _bError:
             _AbstractProfile.__init__(self, _AbstractProfile._EProfileType.eTask, profileAttrs_=None)
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
@@ -271,13 +265,13 @@ class _TaskProfile(_AbstractProfile):
 
     def Freeze(self, *args_, **kwargs_):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1377)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00296)
             return False
         elif not self.isValid:
-            rlogif._LogOEC(True, -1378)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00297)
             return False
         elif self.runnable is None:
-            rlogif._LogOEC(True, -1379)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00298)
             return False
 
         _lstArgs = _ListUtil.UnpackArgs(*args_, minArgsNum_=1, maxArgsNum_=2, bThrowx_=True)
@@ -301,7 +295,7 @@ class _TaskProfile(_AbstractProfile):
                 rlogif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_TaskProfile_TextID_011).format(_specName))
 
         if not _bValid:
-            rlogif._LogOEC(True, -1380)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00299)
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
             return False
 
@@ -317,7 +311,7 @@ class _TaskProfile(_AbstractProfile):
 
         res = _AbstractProfile.Freeze(self)
         if not res:
-            rlogif._LogOEC(True, -1381)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00708)
         return res
 
     def SetRunnable( self
@@ -347,7 +341,7 @@ class _TaskProfile(_AbstractProfile):
                     if _bValid:
                         _bValid = trMask_.hasXTaskTaskRight
                     if not _bValid:
-                        rlogif._LogOEC(True, -1382)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00300)
             else:
                 trMask_ = _ETaskRightFlag.UserTaskRightDefaultMask()
                 if runnable_._eRunnableType.isXTaskRunnable:
@@ -400,7 +394,7 @@ class _TaskProfile(_AbstractProfile):
                     if _bValid:
                         _bValid = trMask_.hasXTaskTaskRight
                     if not _bValid:
-                        rlogif._LogOEC(True, -1383)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00301)
             else:
                 trMask_ = _ETaskRightFlag.UserTaskRightDefaultMask()
                 if runnable_._eRunnableType.isXTaskRunnable:
@@ -432,24 +426,23 @@ class _TaskProfile(_AbstractProfile):
     def SetResources(self, resourcesMask_ : _ETaskResourceFlag =None, timerResource_ =None):
         _rr =  self._GetProfileAttr(_TaskProfile._ATTR_KEY_RUNNABLE, ignoreStatus_=False)
         if _rr is None:
-            rlogif._LogOEC(True, -1384)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00302)
             return False
         else:
             return self.__SetResources(_rr, resourcesMask_=resourcesMask_, timerResource_=timerResource_)
 
-
     def SetArgs(self, args_ : list):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1385)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00303)
             return False
         elif not self.isValid:
-            rlogif._LogOEC(True, -1386)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00304)
             return False
  
         _bValid = _Util.IsInstance(args_, list)
         if _bValid and (self.args is not None):
             _bValid = False
-            rlogif._LogOEC(True, -1387)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00305)
  
         if not _bValid:
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
@@ -460,16 +453,16 @@ class _TaskProfile(_AbstractProfile):
 
     def SetKwargs(self, kwargs_ : dict):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1388)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00306)
             return False
         elif not self.isValid:
-            rlogif._LogOEC(True, -1389)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00307)
             return False
  
         _bValid = _Util.IsInstance(kwargs_, dict)
         if _bValid and (self.kwargs is not None):
             _bValid = False
-            rlogif._LogOEC(True, -1390)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00308)
  
         if not _bValid:
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
@@ -556,12 +549,12 @@ class _TaskProfile(_AbstractProfile):
 
         if self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
             if self.isFrozen:
-                rlogif._LogOEC(True, -1391)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00309)
             elif self.isValid:
                 self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
-                rlogif._LogOEC(True, -1392)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00310)
             else:
-                rlogif._LogOEC(True, -1393)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00311)
 
             return False
 
@@ -573,7 +566,7 @@ class _TaskProfile(_AbstractProfile):
             return False
 
         if runnable_._eRunnableType is None:
-            rlogif._LogOEC(True, -1394)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00312)
             return False
 
         if runnable_._eRunnableType.isXTaskRunnable:
@@ -583,24 +576,23 @@ class _TaskProfile(_AbstractProfile):
                 _bCheckOK = enclosedPyThread_ is None
 
             if not _bCheckOK:
-                rlogif._LogOEC(True, -1395)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00313)
             elif delayedStartTimeSpanMS_ is not None:
                 _bCheckOK = False
-                rlogif._LogOEC(True, -1396)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00314)
 
             if not _bCheckOK:
                 return False
-
 
         return True
 
     def __SetResources( self, runnable_ : _AbstractRunnable, resourcesMask_ : _ETaskResourceFlag =None, timerResource_ =None):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1397)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00315)
             return False
         if not self.isValid:
             if self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
-                rlogif._LogOEC(True, -1398)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00316)
                 return False
 
         if not _Util.IsInstance(runnable_, _AbstractRunnable, bThrowx_=True):
@@ -620,26 +612,26 @@ class _TaskProfile(_AbstractProfile):
         if _ETaskResourceFlag.IsResourceFlagSet(resourcesMask_, _ETaskResourceFlag.eTimer):
             _bValid = not self.isEnclosingStartupThread
             if not _bValid:
-                rlogif._LogOEC(True, -1399)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00317)
             else:
                 _bValid = not _ETaskResourceFlag.IsResourceFlagSet(_rmask, _ETaskResourceFlag.eTimer)
                 if not _bValid:
-                    rlogif._LogOEC(True, -1400)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00318)
                 else:
                     _bValid = _Util.IsInstance(timerResource_, [_FwTimer, _TimerProfile])
                     if not _bValid:
-                        rlogif._LogOEC(True, -1401)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00319)
                     else:
                         callbackIF = timerResource_.callbackIF
                         _bValid = _bValid and callbackIF.isSpecifiedByInstanceMethod
                         _bValid = _bValid and id(callbackIF.ifsource) == id(runnable_)
                         _bValid = _bValid and callbackIF.methodName == _FwTDbEngine.GetText(_EFwTextID.eMisc_CallbackFunctionName_OnTimeoutExpired)
                         if not _bValid:
-                            rlogif._LogOEC(True, -1402)
+                            rlogif._LogOEC(True, _EFwErrorCode.FE_00320)
                         else:
                             _bValid = _Util.GetAttribute(runnable_, _ERunnableApiFuncTag.eRFTOnTimeoutExpired.functionName) is not None
                             if not _bValid:
-                                rlogif._LogOEC(True, -1403)
+                                rlogif._LogOEC(True, _EFwErrorCode.FE_00321)
                             else:
                                 timerres = timerResource_
                                 if isinstance(timerResource_, _TimerProfile):
@@ -653,7 +645,7 @@ class _TaskProfile(_AbstractProfile):
         if _bValid and runnable_.isProvidingInternalQueue:
             if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
                 _bValid = False
-                rlogif._LogOEC(True, -1404)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00322)
             else:
                 if self.internalQueue is None:
                     _intQueueSize = _FwQueue.GetFiniteQueueDefaultSize()
@@ -665,7 +657,7 @@ class _TaskProfile(_AbstractProfile):
         if _bValid and runnable_.isProvidingExternalQueue:
             if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
                 _bValid = False
-                rlogif._LogOEC(True, -1405)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00323)
             else:
                 _extQueueSize = self._GetProfileAttr(_TaskProfile._ATTR_KEY_EXTERNAL_QUEUE_SIZE, ignoreStatus_=True)
                 if _extQueueSize is not None:
@@ -684,7 +676,7 @@ class _TaskProfile(_AbstractProfile):
                 if _bAttrOnSizeBlockingXQueue is not None:
                     if _bAttrOnSizeBlockingXQueue != _bOnSizeBlockingXQueue:
                         self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
-                        rlogif._LogOEC(True, -1406)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00324)
                         return False
 
                 if self.externalQueue is None:
@@ -705,16 +697,15 @@ class _TaskProfile(_AbstractProfile):
 
     def _Validate(self, dictAttrs_ : dict):
         if self._GetProfileHandlersList() is None:
-            rlogif._LogOEC(True, -1407)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00325)
             return
         elif self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
-            rlogif._LogOEC(True, -1408)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00709)
             return
         elif (dictAttrs_ is None) or len(dictAttrs_) == 0:
             return
         elif not _AbstractProfile._CheckMutuallyExclusiveAttrs(dictAttrs_, [_TaskProfile._ATTR_KEY_TIMER, _TaskProfile._ATTR_KEY_TIMER_PROFILE]):
             return
-
 
         for _pah in self._GetProfileHandlersList():
             if _pah.attrName not in dictAttrs_:
@@ -752,7 +743,6 @@ class _TaskProfile(_AbstractProfile):
                       , _TaskProfile._ATTR_KEY_DELAYED_START_TIME_SPAN ]
         _pah = _AbstractProfile._ProfileAttributeHandler(_TaskProfile._ATTR_KEY_RUNNABLE, _TaskProfile.SetRunnable, _lstAttrKeys)
         _pahList.append(_pah)
-
 
         _lstAttrKeys = [ _TaskProfile._ATTR_KEY_RUNNABLE
                       , _TaskProfile._ATTR_KEY_TASK_NAME

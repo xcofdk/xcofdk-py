@@ -7,32 +7,32 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                  import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiimplshare   import _FwApiImplShare
+from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconnap      import _FwApiConnectorAP
+from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn  import _XTaskConnector
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.sscipc import _SSConfigIPC
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnablefwc     import _AbstractRunnableFWC
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase     import _SyncResourceBase
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase     import _SyncResourcesGuard
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs    import _EFwcID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile      import _ExecutionProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgr          import _TaskMgr
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgrimpl      import _TaskManagerImpl
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _StartupThread
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _AutoEnclosedThreadsBag
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcssysdeputy          import _ESubSysID
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcssysdeputy          import _ELcScope
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcssysdeputy          import _LcSSysDeputy
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcssysdeputy          import _FwSSysConfigBase
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes        import _FwIntEnum
-from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconnap      import _FwApiConnectorAP
-from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn  import _XTaskConnector
-
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnablefwc  import _AbstractRunnableFWC
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase  import _SyncResourceBase
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase  import _SyncResourcesGuard
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _EFwcID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile   import _ExecutionProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgrimpl   import _TaskManagerImpl
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _TaskUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _StartupThread
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _AutoEnclosedThreadsBag
 
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchregistry import _MessageClusterMap
 
-from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
+from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 class _SSDeputyIPC(_LcSSysDeputy):
     __slots__ = []
@@ -46,10 +46,10 @@ class _SSDeputyIPC(_LcSSysDeputy):
     def _ProcDeputyCmd(self, tgtScope_ : _ELcScope, deputyCmd_ : _FwIntEnum, subsysCfg_ : _FwSSysConfigBase) -> bool:
 
         if not isinstance(deputyCmd_, _LcSSysDeputy._EDDeputyCmd):
-            vlogif._LogOEC(True, -1152)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00057)
             return False
         elif not isinstance(subsysCfg_, _SSConfigIPC):
-            vlogif._LogOEC(True, -1153)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00058)
             return False
         elif deputyCmd_.isReInject:
             return True
@@ -75,15 +75,13 @@ class _SSDeputyIPC(_LcSSysDeputy):
 
                     if _FwSubsystemCoding.IsSubsystemMessagingConfigured():
                         _lstCID.append(_EFwcID.eFwDispatcher)
-                        if _FwSubsystemCoding.IsSubsystemTimerManagerConfigured():
-                            _lstCID.append(_EFwcID.eTimerManager)
 
                     _AbstractRunnableFWC._DefineFwcTable(lstFwcIDs_=_lstCID)
 
             elif member == _SSConfigIPC._EIpcConfigEntityID.eSyncResourcesGuard__Singleton:
                 _SyncResourceBase._SetSyncResGuardConfig(subsysCfg_.isSyncResourceGuardEnabled)
                 if not subsysCfg_.isSyncResourceGuardEnabled:
-                    pass
+                    pass 
                 elif deputyCmd_.isDeInject:
                     _srg = _SyncResourcesGuard._GetInstance()
                     if _srg is not None:
@@ -92,7 +90,7 @@ class _SSDeputyIPC(_LcSSysDeputy):
                     _srg = _SyncResourcesGuard._CreateInstance()
                     if _srg is None:
                         _srg = False
-                        vlogif._LogOEC(True, -1154)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00059)
                         break
 
             elif member == _SSConfigIPC._EIpcConfigEntityID.eTaskID__Defines:
@@ -116,13 +114,13 @@ class _SSDeputyIPC(_LcSSysDeputy):
 
             elif member == _SSConfigIPC._EIpcConfigEntityID.eTaskManager__Singleton:
                 if deputyCmd_.isDeInject:
-                    if _TaskManagerImpl._GetInstance() is not None:
-                        _TaskManagerImpl._GetInstance().CleanUp()
-                elif _TaskManagerImpl._GetInstance() is None:
-                    tmgrImpl = _TaskManagerImpl()
-                    res = _TaskManagerImpl._GetInstance() is not None
+                    if _TaskMgr() is not None:
+                        _TaskMgr().CleanUp()
+                elif _TaskMgr() is None:
+                    _tmgrImpl = _TaskManagerImpl()
+                    res = _TaskMgr() is not None
                     if not res:
-                        tmgrImpl.CleanUp()
+                        _tmgrImpl.CleanUp()
                         break
 
             elif member == _SSConfigIPC._EIpcConfigEntityID.eXTaskConn__PRFC:
@@ -140,13 +138,13 @@ class _SSDeputyIPC(_LcSSysDeputy):
             elif member == _SSConfigIPC._EIpcConfigEntityID.eFwApi__ConnAccessLock:
                 _FwApiConnectorAP._APUnsetConnAccessLock()
 
-            elif member == _SSConfigIPC._EIpcConfigEntityID.eFwApiShare__AccessLock:
+            elif member == _SSConfigIPC._EIpcConfigEntityID.eFwApiImplShare__AccessLock:
                 if deputyCmd_.isInject:
                     _FwApiImplShare._Reset()
 
             else:
                 res = False
-                vlogif._LogOEC(True, -1155)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00060)
                 break
         return res
 
@@ -154,7 +152,7 @@ class _SSDeputyIPC(_LcSSysDeputy):
     def __IsRequestIgnorable(tgtScope_ : _ELcScope, deputyCmd_ : _FwIntEnum, configEntityID_ : _SSConfigIPC._EIpcConfigEntityID):
         lst_PRE_IPC_RELEVANT_CFG_ENTITIES = [
             _SSConfigIPC._EIpcConfigEntityID.eFwApi__ConnAccessLock
-          , _SSConfigIPC._EIpcConfigEntityID.eFwApiShare__AccessLock
+          , _SSConfigIPC._EIpcConfigEntityID.eFwApiImplShare__AccessLock
         ]
         lst_SEMI_IPC_RELEVANT_CFG_ENTITIES = [
             _SSConfigIPC._EIpcConfigEntityID.eSyncResourcesGuard__Singleton

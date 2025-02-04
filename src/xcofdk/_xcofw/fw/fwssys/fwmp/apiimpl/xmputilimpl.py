@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwcom         import fwutil
 from xcofdk.fwcom.xmpdefs import EProcessStartMethodID
 
@@ -17,9 +16,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.mpstartpolicy import _EProcessStartMethodID
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.mpstartpolicy import _MPStartPolicy
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _XMPUtilImpl:
     __slots__ = []
@@ -29,13 +29,12 @@ class _XMPUtilImpl:
     def __init__(self):
         pass
 
-
     @staticmethod
     def _MPIsCurrentStartMethod(smID_ : EProcessStartMethodID) -> bool:
         if not _XMPUtilImpl.__IsFWAvailable():
             return False
         if not isinstance(smID_, EProcessStartMethodID):
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XMPUtilImpl_TextID_001).format(type(smID_).__name__, EProcessStartMethodID.__name__))
+            logif._LogErrorEC(_EFwErrorCode.UE_00118, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XMPUtilImpl_TextID_001).format(type(smID_).__name__, EProcessStartMethodID.__name__))
             return False
         return _MPStartPolicy._IsCurrentStartMethod(_EProcessStartMethodID(smID_.value))
 
@@ -84,9 +83,7 @@ class _XMPUtilImpl:
         if smName_ is None:
             smName_ = EProcessStartMethodID.SystemDefault.name.lower()
         res = _MPStartPolicy._MapStartMethodToID(smName_)
-        if (res is None) or (res.value < 0):
-            pass
-        else:
+        if not  ((res is None) or (res.value < 0)):
             res = EProcessStartMethodID(res.value)
         return res
 
@@ -100,12 +97,10 @@ class _XMPUtilImpl:
     def _MPGetDefinedStartMethdsNameList() -> list:
         return _MPStartPolicy._GetDefinedStartMethdsNameList()
 
-
     @staticmethod
     def __IsFWAvailable():
         res = fwutil.IsFwAvailable()
         if not res:
             logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XMPUtilImpl_TextID_002))
         return res
-
 

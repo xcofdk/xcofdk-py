@@ -7,6 +7,7 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
+from typing import Union as _PyUnion
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception     import _XcoExceptionRoot
 from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout            import _Timeout
@@ -17,7 +18,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb           import _LcDynamicTL
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb           import _LcCeaseTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb           import _ELcCeaseTLBState
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile           import _AbstractProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.err.euerrhandler     import _EuErrorHandler
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable      import _AbstractExecutable
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore       import _BinarySemaphore
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex           import _Mutex
@@ -29,14 +29,16 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate        import _TaskState
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _PyThread
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _EFwApiBookmarkID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _ETaskApiContextID
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil         import _ETaskExecutionPhaseID
-
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject            import _AbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwerrh.euerrhandler             import _EuErrorHandler
 
 class _AbstractTask(_EuErrorHandler):
 
-    __slots__  = [ '__tskState' , '__tskEPhase' , '__tskBadge' , '__tskError' , '__linkedPyThrd'
+    __slots__  = [ '__mtxTST'   , '__tskState'  , '__tskBadge' , '__tskError' , '__linkedPyThrd'
                  , '__execConn' , '__euRNum'    , '__fwapiBM'  , '__lcDynTLB' , '__lcCeaseTLB'
-                 , '__mtxTST'
+                 , '__tskACtx'  , '__tskXPhase'
                  ]
 
     def __init__(self):
@@ -44,12 +46,13 @@ class _AbstractTask(_EuErrorHandler):
         self.__euRNum       = 0
         self.__mtxTST       = None
         self.__fwapiBM      = _EFwApiBookmarkID.eNone
+        self.__tskACtx      = _ETaskApiContextID.eDontCare
         self.__tskError     = None
         self.__tskState     = None
         self.__execConn     = None
         self.__lcDynTLB     = None
         self.__tskBadge     = None
-        self.__tskEPhase    = _ETaskExecutionPhaseID.eNone
+        self.__tskXPhase    = _ETaskExecutionPhaseID.eNone
         self.__lcCeaseTLB   = None
         self.__linkedPyThrd = None
 
@@ -65,12 +68,20 @@ class _AbstractTask(_EuErrorHandler):
         self.__tskState = val_
 
     @property
-    def _tskEPhase(self):
-        return self.__tskEPhase
+    def _tskXPhase(self):
+        return self.__tskXPhase
 
-    @_tskEPhase.setter
-    def _tskEPhase(self, val_):
-        self.__tskEPhase = val_
+    @_tskXPhase.setter
+    def _tskXPhase(self, val_):
+        self.__tskXPhase = val_
+
+    @property
+    def _tskApiCtx(self):
+        return self.__tskACtx
+
+    @_tskApiCtx.setter
+    def _tskApiCtx(self, val_):
+        self.__tskACtx = val_
 
     @property
     def _tskBadge(self):
@@ -216,7 +227,6 @@ class _AbstractTask(_EuErrorHandler):
     def isErrorFree(self):
         return False if self._isInvalid else self._tskError.isErrorFree
 
-
     @property
     def isEnclosingPyThread(self) -> bool:
         return False if self._isInvalid else self._tskBadge.isEnclosingPyThread
@@ -302,8 +312,12 @@ class _AbstractTask(_EuErrorHandler):
         return self._euRNumber
 
     @property
-    def eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
-        return self._eTaskExecPhase
+    def eTaskXPhase(self) -> _ETaskExecutionPhaseID:
+        return self._GetTaskXPhase()
+
+    @property
+    def eTaskApiContext(self) -> _ETaskApiContextID:
+        return self._GetTaskApiContext()
 
     @property
     def eFwApiBookmarkID(self) -> _EFwApiBookmarkID:
@@ -335,10 +349,10 @@ class _AbstractTask(_EuErrorHandler):
         else:
             self._lcDynTLB = _LcDynamicTLB._CreateTLB(self, self._tskBadge, self._executionProfile, self._linkedExecutable)
             if self._lcDynTLB is not None:
-                self.__UpdateDynTLB(euRNumber_=self.euRNumber, execPhase_=self.eTaskExecPhase, tskState_=self.taskStateID)
+                self.__UpdateDynTLB(euRNumber_=self.euRNumber, execPhase_=self.eTaskXPhase, tskState_=self.taskStateID)
         return self._lcDynTLB
 
-    def CreateLcCeaseTLB(self, mtxData_: _Mutex, bAborting_: bool) -> _LcCeaseTLB:
+    def CreateLcCeaseTLB(self, mtxData_: _Mutex, bEnding_: bool) -> _LcCeaseTLB:
         if self._lcDynTLB is None:
             pass
         elif self._lcCeaseTLB is not None:
@@ -346,7 +360,7 @@ class _AbstractTask(_EuErrorHandler):
         elif self.isAutoEnclosed or (self.linkedExecutable is None):
             pass
         else:
-            self._lcCeaseTLB = self._lcDynTLB._CreateCeaseTLB(mtxData_, bAborting_)
+            self._lcCeaseTLB = self._lcDynTLB._CreateCeaseTLB(mtxData_, bEnding_)
         return self._lcCeaseTLB
 
     def GetLcCompID(self) -> _ELcCompID:
@@ -363,7 +377,6 @@ class _AbstractTask(_EuErrorHandler):
 
     def JoinTask(self, timeout_: _Timeout =None, tskOpPreCheck_ : _ATaskOperationPreCheck =None, curTask_ =None) -> bool:
         return False if self._isInvalid else self._JoinTask(timeout_=timeout_, tskOpPreCheck_=tskOpPreCheck_, curTask_=curTask_)
-
 
     @property
     def _isAlive(self) -> bool:
@@ -399,9 +412,13 @@ class _AbstractTask(_EuErrorHandler):
         self.__UpdateDynTLB(euRNumber_=self._euRNum)
         return self._euRNum
 
-    def _SetLcProxy(self, lcPxy_ : _LcProxy):
-        _LcProxyClient._SetLcProxy(self, lcPxy_)
-        self._PropagateLcProxy()
+    def _PcSetLcProxy(self, lcPxy_ : _PyUnion[_LcProxy, _AbstractSlotsObject], bForceUnset_ =False):
+        _LcProxyClient._PcSetLcProxy(self, lcPxy_, bForceUnset_=bForceUnset_)
+        if self._PcIsLcProxySet():
+            self._PropagateLcProxy()
+
+    def _PropagateLcProxy(self, lcProxy_=None):
+        pass
 
     def _SetGetTaskState(self, eNewState_ : _TaskState._EState) -> _TaskState._EState:
         if self._isInvalid: return None
@@ -409,10 +426,14 @@ class _AbstractTask(_EuErrorHandler):
         self.__UpdateDynTLB(tskState_=res)
         return res
 
-    def _SetTaskExecPhase(self, eExecPhaseID_ : _ETaskExecutionPhaseID):
+    def _SetTaskXPhase(self, eXPhaseID_ : _ETaskExecutionPhaseID):
         if self._isInvalid: return
-        self._tskEPhase = eExecPhaseID_
-        self.__UpdateDynTLB(execPhase_=eExecPhaseID_)
+        self._tskXPhase = eXPhaseID_
+        self.__UpdateDynTLB(execPhase_=eXPhaseID_)
+
+    def _SetTaskApiContext(self, eApiCtxID_ : _ETaskApiContextID):
+        if self._isInvalid: return
+        self._tskApiCtx = eApiCtxID_
 
     def _SetFwApiBookmark(self, eFwApiBookmarkID_ : _EFwApiBookmarkID):
         if self._isInvalid: return
@@ -420,7 +441,6 @@ class _AbstractTask(_EuErrorHandler):
 
     def _ProcUnhandledException(self, xcp_: _XcoExceptionRoot):
         return self._ProcUnhandledXcp(xcp_)
-
 
     def _ToString(self, *args_, **kwargs_) -> str:
         if self._isInvalid:
@@ -442,7 +462,8 @@ class _AbstractTask(_EuErrorHandler):
         self._fwapiBM      = None
         self._execConn     = None
         self._lcDynTLB     = None
-        self._tskEPhase    = None
+        self._tskApiCtx    = None
+        self._tskXPhase    = None
         self._lcCeaseTLB   = None
         self._linkedPyThrd = None
 

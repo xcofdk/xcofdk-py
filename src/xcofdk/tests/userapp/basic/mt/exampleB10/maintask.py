@@ -54,26 +54,33 @@ class MyMainTask(MainXTask):
 
         if taskProfile_ is None:
             taskProfile_ = GetMyMainTaskProfile()
-        MainXTask.__init__(self, taskProfile_=taskProfile_)
+        super().__init__(taskProfile_=taskProfile_)
 
     @override
     def SetUpXTask(self) -> ETernaryCallbackResultID:
         xlogif.LogInfo(f'Creating service task...')
         self.__srv = MyService(taskProfile_=GetMyServiceTaskProfile())
-        xlogif.LogInfo(f'Done setup phase of task {self.xtaskAliasName}.')
+        xlogif.LogInfo(f'Done setup-phase of task {self.xtaskAliasName}.')
         return ETernaryCallbackResultID.CONTINUE
 
     @override
     def RunXTask(self) -> ETernaryCallbackResultID:
-        xlogif.LogInfo(f'Starting run phase of task {self.xtaskAliasName}...')
+        xlogif.LogInfo(f'Starting run-phase of task {self.xtaskAliasName}...')
+
+        xlogif.LogInfo(f'Starting service task {self.__srv.xtaskAliasName}...')
         self.__srv.Start()
-        xlogif.LogInfo(f'Done run phase of task {self.xtaskAliasName}.')
-        return ETernaryCallbackResultID.STOP
+
+        res = self.__srv.isStarted and not (self.__srv.isAborting or self.__srv.isFailed)
+        if not res:
+            xlogif.LogFatal(f'Failed to start service task {self.__srv.xtaskAliasName}.')
+
+        xlogif.LogInfo(f'Done run-phase of task {self.xtaskAliasName}.')
+        return ETernaryCallbackResultID.ABORT if not res else ETernaryCallbackResultID.STOP
     
     @override
     def TearDownXTask(self) -> ETernaryCallbackResultID:
         self.__srv.Join()
-        xlogif.LogInfo(f'Done teardown phase of task {self.xtaskAliasName}.')
+        xlogif.LogInfo(f'Done teardown-phase of task {self.xtaskAliasName}.')
         return ETernaryCallbackResultID.STOP
 
     @staticmethod

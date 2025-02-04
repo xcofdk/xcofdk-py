@@ -7,14 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-from xcofdk._xcofw.fw.fwssys.fwcore.logging                   import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines        import _ELogLevel
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartoptionsimpl import _FwStartOptionsImpl
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartuppolicy    import _FwStartupPolicy
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject            import _ProtectedAbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes         import _CommonDefines
-
 
 class _FwStartupConfig(_ProtectedAbstractSlotsObject):
 
@@ -37,19 +34,7 @@ class _FwStartupConfig(_ProtectedAbstractSlotsObject):
 
     @property
     def _isReleaseModeEnabled(self) -> bool:
-        if self.__isInvalid: return False
-
-        if self.__sup.isReleaseModeEnabled:
-            if self.__sopt._isReleaseModeDisabled:
-                res = self.__sup.isDevModeEnabled
-            else:
-                res = True
-        else:
-            if self.__sopt._isReleaseModeEnabled:
-                res = self.__sup.isDevModeEnabled
-            else:
-                res = False
-        return res
+        return False if self.__isInvalid else self.__sup.isReleaseModeEnabled
 
     @property
     def _isUserLogTimestampEnabled(self) -> bool:
@@ -60,6 +45,11 @@ class _FwStartupConfig(_ProtectedAbstractSlotsObject):
     def _isUserLogHighlightingEnabled(self) -> bool:
         if self.__isInvalid: return False
         return not self.__sopt._isUserLogHighlightingDisabled
+
+    @property
+    def _isUserLogCallstackEnabled(self) -> bool:
+        if self.__isInvalid: return False
+        return self.__sopt._isUserLogCallstackEnabled
 
     @property
     def _isUserDieModeEnabled(self) -> bool:
@@ -113,22 +103,12 @@ class _FwStartupConfig(_ProtectedAbstractSlotsObject):
         if self.__isInvalid:
             return None
 
-        res  = "Startup config:\n"
-        res += "  {:<25s} : {:<s}\n".format("ignoreEnvVars"      , str(self._isIgnoreEvnVarsEnabled))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += "  {:<25s} : {:<s}\n".format("fwDieMode"          , str(self._isFwDieModeEnabled))
-        res += "  {:<25s} : {:<s}\n".format("fwXcpMode"          , str(self._isFwExceptionModeEnabled))
-        res += "  {:<25s} : {:<s}\n".format("fwLogLevel"         , _ELogLevel.Encode(self._fwLogLevel))
-        res += "  {:<25s} : {:<s}\n".format("fwCustomConfigFile" , str(self._fwwCustomConfigFile))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += "  {:<25s} : {:<s}\n".format("userDieMode"        , str(self._isUserDieModeEnabled))
-        res += "  {:<25s} : {:<s}\n".format("userXcpMode"        , str(self._isUserExceptionModeEnabled))
-        res += "  {:<25s} : {:<s}\n".format("userLogLevel"       , _ELogLevel.Encode(self._userLogLevel))
-        res += "  {:<25s} : {:<s}\n".format("suppressFwWarnings" , str(self._isUserSuppressFwWarningsEnabled))
-        res += "  {:<25s} : {:<s}\n".format("userLogTimestamp"   , str(self._isUserLogTimestampEnabled))
-        res += "  {:<25s} : {:<s}\n".format("userConfigFile"     , str(self._userConfigFile))
-        res += _CommonDefines._CHAR_SIGN_NEWLINE
-        res += "  {:<25s} : {:<s}\n".format("releaseMode"        , str(self._isReleaseModeEnabled))
+        res  = 'Startup config:\n'
+        res += '  {:<25s} : {:<s}\n'.format('userLogLevel'        , _ELogLevel.Encode(self._userLogLevel))
+        res += '  {:<25s} : {:<s}\n'.format('userLogTimestamp'    , str( self._isUserLogTimestampEnabled))
+        res += '  {:<25s} : {:<s}\n'.format('userLogHighlighting' , str(self._isUserLogHighlightingEnabled))
+        res += '  {:<25s} : {:<s}\n'.format('userLogCallstack'    , str(self._isUserLogCallstackEnabled))
+        res += '  {:<25s} : {:<s}\n'.format('releaseMode'         , str(self._isReleaseModeEnabled))
         res += _CommonDefines._CHAR_SIGN_NEWLINE
         return res
 
@@ -137,7 +117,6 @@ class _FwStartupConfig(_ProtectedAbstractSlotsObject):
             return
         self.__sup  = None
         self.__sopt = None
-
 
     @property
     def __isInvalid(self):

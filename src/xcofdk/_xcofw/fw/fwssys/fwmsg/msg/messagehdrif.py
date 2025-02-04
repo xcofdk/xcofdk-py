@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum   import IntEnum
 from typing import Union as _PyUnion
 
@@ -20,7 +19,6 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _EMessageLabel
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _EMessagePeer
 
 from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
-
 
 class _MessageHeaderIF(_AbstractSlotsObject):
 

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import os
 from   typing import Union
 
@@ -15,15 +14,16 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging                import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.timeutil          import _TimeUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcmgr               import _LcManager
 from xcofdk._xcofw.fw.fwssys.fwcore.swpfm.sysinfo          import _SystemInfo
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes      import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconnap    import _FwApiConnectorAP
 from xcofdk._xcofwa.fwversion                              import _FwVersion
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-
 class _FwApiBase:
+
     def __init__(self):
         pass
 
@@ -34,6 +34,10 @@ class _FwApiBase:
     @staticmethod
     def FwApiIsFwAvailable() -> bool:
         return _FwApiConnectorAP._APIsFwApiConnected()
+
+    @staticmethod
+    def FwApiIsXTaskRunning(xtUID_ : int) -> bool:
+        return _FwApiConnectorAP._APIsXTaskRunning(xtUID_)
 
     @staticmethod
     def FwApiGetXcofdkVer() -> str:
@@ -56,16 +60,15 @@ class _FwApiBase:
         _fwVer = _FwVersion._GetVersionInfo(bSkipPrefix_=True)
 
         if not _SystemInfo._IsFrameworkSupportingPythonVersion():
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_014).format(_fwVer))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00160, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_014).format(_fwVer))
             return False
 
         if _SystemInfo._IsGilDisabled():
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_016).format(_SystemInfo._GetPythonVer(), _fwVer))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00161, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_016).format(_SystemInfo._GetPythonVer(), _fwVer))
             return False
 
-
         if _FwApiConnectorAP._APIsFwApiConnected():
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_001))
+            logif._LogErrorEC(_EFwErrorCode.UE_00001, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_001))
             return False
 
         if isinstance(startOptions_, str):
@@ -76,11 +79,9 @@ class _FwApiBase:
         if _suPolicy is None:
             return False
 
-        print(_FwApiBase.__GetPreamble())
-
         _apiRetRec = _LcManager._CreateLcMgr(_suPolicy, startOptions_)
         if _apiRetRec is None:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_004))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00162, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TextID_004))
             return False
 
         if _apiRetRec.syncSem is not None:
@@ -98,29 +99,6 @@ class _FwApiBase:
         return res
 
     @staticmethod
-    def FwApiGetXTask(xuUniqueID_ : int =0):
-        if xuUniqueID_ == 0:
-            return _FwApiConnectorAP._APGetCurXTask()
-        return _FwApiConnectorAP._APGetXTask(xuUniqueID_)
-
-    @staticmethod
-    def FwApiGetCurXTask():
-        return _FwApiConnectorAP._APGetCurXTask()
-
-
-    @staticmethod
-    def __GetPreamble():
-        _dlLong  = _CommonDefines._DASH_LINE_LONG
-        _dlShort = _CommonDefines._DASH_LINE_SHORT
-
-        _verstr = _SystemInfo._GetPythonVer()
-        _verstr = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_Python_Version).format(_verstr)
-
-        res = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble)
-        res = res.format(_dlLong, _dlShort, _dlShort, _FwVersion._GetVersionInfo(bShort_=False), _dlShort, _verstr, _dlShort, _dlLong)
-        return res
-
-    @staticmethod
     def __CalcPPass(startOptions_ : list) -> int:
         tpl = os.path.splitext(__file__)
         bn = os.path.basename(tpl[0])
@@ -128,10 +106,9 @@ class _FwApiBase:
         res = _TimeUtil.GetHash(__file__, bn)
         if isinstance(startOptions_, list):
             if len(startOptions_) > 0:
-                tmp = list(startOptions_)
-                tmp.append(res)
-                res = _TimeUtil.GetHash(*tmp)
+                _tmp = list(startOptions_)
+                _tmp.append(res)
+                res = _TimeUtil.GetHash(*_tmp)
 
         return res
-
 

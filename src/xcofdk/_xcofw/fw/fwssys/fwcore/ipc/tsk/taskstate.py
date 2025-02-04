@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
@@ -19,7 +18,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex     import _Mutex
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil   import _TaskUtil
 
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _TaskState(_AbstractSlotsObject):
     @unique
@@ -111,7 +110,7 @@ class _TaskState(_AbstractSlotsObject):
 
             if _tname not in _expectedTypes:
                 self.CleanUp()
-                vlogif._LogOEC(True, -1409)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00313)
                 return
 
         if not _Util.IsInstance(eStateID_, _TaskState._EState, bThrowx_=True):
@@ -142,7 +141,6 @@ class _TaskState(_AbstractSlotsObject):
     def isPendingRun(self):
         _curSt, _bAlive = self.__GetState()
         return False if _curSt is None else _curSt.isPendingRun
-
 
     @property
     def isRunning(self):
@@ -221,9 +219,7 @@ class _TaskState(_AbstractSlotsObject):
             return _curSt.compactName
 
     def _CleanUp(self):
-        if self.__isInvalid:
-            pass
-        else:
+        if not self.__isInvalid:
             if self.__bAutoCreatedMtx:
                 self.__mtxApi.CleanUp()
             self.__aiState.CleanUp()
@@ -307,11 +303,11 @@ class _TaskState(_AbstractSlotsObject):
         elif eNewState_ != _TaskState._EState.eRunning:
             pass
         else:
-            b = self.__taskInst.taskBadge
-            t = self.__taskInst.linkedPyThread
+            _b = self.__taskInst.taskBadge
+            _t = self.__taskInst.linkedPyThread
 
-            nid = None if t is None else t.native_id
-            if nid is None:
-                pass
+            _nid = None if _t is None else _t.native_id
+            if _nid is None:
+                pass 
             else:
-                b._UpdateRuntimeIDs(threadNID_=nid)
+                _b._UpdateRuntimeIDs(threadNID_=_nid)

@@ -15,7 +15,6 @@ from xcofdk.fwcom import override
 
 from xcofdk.tests.userapp.util.tkimport  import tk
 from xcofdk.tests.userapp.util.tkimport  import ttk
-#from xcofdk.tests.userapp.util.tkimport import ttf
 
 from xcofdk.tests.userapp.st.welcome.interfaces.modelif import EModelItemID
 from xcofdk.tests.userapp.st.welcome.interfaces.modelif import UserAppModelIF

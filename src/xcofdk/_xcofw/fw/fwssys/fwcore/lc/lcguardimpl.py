@@ -7,11 +7,10 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum     import unique
 from datetime import datetime as _PyDateTime
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _CreateLogImplError
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _CreateLogImplErrorEC
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _LogKPI
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _XLogWarning
 
@@ -25,23 +24,23 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase  import _PySemaphore
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask         import _AbstractTask
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _PyThread
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines          import _ELcCompID
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate        import _LcFailure
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcguard            import _LcGuard
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcmgrtif           import _LcManagerTrustedIF
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines     import _ELcShutdownRequest
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstate            import _LcState
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstateimpl        import _LcStateImpl
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmonimpl       import _LcMonitorImpl
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcshutdowncoord import _LcShutdownCoordinator
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject         import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes     import _FwIntEnum
 
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines      import _ELcCompID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines      import _LcFrcView
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate    import _LcFailure
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcguard        import _LcGuard
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcmgrtif       import _LcManagerTrustedIF
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines import _ELcShutdownRequest
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstate        import _LcState
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcstateimpl    import _LcStateImpl
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+from xcofdk._xcofw.fw.fwssys.fwerrh.lcfrcview    import _LcFrcView
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _LcGuardImpl(_LcGuard):
 
@@ -53,7 +52,6 @@ class _LcGuardImpl(_LcGuard):
         eRunning     =2
         ePendingStop =3
         eDone        =4
-
 
     class _LcMonData(_AbstractSlotsObject):
 
@@ -136,7 +134,7 @@ class _LcGuardImpl(_LcGuard):
     __slots__ = [
                   '__apiLck'     , '__pythrd'     , '__semSS'            , '__myState'    , '__lcState'
                 , '__lcMgrTIF'   , '__lcMon'      , '__lcMonData'        , '__rclTSMS'    , '__logAlert'
-                , '__logAlertAA' , '__lcMgrSetupRunner'
+                , '__logAlertAA' , '__maxETAlert' , '__lcMgrSetupRunner'
                 ]
 
     __LOG_ALERT_TIMESPAN_MS                   = 3000
@@ -147,7 +145,6 @@ class _LcGuardImpl(_LcGuard):
     __MIN_OFFSET_RELATIVE_TO_LC_MON_CYCLE        = None
     __bSET_LC_FAILURE_UPON_LC_MON_ALIVE_ALARM    = True
     __bIGNORE_MRBL_STATE_UPON_LC_MON_ALIVE_ALARM = False
-
 
     def __init__(self, ppass_ : int, lcMgrTIF_ : _LcManagerTrustedIF):
         self.__lcMon            = None
@@ -160,23 +157,24 @@ class _LcGuardImpl(_LcGuard):
         self.__lcMgrTIF         = None
         self.__logAlert         = None
         self.__lcMonData        = None
+        self.__maxETAlert       = None
         self.__logAlertAA       = None
         self.__lcMgrSetupRunner = None
 
         if _LcGuard._singleton is not None:
             self.CleanUpByOwnerRequest(self._myPPass)
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(301)
-            vlogif._LogOEC(True, -1521)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _errCode = _EFwErrorCode.FE_LCSF_039
+            vlogif._LogOEC(True, _errCode)
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
             return
 
         super().__init__(ppass_)
 
         if not isinstance(lcMgrTIF_, _LcManagerTrustedIF):
             self.CleanUpByOwnerRequest(self._myPPass)
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(302)
-            vlogif._LogOEC(True, -1522)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _errCode = _EFwErrorCode.FE_LCSF_040
+            vlogif._LogOEC(True, _errCode)
+            _LcFailure.CheckSetLcSetupFailure(_errCode)
             return
 
         _lcs = _LcStateImpl(ppass_)
@@ -185,9 +183,9 @@ class _LcGuardImpl(_LcGuard):
             _lcs.CleanUpByOwnerRequest(ppass_)
             self.CleanUpByOwnerRequest(ppass_)
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(303)
-                vlogif._LogOEC(True, -1523)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _errCode = _EFwErrorCode.FE_LCSF_041
+                vlogif._LogOEC(True, _errCode)
+                _LcFailure.CheckSetLcSetupFailure(_errCode)
             return
 
         self.__apiLck        = _PyRLock()
@@ -215,12 +213,6 @@ class _LcGuardImpl(_LcGuard):
         if self.__isInvalid: return False
         with self.__apiLck:
             return self.__lcState.isLcCoreOperable
-
-    @property
-    def isLcPreCoreOperable(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__apiLck:
-            return self.__lcState.isLcPreCoreOperable
 
     @property
     def isLcStarted(self) -> bool:
@@ -313,12 +305,6 @@ class _LcGuardImpl(_LcGuard):
             return self.__lcState.isMiscCompFailed
 
     @property
-    def hasLcAnyStoppedState(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__apiLck:
-            return self.__lcState.hasLcAnyStoppedState
-
-    @property
     def hasLcAnyFailureState(self) -> bool:
         if self.__isInvalid: return False
         with self.__apiLck:
@@ -385,7 +371,7 @@ class _LcGuardImpl(_LcGuard):
 
     def _UpdateRunCycleLoopTimespanMS(self, rclTSMS_ : int):
         if not (isinstance(rclTSMS_, int) and rclTSMS_ > 0):
-            vlogif._LogOEC(True, -1524)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00347)
         else:
             self.__rclTSMS = rclTSMS_
 
@@ -393,13 +379,13 @@ class _LcGuardImpl(_LcGuard):
         if self.__isInvalid:
             return False
         if not isinstance(eLcCompID_, _ELcCompID):
-            vlogif._LogOEC(True, -1525)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00348)
             return False
         if not isinstance(bStartStopFlag_, bool):
-            vlogif._LogOEC(True, -1526)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00349)
             return False
         if (atask_ is not None) and not isinstance(atask_, _AbstractTask):
-            vlogif._LogOEC(True, -1527)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00350)
             return False
 
         self.__apiLck.acquire()
@@ -407,7 +393,7 @@ class _LcGuardImpl(_LcGuard):
 
         res = self.__lcState._SetLcState(eLcCompID_, bStartStopFlag_, frcError_=None, atask_=atask_)
         if not res:
-            vlogif._LogOEC(False, -3027)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00030)
 
         self.__apiLck.release()
         return res
@@ -417,13 +403,13 @@ class _LcGuardImpl(_LcGuard):
             return False
 
         if not isinstance(eFailedCompID_, _ELcCompID):
-            vlogif._LogOEC(True, -1528)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00351)
             return False
         if not isinstance(frcError_, _FatalEntry):
-            vlogif._LogOEC(True, -1529)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00352)
             return False
         if (atask_ is not None) and not isinstance(atask_, _AbstractTask):
-            vlogif._LogOEC(True, -1530)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00353)
             return False
 
         self.__apiLck.acquire()
@@ -434,7 +420,7 @@ class _LcGuardImpl(_LcGuard):
 
         if not res:
             _tailPart = '\t[FRC]\n\t{}'.format(str(frcError_))
-            vlogif._LogOEC(False, -3028)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00031)
 
         elif not bSkipReply_:
             if self.__lcMgrTIF._TIFPreCheckLcFailureNotification(eFailedCompID_):
@@ -450,20 +436,18 @@ class _LcGuardImpl(_LcGuard):
         _iImplErr = None
 
         if self.__pythrd is not None:
-            _iImplErr = 304
-            vlogif._LogOEC(True, -1531)
+            _iImplErr = _EFwErrorCode.FE_LCSF_042
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00354)
         elif not isinstance(semStartStop_, _PySemaphore):
-            _iImplErr = 305
-            vlogif._LogOEC(True, -1532)
+            _iImplErr = _EFwErrorCode.FE_LCSF_043
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00355)
         elif lcMgrSetupRunner_ is None:
-            _iImplErr = 306
-            vlogif._LogOEC(True, -1533)
+            _iImplErr = _EFwErrorCode.FE_LCSF_044
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00356)
 
         if _iImplErr is not None:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_iImplErr)
             return False
-
 
         self.__semSS            = semStartStop_
         self.__pythrd           = _PyThread(group=None, target=self.__RunThrdTgtCallback, args=(), kwargs={}, daemon=None)
@@ -528,6 +512,7 @@ class _LcGuardImpl(_LcGuard):
             self.__lcMgrTIF         = None
             self.__logAlertAA       = None
             self.__lcMonData        = None
+            self.__maxETAlert       = None
             self.__lcMgrSetupRunner = None
 
     @property
@@ -541,28 +526,23 @@ class _LcGuardImpl(_LcGuard):
             return
 
         _aliveCtr = self.__RunFull()
-
         if self.__semSS is not None:
             self.__semSS.release()
             self.__semSS = None
-
         self.__myState = _LcGuardImpl._ELcGuardState.eDone
 
     def __ExecuteSetupRunner(self):
         res = False
         if self.__lcMgrSetupRunner is None:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(307)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_045)
         else:
             self.__lcMgrSetupRunner()
-
             if not (self.__lcMgrSetupRunner.isLcMgrSetupRunnerSucceeded and _LcFailure.IsLcErrorFree()):
-                vlogif._LogOEC(False, -3029)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00032)
                 self.__myState = _LcGuardImpl._ELcGuardState.eFailed
 
                 if _LcFailure.IsLcErrorFree():
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(308)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_046)
             else:
                 res = True
 
@@ -573,6 +553,7 @@ class _LcGuardImpl(_LcGuard):
 
     def __RunFull(self):
         _aliveCtr = 0
+        _bSkipMaxExecTimeCheck = self.__maxETAlert is None
 
         while self._isRunning:
             _aliveCtr += 1
@@ -581,7 +562,13 @@ class _LcGuardImpl(_LcGuard):
             if (_lcm is None) or _lcm.isLcMonitorIdle or (_lcm._mainTLB is None):
                 pass
             elif _lcm.isLcMonitorAlive:
-                self.__CheckLcMonAliveness(_aliveCtr)
+                if self.__CheckLcMonAliveness(_aliveCtr):
+                    if _bSkipMaxExecTimeCheck:
+                        pass
+                    elif self.__maxETAlert.CheckAlert():
+                        _XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcGuardImpl_TextID_002))
+
+                        _lcm._EnableCoordinatedShutdown()
 
             if _lcm.isLcShutdownEnabled:
                 self.__ExecuteShutdownSequence()
@@ -600,29 +587,24 @@ class _LcGuardImpl(_LcGuard):
             _eSDR = _ELcShutdownRequest.ePreShutdown
             self.__lcMgrTIF._TIFOnLcShutdownRequest(_eSDR)
 
-        bSdcME = None
+        _bSdcME = None
 
-        if not _lcm.isCoordinatedShutdownRunning:
-            pass
-        else:
+        if _lcm.isCoordinatedShutdownRunning:
             if not _lcm._isCoordinatedShutdownManagedByMR:
-                bSdcME = _LcShutdownCoordinator(_lcm)
-                bSdcME._ExecuteCoordinatedCeasingGate()
+                _bSdcME = _LcShutdownCoordinator(_lcm)
+                _bSdcME._ExecuteCoordinatedCeasingGate()
 
                 if _lcm.isCoordinatedShutdownRunning:
-                    bSdcME._ExecuteCoordinatedPreShutdownGate()
-
+                    _bSdcME._ExecuteCoordinatedPreShutdownGate()
             else:
                 self.__MonitorShutdownCoordinationByMR(False)
 
         _eSDR = _ELcShutdownRequest.eShutdown
         self.__lcMgrTIF._TIFOnLcShutdownRequest(_eSDR)
 
-        if not _lcm.isCoordinatedShutdownRunning:
-            pass
-        else:
-            if bSdcME is not None:
-                bSdcME._ExecuteCoordinatedShutdownGate()
+        if _lcm.isCoordinatedShutdownRunning:
+            if _bSdcME is not None:
+                _bSdcME._ExecuteCoordinatedShutdownGate()
 
                 _LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcGuardImpl_TextID_003))
             else:
@@ -634,7 +616,6 @@ class _LcGuardImpl(_LcGuard):
 
         vlogif._LogNewline()
         vlogif._LogNewline()
-        pass
 
         if self.__lcState is not None:
             if not self.__lcState.isLcStopped:
@@ -648,38 +629,38 @@ class _LcGuardImpl(_LcGuard):
             return True
 
         if not isinstance(_bSDEnabled, bool):
-            bErr = True
+            _bErr = True
         elif (_curSDR is not None) and not isinstance(_curSDR, _ELcShutdownRequest):
-            bErr = True
+            _bErr = True
         elif not isinstance(_aliveCtr, int):
-            bErr = True
+            _bErr = True
         else:
-            bErr = False
-        if bErr:
-            vlogif._LogOEC(True, -1534)
+            _bErr = False
+        if _bErr:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00357)
             return False
 
-        md = self.__lcMonData
+        _md = self.__lcMonData
 
-        _aliveCtrPrv    = md.aliveCounter
-        _bInitialUpdate = md.isShutdownEnabled is None
+        _aliveCtrPrv    = _md.aliveCounter
+        _bInitialUpdate = _md.isShutdownEnabled is None
 
         if _bInitialUpdate:
             _bSDEnabled      = False
             _bCeaseModeStart = False
         else:
-            _bCeaseModeStart = False if md.isShutdownEnabled == _bSDEnabled else _bSDEnabled
+            _bCeaseModeStart = False if _md.isShutdownEnabled == _bSDEnabled else _bSDEnabled
 
-        md.Update(_bSDEnabled, _curSDR, _aliveCtr)
+        _md.Update(_bSDEnabled, _curSDR, _aliveCtr)
 
         if _bInitialUpdate:
-            md.aliveAlarmCounter = 0
+            _md.aliveAlarmCounter = 0
             return True
         if _bCeaseModeStart:
-            md.aliveAlarmCounter = 0
+            _md.aliveAlarmCounter = 0
             return False
 
-        _bWasAAlarmOFF = not md.isAliveAlarmOn
+        _bWasAAlarmOFF = not _md.isAliveAlarmOn
 
         if _LcGuardImpl.__MIN_OFFSET_RELATIVE_TO_LC_MON_CYCLE is None:
             _lcmCycle = _lcm._runPhaseFrequencyMS
@@ -690,28 +671,26 @@ class _LcGuardImpl(_LcGuard):
             _LcGuardImpl.__MIN_OFFSET_RELATIVE_TO_LC_MON_CYCLE = minOffset
 
         if not (_aliveCtr > (_aliveCtrPrv+_LcGuardImpl.__MIN_OFFSET_RELATIVE_TO_LC_MON_CYCLE)):
-            md.aliveAlarmCounter += 1
+            _md.aliveAlarmCounter += 1
         else:
-            md.aliveAlarmCounter = 0
+            _md.aliveAlarmCounter = 0
 
-        if not md.isAliveAlarmOn:
+        if not _md.isAliveAlarmOn:
             return True
-
 
         _missingMS = _lcm._mainTLB.elapsedTimeSinceLastUpdate
 
-        bDI = _LcGuardImpl.__bSET_LC_FAILURE_UPON_LC_MON_ALIVE_ALARM
-        if bDI:
-            if _LcGuardImpl.__bIGNORE_MRBL_STATE_UPON_LC_MON_ALIVE_ALARM:
-                pass
-            else:
-                bDI = not _lcm._mainTLB.isRunning
+        _bDI = _LcGuardImpl.__bSET_LC_FAILURE_UPON_LC_MON_ALIVE_ALARM
+        if _bDI:
+            if not _LcGuardImpl.__bIGNORE_MRBL_STATE_UPON_LC_MON_ALIVE_ALARM:
+                _bDI = not _lcm._mainTLB.isRunning
 
-        if not bDI:
+        if not _bDI:
             return True
 
-        md.aliveAlarmCounter = 0
-        _frcError = _CreateLogImplError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcGuardImpl_TextID_001).format(_missingMS))
+        _md.aliveAlarmCounter = 0
+
+        _frcError = _CreateLogImplErrorEC(_EFwErrorCode.FE_00376, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcGuardImpl_TextID_001).format(_missingMS))
 
         _lcm._EnableCoordinatedShutdown(bManagedByMR_=False)
 
@@ -721,7 +700,7 @@ class _LcGuardImpl(_LcGuard):
                 _frcError.CleanUp()
         else:
             if _frcError is None:
-                vlogif._LogOEC(True, -1535)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00358)
             else:
                 if not self._SetLcFailure(_ELcCompID.eFwMain, _frcError, atask_=None, bInternalCall_=True):
                     _frcError._UpdateErrorImpact(_EErrorImpact.eNoImpactByOwnerCondition)
@@ -729,25 +708,22 @@ class _LcGuardImpl(_LcGuard):
         return False
 
     def __MonitorShutdownCoordinationByMR(self, bCheckForShutdownGate_ : bool):
-
-        _lcm, md = self.__lcMon, self.__lcMonData
+        _lcm, _md = self.__lcMon, self.__lcMonData
 
         while True:
-            bGO = _lcm.isCoordinatedShutdownGateOpened if bCheckForShutdownGate_ else _lcm.isCoordinatedPreShutdownGateOpened
-            if bGO:
+            _bGO = _lcm.isCoordinatedShutdownGateOpened if bCheckForShutdownGate_ else _lcm.isCoordinatedPreShutdownGateOpened
+            if _bGO:
                 break
 
             _TaskUtil.SleepMS(20)
 
-            _aliveCtrPrv   = md.aliveCounter
-            _bWasAAlarmOn = not md.isAliveAlarmOn
+            _aliveCtrPrv = _md.aliveCounter
 
             _bSDEnabled, _curSDR, _aliveCtr = _lcm._GetAliveCounter()
-            md.Update(_bSDEnabled, _curSDR, _aliveCtr)
+            _md.Update(_bSDEnabled, _curSDR, _aliveCtr)
 
             if not (_aliveCtr > _aliveCtrPrv):
-                md.aliveAlarmCounter += 1
+                _md.aliveAlarmCounter += 1
             else:
-                md.aliveAlarmCounter = 0
-
+                _md.aliveAlarmCounter = 0
             continue

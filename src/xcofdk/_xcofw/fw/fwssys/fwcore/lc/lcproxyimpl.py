@@ -7,17 +7,16 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from typing import Union as _PyUnion
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _CreateLogImplError
+from xcofdk.fwapi.xtask import MainXTask
+
+from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _CreateLogImplErrorEC
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartupconfig import _FwStartupConfig
 
 from threading import RLock as _PyRLock
-
-from xcofdk.fwapi.xtask import MainXTask
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry     import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logifbase      import _LogIFBase
@@ -26,14 +25,11 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.main.fwmain        import _FwMain
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore     import _BinarySemaphore
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask          import _AbstractTask
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex         import _Mutex
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgr        import _TaskMgr
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgr        import _TaskManager
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskmgrimpl    import _TaskManagerImpl
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil       import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmonimpl        import _LcMonitorImpl
-
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines           import _ELcScope
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines           import _ELcCompID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines           import _LcFrcView
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate         import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcguard             import _LcGuard
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines           import _ELcOperationModeID
@@ -43,10 +39,11 @@ from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines      import _ELcOpModeBitF
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines      import _ELcShutdownRequest
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxy             import _LcProxy
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+from xcofdk._xcofw.fw.fwssys.fwerrh.lcfrcview    import _LcFrcView
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _LcProxyImpl(_LcProxy):
 
@@ -75,42 +72,38 @@ class _LcProxyImpl(_LcProxy):
         self.__eOpModeBitMask = None
         super().__init__(ppass_)
 
-        _errMsg     = None
-        _iImplErr   = None
-        _implErrMsg = None
+        _errMsg   = None
+        _iImplErr = None
 
         if _LcProxy._singleton is not None:
-            _iImplErr = 701
+            _iImplErr = _EFwErrorCode.FE_LCSF_103
         elif not isinstance(lcScope_, _ELcScope):
-            _iImplErr = 702
+            _iImplErr = _EFwErrorCode.FE_LCSF_066
         elif not isinstance(lcGuard_, _LcGuard):
-            _iImplErr = 703
+            _iImplErr = _EFwErrorCode.FE_LCSF_067
         elif not isinstance(lcMon_, _LcMonitorImpl):
-            _iImplErr = 704
+            _iImplErr = _EFwErrorCode.FE_LCSF_068
         elif not (isinstance(startupCfg_, _FwStartupConfig) and startupCfg_._isValid):
-            _iImplErr = 705
+            _iImplErr = _EFwErrorCode.FE_LCSF_069
 
         if _iImplErr is not None:
             self.CleanUpByOwnerRequest(self._myPPass)
-
-            _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
+            _LcFailure.CheckSetLcSetupFailure(_iImplErr)
 
             if _errMsg is not None:
-                vlogif._LogOEC(True, -1601)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00385)
             return
 
         _LcProxyImpl.__bPxyInfoAvailable = False
 
-        _tmgr = _TaskManagerImpl._GetInstance()
+        _tmgr = _TaskMgr()
         if _tmgr is None:
             self.CleanUpByOwnerRequest(self._myPPass)
 
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(707)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_072)
 
-            vlogif._LogOEC(True, -1602)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00386)
             return
 
         _fwMain   = None
@@ -120,8 +113,7 @@ class _LcProxyImpl(_LcProxy):
             self.CleanUpByOwnerRequest(self._myPPass)
 
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(708)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_073)
             return
 
         _LcProxy._singleton = self
@@ -139,28 +131,43 @@ class _LcProxyImpl(_LcProxy):
         self.__eOpModeBitMask = _ELcOpModeBitFlag.DefaultMask()
 
         if not _tmgr._InjectLcProxy(self):
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(709)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_074)
 
         elif _LogIFBase.GetInstance() is None:
             if _LogIFImpl._GetInstance(lcpxy_=self, startupCfg_=startupCfg_) is None:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(710)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-                vlogif._LogOEC(False, -3030)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_075)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00034)
 
         if _LcFailure.IsLcNotErrorFree():
             self.CleanUpByOwnerRequest(self._myPPass)
 
-
-    @property
-    def isLcProxyAvailable(self) -> bool:
+    def _PxyIsLcProxyModeNormal(self) -> bool:
         if self.__isInvalid:
             return False
-        return not self.isLcModeShutdown
+        with self.__opModeLck:
+            return _ELcOpModeBitFlag.IsNormal(self.__eOpModeBitMask)
 
-    @property
-    def isLcProxyInfoAvailable(self) -> bool:
+    def _PxyIsLcProxyModeShutdown(self) -> bool:
+        if self.__isInvalid:
+            return False
+        with self.__opModeLck:
+            return _ELcOpModeBitFlag.IsShutdown(self.__eOpModeBitMask)
+
+    def _PxyIsLcMonShutdownEnabled(self) -> bool:
+        return False if self.__lcMonImpl is None else self.__lcMonImpl.isLcShutdownEnabled
+
+    def _PxyGetLcProxyOperationMode(self) -> _ELcOperationModeID:
+        if self.__isInvalid:
+            return _ELcOperationModeID.eIdle
+        with self.__opModeLck:
+            if _ELcOperationModeID.eLcCeaseMode.value < self.__eOpModeID.value < _ELcOperationModeID.eLcPreShutdown.value:
+                if self.__lcMonImpl.isDummyMonitor:
+                    pass
+                elif self.__lcMonImpl.isLcShutdownEnabled:
+                    self.__eOpModeID = _ELcOperationModeID.eLcCeaseMode
+            return _ELcOperationModeID(self.__eOpModeID.value)
+
+    def _PxyIsLcProxyInfoAvailable(self) -> bool:
         res = False
 
         if       self.__isUnavailable:            pass
@@ -180,229 +187,122 @@ class _LcProxyImpl(_LcProxy):
                 _LcProxyImpl.__bPxyInfoAvailable = True
         return res
 
-    @property
-    def isTaskManagerApiAvailable(self):
-        _tmgr = self.taskManager
-        return (_tmgr is not None) and _tmgr.isTaskManagerApiAvailable
-
-    @property
-    def lcScope(self) -> _PyUnion[_ELcScope, None]:
-        return None if self.__isInvalid else self.__lcScope
-
-
-    @property
-    def taskManager(self) -> _PyUnion[_TaskManager, None]:
-        return None if self.__isUnavailable else self.__tmgr
-
-    @property
-    def curProxyInfo(self) -> _PyUnion[_ProxyInfo, None]:
-        if self.__isUnavailable:
-            return None
-        else:
-            return self.__CreateProxyInfo(self.isLcProxyInfoAvailable)
-
-
-    @property
-    def isLcModeNormal(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__opModeLck:
-            return _ELcOpModeBitFlag.IsNormal(self.__eOpModeBitMask)
-
-    @property
-    def isLcModePreShutdown(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__opModeLck:
-            return _ELcOpModeBitFlag.IsPreShutdown(self.__eOpModeBitMask)
-
-    @property
-    def isLcModeShutdown(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__opModeLck:
-            return _ELcOpModeBitFlag.IsShutdown(self.__eOpModeBitMask)
-
-    @property
-    def isLcModeFailureHandling(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__opModeLck:
-            return _ELcOpModeBitFlag.IsFailureHandling(self.__eOpModeBitMask)
-
-    @property
-    def isLcShutdownEnabled(self) -> bool:
-        return False if self.__lcMonImpl is None else self.__lcMonImpl.isLcShutdownEnabled
-
-    @property
-    def eLcOperationModeID(self) -> _ELcOperationModeID:
-        if self.__isInvalid: return _ELcOperationModeID.eIdle
-        with self.__opModeLck:
-            if _ELcOperationModeID.eLcCeaseMode.value < self.__eOpModeID.value < _ELcOperationModeID.eLcPreShutdown.value:
-                if self.__lcMonImpl.isDummyMonitor: pass
-                elif self.__lcMonImpl.isLcShutdownEnabled:
-                    self.__eOpModeID = _ELcOperationModeID.eLcCeaseMode
-            return _ELcOperationModeID(self.__eOpModeID.value)
-
-
-    def _SetLcOperationalState(self, eLcCompID_: _ELcCompID, bStartStopFlag_: bool, atask_ : _AbstractTask) -> bool:
-        if self.__isUnavailable:
-            return False
-        if not isinstance(eLcCompID_, _ELcCompID):
-            vlogif._LogOEC(True, -1603)
-            return False
-        if not isinstance(eLcCompID_, _ELcCompID):
-            vlogif._LogOEC(True, -1604)
-            return False
-        if not (isinstance(atask_, _AbstractTask) and (atask_.taskBadge is not None)):
-            vlogif._LogOEC(True, -1605)
-            return False
-        return self.__lcGuard._SetLcOperationalState(eLcCompID_, bStartStopFlag_, atask_=atask_)
-
-    def _NotifyLcFailure(self, eFailedCompID_ : _ELcCompID, frcError_ : _FatalEntry, atask_ : _AbstractTask =None):
-        if self.__isInvalid:
-            return
-        if not isinstance(eFailedCompID_, _ELcCompID):
-            vlogif._LogOEC(True, -1606)
-            return
-
-        bVal   = None if self.__lcMonImpl.isLcShutdownEnabled else True
-        bValid = bVal is None
-
-        self.__LockAPI(bVal)
-
-        if not self.__lcGuard._SetLcFailure(eFailedCompID_, frcError_, atask_=atask_, bSkipReply_=bValid):
-            if bVal is not None:
-                self.__LockAPI(False)
-
-    @property
-    def isLcOperable(self) -> bool:
+    def _PxyIsLcOperable(self) -> bool:
         if self.__isUnavailable: return False
         return self.__lcGuard.isLcOperable
 
-    @property
-    def isLcCoreOperable(self) -> bool:
+    def _PxyIsLcCoreOperable(self) -> bool:
         if self.__isInvalid: return False
         return self.__lcGuard.isLcCoreOperable
 
-    @property
-    def isLcPreCoreOperable(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isLcPreCoreOperable
-
-    @property
-    def isLcStarted(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isLcStarted
-
-    @property
-    def isTaskManagerStarted(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isTaskManagerStarted
-
-    @property
-    def isFwMainStarted(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isFwMainStarted
-
-    @property
-    def isMainXTaskStarted(self) -> bool:
+    def _PxyIsMainXTaskStarted(self) -> bool:
         if self.__isInvalid: return False
         return self.__lcGuard.isMainXTaskStarted
 
-    @property
-    def isLcStopped(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isLcStopped
-
-    @property
-    def isTaskManagerStopped(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isTaskManagerStopped
-
-    @property
-    def isFwMainStopped(self) -> bool:
-        if self.__isUnavailable: return False
-        return self.__lcGuard.isFwMainStopped
-
-    @property
-    def isMainXTaskStopped(self) -> bool:
+    def _PxyIsMainXTaskStopped(self) -> bool:
         if self.__isInvalid: return False
         return self.__lcGuard.isMainXTaskStopped
 
-    @property
-    def isLcFailed(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isLcFailed
-
-    @property
-    def isTaskManagerFailed(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isTaskManagerFailed
-
-    @property
-    def isFwMainFailed(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.isFwMainFailed
-
-    @property
-    def isMainXTaskFailed(self) -> bool:
+    def _PxyIsMainXTaskFailed(self) -> bool:
         if self.__isInvalid: return False
         return self.__lcGuard.isMainXTaskFailed
 
-    @property
-    def hasLcAnyStoppedState(self) -> bool:
-        if self.__isInvalid: return False
-        return self.__lcGuard.hasLcAnyStoppedState
+    def _PxyIsTaskMgrApiAvailable(self):
+        _tmgr = self._PxyGetTaskMgr()
+        return (_tmgr is not None) and _tmgr.isTMgrApiFullyAvailable
 
-    @property
-    def hasLcAnyFailureState(self) -> bool:
+    def _PxyIsTaskMgrFailed(self) -> bool:
+        if self.__isInvalid: return False
+        return self.__lcGuard.isTaskManagerFailed
+
+    def _PxyHasLcAnyFailureState(self) -> bool:
         if self.__isInvalid: return False
         return self.__lcGuard.hasLcAnyFailureState
 
-    @property
-    def lcFrcView(self) -> _LcFrcView:
+    def _PxyGetCurProxyInfo(self) -> _PyUnion[_ProxyInfo, None]:
+        if self.__isUnavailable:
+            return None
+        return self.__CreateProxyInfo(self._PxyIsLcProxyInfoAvailable())
+
+    def _PxyGetTaskMgr(self) -> _PyUnion[_TaskManager, None]:
+        return None if self.__isUnavailable else self.__tmgr
+
+    def _PxyGetLcFrcView(self) -> _LcFrcView:
         if self.__isInvalid: return None
         return self.__lcGuard.lcFrcView
 
-    def HasLcCompFRC(self, eLcCompID_: _ELcCompID, atask_: _AbstractTask = None) -> bool:
+    def _PxyHasLcCompAnyFailureState(self, eLcCompID_: _ELcCompID, atask_: _AbstractTask = None) -> bool:
         if self.__isInvalid: return False
         return self.__lcGuard.HasLcCompFRC(eLcCompID_, atask_=atask_)
 
-    def GetLcCompFrcView(self, eLcCompID_ : _ELcCompID, atask_ : _AbstractTask =None) -> _LcFrcView:
+    def _PxyGetLcCompFrcView(self, eLcCompID_ : _ELcCompID, atask_ : _AbstractTask =None) -> _LcFrcView:
         if self.__isInvalid: return None
         with self.__apiLck:
             return self.__lcGuard.GetLcCompFrcView(eLcCompID_, atask_=atask_)
 
+    def _PxySetLcOperationalState(self, eLcCompID_: _ELcCompID, bStartStopFlag_: bool, atask_ : _AbstractTask) -> bool:
+        if self.__isUnavailable:
+            return False
+        if not isinstance(eLcCompID_, _ELcCompID):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00387)
+            return False
+        if not isinstance(eLcCompID_, _ELcCompID):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00388)
+            return False
+        if not (isinstance(atask_, _AbstractTask) and (atask_.taskBadge is not None)):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00389)
+            return False
+        return self.__lcGuard._SetLcOperationalState(eLcCompID_, bStartStopFlag_, atask_=atask_)
 
-    def _FinalizeSetup(self):
+    def _PxyNotifyLcFailure(self, eFailedCompID_ : _ELcCompID, frcError_ : _FatalEntry, atask_ : _AbstractTask =None):
+        if self.__isInvalid:
+            return
+        if not isinstance(eFailedCompID_, _ELcCompID):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00390)
+            return
 
+        _bSkipReply = True if self.__lcMonImpl.isLcShutdownEnabled else False
+        _bLock      = None if _bSkipReply else True
+
+        self.__LockAPI(_bLock)
+
+        if self._PxyIsLcProxyModeShutdown():
+            pass 
+
+        if not self.__lcGuard._SetLcFailure(eFailedCompID_, frcError_, atask_=atask_, bSkipReply_=_bSkipReply):
+            if _bLock is not None:
+                self.__LockAPI(False)
+
+    def _PxyFinalizeSetup(self):
         res = self.__fwMain.FinalizeCustomSetup()
         if not res:
-            vlogif._LogOEC(False, -3031)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00035)
 
             if _LcFailure.IsLcErrorFree():
                 _frcMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcProxyImpl_TextID_001)
-                _frc    = _CreateLogImplError(_frcMsg)
+                _frc    = _CreateLogImplErrorEC(_EFwErrorCode.FE_00375, _frcMsg)
                 if _frc is not None:
                     self.__lcGuard._SetLcFailure(_ELcCompID.eFwMain, frcError_=_frc, atask_=self.__fwMain, bSkipReply_=True)
 
                 if _LcFailure.IsLcErrorFree():
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_frcMsg)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_005, errMsg_=_frcMsg)
         return res
 
-    def _ProcessShutdownRequest (self, eShutdownRequest_ : _ELcShutdownRequest, eFailedCompID_ : _ELcCompID =None
-                               , frcError_ : _FatalEntry =None, atask_ : _AbstractTask =None, bPrvRequestReply_ =True):
-
+    def _PxyProcessShutdownRequest( self, eShutdownRequest_ : _ELcShutdownRequest, eFailedCompID_ : _ELcCompID =None
+                                  , frcError_ : _FatalEntry =None, atask_ : _AbstractTask =None, bPrvRequestReply_ =True):
         if self.__isInvalid:
             return
 
-        bRefresh = not bPrvRequestReply_
+        _bRefresh = not bPrvRequestReply_
 
         if eShutdownRequest_ == _ELcShutdownRequest.eFailureHandling:
             if eFailedCompID_ is None:
-                vlogif._LogOEC(True, -1607)
-                if not bRefresh:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00391)
+                if not _bRefresh:
                     self.__LockAPI(False)
                 return
 
-        if bRefresh:
+        if _bRefresh:
             self.__LockAPI(True)
 
         _bCurNormal          = None
@@ -412,7 +312,7 @@ class _LcProxyImpl(_LcProxy):
 
         _bCurNormal, _bCurPreShutdown, _bCurShutdown, _bCurFailureHandling = self.__DecodeCurOperationBitmask()
         if _bCurNormal is None:
-            if bRefresh:
+            if _bRefresh:
                 self.__LockAPI(False)
             return
 
@@ -424,12 +324,15 @@ class _LcProxyImpl(_LcProxy):
             eShutdownRequest_, _bCurNormal, _bCurPreShutdown, _bCurShutdown, _bCurFailureHandling)
 
         if _bIgnoreAction or _bBadAction:
-            if bRefresh:
+            if _bRefresh:
                 self.__LockAPI(False)
 
             if _bBadAction:
-                vlogif._LogOEC(True, -1608)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00392)
             return
+
+        if not self.__fwMain.isCurrentTask:
+            _curTskInst = self.__tmgr._GetCurTask(bAutoEncloseMissingThread_=False)
 
         _bPrvNormal          = None
         _bPrvShutdown        = None
@@ -446,22 +349,20 @@ class _LcProxyImpl(_LcProxy):
             pass
         elif _bPrvNormal:
             if eShutdownRequest_.isShutdown:
-                vlogif._LogOEC(True, -1609)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00393)
                 return
 
             if eShutdownRequest_.isFailureHandling:
                 _lstNewOpModes.append(_ELcOpModeBitFlag.ebfLcPreShutdown)
 
                 _lcCompID = eFailedCompID_
-
         else:
             if not eShutdownRequest_.isShutdown:
-                vlogif._LogOEC(True, -1610)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00394)
                 return
 
         if self.__lcMonImpl.isDummyMonitor:
             self.__fwMain.ProcessShutdownAction(eShutdownRequest_, eFailedCompID_=_lcCompID, frcError_=frcError_, atask_=atask_)
-
         else:
             self.__lcMonImpl._SetCurrentShutdownRequest(eShutdownRequest_)
 
@@ -481,18 +382,19 @@ class _LcProxyImpl(_LcProxy):
 
         self.__LockAPI(False)
 
-    def _StopFwMain(self):
+    def _PxyStopFwMain(self):
         if self.__isInvalid:
             return
 
         self.__tmgr._InjectLcProxy(None)
+
         if self.__fwMain.isRunning:
             _semStop = None if self.__fwMain.isEnclosingPyThread else _BinarySemaphore(take_=True)
             self.__fwMain.StopFwMain(semStop_=_semStop)
             if _semStop is not None:
                 _semStop.CleanUp()
 
-    def _JoinFwMain(self, mainXTUID_ : int =None) -> list:
+    def _PxyJoinFwMain(self, mainXTUID_ : int =None) -> list:
         if self.__isInvalid:
             return None
 
@@ -501,54 +403,50 @@ class _LcProxyImpl(_LcProxy):
 
         if mainXTUID_ is not None:
             if not _lcg.isMainXTaskFailed:
-                teXU = self.__tmgr._GetTaskError(mainXTUID_)
+                _teXT = self.__tmgr._GetTaskErrorByTID(mainXTUID_)
 
-                if (teXU is not None) and teXU.isFatalError:
-                    fee = teXU._currentErrorEntry
-                    _lcg._SetLcFailure(_ELcCompID.eMainXTask, fee, atask_=None, bSkipReply_=True)
+                if (_teXT is not None) and _teXT.isFatalError:
+                    _fee = _teXT._currentErrorEntry
+                    _lcg._SetLcFailure(_ELcCompID.eMainXTask, _fee, atask_=None, bSkipReply_=True)
 
                 elif _myLcState.isMainXTaskStarted:
                     _lcg._SetLcOperationalState(_ELcCompID.eMainXTask, False, atask_=None)
 
-        if not _lcg.isFwMainFailed:
+        if not _myLcState.isFwMainFailed:
             teMain = self.__fwMain.taskError
 
             if (teMain is not None) and teMain.isFatalError:
-                fee = teMain._currentErrorEntry
-                _lcg._SetLcFailure(_ELcCompID.eFwMain, fee, atask_=None, bSkipReply_=True)
+                _fee = teMain._currentErrorEntry
+                _lcg._SetLcFailure(_ELcCompID.eFwMain, _fee, atask_=None, bSkipReply_=True)
+
             elif _myLcState.isFwMainStarted:
                 _lcg._SetLcOperationalState(_ELcCompID.eFwMain, False, atask_=None)
 
         if self.__fwMain.isEnclosingStartupThread:
-            pass
+            pass 
         else:
             self.__fwMain.JoinTask()
 
         res = self.__tmgr._StopAllTasks(bCleanupStoppedTasks_=True, lstSkipTaskIDs_=[self.__fwMain.taskID])
         return res
 
-    def _SyncStarFwMainByAsynStartup(self):
-
-        _errMsg   = None
+    def _PxySyncStarFwMainByAsynStartup(self):
         _iImplErr = None
 
         if _LcFailure.IsLcNotErrorFree():
-            _iImplErr = 741
+            _iImplErr = _EFwErrorCode.FE_LCSF_076
         elif self.__fwMain.isEnclosingPyThread:
-            _iImplErr = 743
+            _iImplErr = _EFwErrorCode.FE_LCSF_078
         elif self.__isUnavailable:
-            _iImplErr = 744
+            _iImplErr = _EFwErrorCode.FE_LCSF_079
         elif not ((self.__fwMain.linkedExecutable is None) or self.__fwMain.linkedExecutable.isRunnable):
-            _iImplErr = 745
+            _iImplErr = _EFwErrorCode.FE_LCSF_080
 
         if _iImplErr is not None:
-            res     = False
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-            if _errMsg is not None:
-                vlogif._LogOEC(True, -1611)
+            res = False
+            _LcFailure.CheckSetLcSetupFailure(_iImplErr)
         else:
+
             _ss = None if self.__fwMain.isEnclosingPyThread else _BinarySemaphore(take_=True)
             res = self.__fwMain.StartFwMain(_ss)
 
@@ -557,13 +455,11 @@ class _LcProxyImpl(_LcProxy):
 
             res = res and self.__fwMain.isRunning
             if not res:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(746)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_081)
 
-                vlogif._LogOEC(False, -3032)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00036)
             else:
-                eOpMode = _ELcOpModeBitFlag.ebfLcNormal
-                self.__UpdateLcOperationBitMask(eOpMode)
+                self.__UpdateLcOperationBitMask(_ELcOpModeBitFlag.ebfLcNormal)
         return res
 
     def _ToString(self, *args_, **kwargs_):
@@ -604,17 +500,20 @@ class _LcProxyImpl(_LcProxy):
             self.__eOpModeID      = None
             self.__eOpModeBitMask = None
 
-
     @property
     def __isInvalid(self):
         return self.__apiLck is None
 
     @property
     def __isUnavailable(self):
-        return (self.__apiLck is None) or self.isLcModeShutdown
+        return (self.__apiLck is None) or self._PxyIsLcProxyModeShutdown()
 
     @property
     def __curOperationMode2Str(self):
+        _bCurNormal          = None
+        _bCurShutdown        = None
+        _bCurPreShutdown     = None
+        _bCurFailureHandling = None
         _bCurNormal, _bCurPreShutdown, _bCurShutdown, _bCurFailureHandling = self.__DecodeCurOperationBitmask()
         return 'LC operation mode: (bLcNormal, bLcPreShutdown, bLcShutdown, bLcFailureHandling)=({}, {}, {}, {})'.format(
                 _bCurNormal, _bCurPreShutdown, _bCurShutdown, _bCurFailureHandling)
@@ -633,10 +532,7 @@ class _LcProxyImpl(_LcProxy):
     def __CreateFwMain(tmgr_, lcMon_ : _LcMonitorImpl, mainXT_ : MainXTask =None):
 
         _tiFwMain = None
-
-        _midPart = _EFwTextID.eMisc_Async
-        _midPart = _FwTDbEngine.GetText(_midPart)
-        _fwMain = _FwMain(lcMon_)
+        _fwMain   = _FwMain(lcMon_)
 
         _bFwOK = _LcFailure.IsLcErrorFree()
         _bFwOK = _bFwOK and (vlogif._GetFirstFatalError() is None)  
@@ -649,37 +545,31 @@ class _LcProxyImpl(_LcProxy):
 
         if not _bFwOK:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(731)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_082)
 
             if _myTskBadge is None:
-                vlogif._LogOEC(False, -3033)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00037)
             else:
-                vlogif._LogOEC(True, -1612)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00396)
 
         elif _myTskBadge.isEnclosingPyThread:
             _bFwOK = False
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(732)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-            vlogif._LogOEC(True, -1613)
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_083)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00397)
 
         else:
-            _bFwOK = _bFwOK and _myTskBadge.hasDieXcpTargetTaskRight and _myTskBadge.hasErrorObserverTaskRight
-            _bFwOK = _bFwOK and (_myTskBadge.hasDieExceptionDelegateTargetTaskRight or False) 
+
+            _bFwOK = _bFwOK and _myTskBadge.hasDieXcpTargetTaskRight
+            _bFwOK = _bFwOK and _myTskBadge.hasErrorObserverTaskRight
+            _bFwOK = _bFwOK and _myTskBadge.hasDieExceptionDelegateTargetTaskRight
             if not _bFwOK:
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(733)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-                vlogif._LogOEC(True, -1614)
-
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_084)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00398)
             else:
                 _bFwOK = tmgr_._AddTaskEntry(_fwMain, removeAutoEnclosedTaskEntry_=True)
                 if not _bFwOK:
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(734)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-                    vlogif._LogOEC(True, -1615)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_085)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00399)
 
             if _bFwOK:
                 _mm = _Mutex()
@@ -689,15 +579,12 @@ class _LcProxyImpl(_LcProxy):
                     _tiFwMain.CleanUp()
                     _mm.CleanUp()
 
-                    _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(735)
-                    _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
-
-                    vlogif._LogOEC(True, -1616)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_086)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00400)
 
         if not _bFwOK:
             if _LcFailure.IsLcErrorFree():
-                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(736)
-                _LcFailure.CheckSetLcSetupFailure(errMsg_=_errMsg)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_087)
 
             if _fwMain is not None:
                 if vlogif._GetFirstFatalError() is None:  
@@ -758,17 +645,17 @@ class _LcProxyImpl(_LcProxy):
         if self.__isInvalid:
             return None
 
-        ctInst = self.__tmgr._GetCurTask(bAutoEncloseMissingThread_=True)
+        _ctInst = self.__tmgr._GetCurTask(bAutoEncloseMissingThread_=True)
 
         if not bPxyInfoAvail_:
-            res = None
+            return None
 
-        elif ctInst is None:
+        if _ctInst is None:
             res = None
-            vlogif._LogOEC(True, -1617)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00401)
 
         else:
-            res = _ProxyInfo(ctInst, self.__tiFwMain)
+            res = _ProxyInfo(_ctInst, self.__tiFwMain, bIgnoreCeaseMode_=True)
             if res.curTaskInfo is None:
                 res.CleanUp()
                 res = None
@@ -779,7 +666,7 @@ class _LcProxyImpl(_LcProxy):
             elif self.__lcMonImpl.isLcShutdownEnabled:
                 if not res.curTaskInfo.isInLcCeaseMode:
                     _myTskInst = res.curTaskInfo._taskInst
-                    _myTskInst._CreateCeaseTLB(bAborting_=_myTskInst.isAborting)
+                    _myTskInst._CreateCeaseTLB(bEnding_=_myTskInst.isAborting)
 
             if res is None:
                 if _LcProxyImpl.__bPxyInfoAvailable:
@@ -815,7 +702,6 @@ class _LcProxyImpl(_LcProxy):
                 self.__eOpModeBitMask = _ELcOpModeBitFlag.AddBitFlag(self.__eOpModeBitMask, eOpMode_)
 
             if _bChanged:
-                prvm = self.__eOpModeID
                 self.__eOpModeID = eOpMode_._toLcOperationModeID
 
     def __DecodeCurOperationBitmask(self):
@@ -837,14 +723,14 @@ class _LcProxyImpl(_LcProxy):
                 if _bNormal:
                     if _bPreShutdown or _bShutdown or _bFailureHandling:
                         bImplErr = True
-                        vlogif._LogOEC(True, -1618)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00402)
                 elif not (_bPreShutdown or _bShutdown or _bFailureHandling):
                     if self.__eOpModeBitMask.value != _ELcOpModeBitFlag.ebfIdle.value:
                         bImplErr = True
-                        vlogif._LogOEC(True, -1619)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00403)
                 elif _bPreShutdown and _bShutdown:
                     bImplErr = True
-                    vlogif._LogOEC(True, -1620)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00404)
 
                 if bImplErr:
                     _bNormal, _bPreShutdown, _bShutdown, _bFailureHandling = None, None, None, None

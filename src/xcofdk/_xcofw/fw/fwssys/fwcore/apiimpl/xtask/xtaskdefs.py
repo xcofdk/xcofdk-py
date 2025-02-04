@@ -7,13 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import unique
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwEnum
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EXTaskApiID(_FwEnum):

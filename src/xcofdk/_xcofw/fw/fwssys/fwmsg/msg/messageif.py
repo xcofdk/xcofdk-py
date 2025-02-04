@@ -7,13 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AbstractSlotsObject
 
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg.messagehdrif import _MessageHeaderIF
 
 from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
-
 
 class _MessageIF(_AbstractSlotsObject):
     __slots__ = []

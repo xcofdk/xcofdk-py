@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
 
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util             import _Util
@@ -20,9 +19,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunnableApiFu
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnable     import _AbstractRunnable
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile   import _ExecutionProfile
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _AbstractRunnableFWC(_AbstractRunnable):
     class _FwcEntry:
@@ -38,15 +38,15 @@ class _AbstractRunnableFWC(_AbstractRunnable):
             return self.__eFwcID
 
         @property
-        def taskName(self):
-            return None if self.__inst is None else self.__inst.taskName
+        def fwcTaskName(self):
+            return None if self.__inst is None else self.__inst._drivingTaskName
 
         @property
-        def aliasName(self):
+        def fwcAliasName(self):
             return self.__alias
 
         @property
-        def inst(self):
+        def fwcInst(self):
             return self.__inst
 
         def SetInstance(self, inst_):
@@ -78,11 +78,9 @@ class _AbstractRunnableFWC(_AbstractRunnable):
         def GetSize(bActiveOnly =True):
             res = 0
             dc =  _AbstractRunnableFWC._FwcTable.__dictFWCs
-            if dc is None:
-                pass
-            else:
+            if dc is not None:
                 if bActiveOnly:
-                    lstComps = [ _vv for _vv in dc.values() if _vv.inst is not None ]
+                    lstComps = [ _vv for _vv in dc.values() if _vv.fwcInst is not None ]
                     res = len(lstComps)
                 else:
                     res = len(dc)
@@ -93,46 +91,40 @@ class _AbstractRunnableFWC(_AbstractRunnable):
             if not _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
                 pass
             elif not (fwc_ is None or isinstance(fwc_, _AbstractRunnableFWC)):
-                vlogif._LogOEC(True, -1231)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00151)
             else:
                 tbl, _kk = _AbstractRunnableFWC._FwcTable.__dictFWCs, eFwcID_.value
                 _vv = tbl[_kk]
                 if fwc_ is None:
                     _vv.SetInstance(inst_=None)
-                elif _vv.inst is not None:
-                    vlogif._LogOEC(True, -1232)
+                elif _vv.fwcInst is not None:
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00152)
                 else:
                     _vv.SetInstance(inst_=fwc_)
 
         @staticmethod
         def GetFwcInstance(eFwcID_ :  _EFwcID):
             res = None
-            if not _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
-                pass
-            else:
+            if _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
                 tbl, _kk = _AbstractRunnableFWC._FwcTable.__dictFWCs, eFwcID_.value
                 if _kk in tbl:
-                    res = tbl[_kk].inst
+                    res = tbl[_kk].fwcInst
             return res
 
         @staticmethod
         def GetFwcTaskName(eFwcID_ :  _EFwcID):
             res = None
-            if not _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
-                pass
-            else:
+            if _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
                 tbl, _kk = _AbstractRunnableFWC._FwcTable.__dictFWCs, eFwcID_.value
-                res = tbl[_kk].taskName
+                res = tbl[_kk].fwcTaskName
             return res
 
         @staticmethod
         def GetFwcAliasName(eFwcID_ :  _EFwcID):
             res = None
-            if not _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
-                pass
-            else:
+            if _AbstractRunnableFWC._FwcTable.__IsValidRequest(eFwcID_):
                 tbl, _kk = _AbstractRunnableFWC._FwcTable.__dictFWCs, eFwcID_.value
-                res = tbl[_kk].aliasName
+                res = tbl[_kk].fwcAliasName
             return res
 
         @staticmethod
@@ -155,7 +147,7 @@ class _AbstractRunnableFWC(_AbstractRunnable):
 
                 for _ee in lstFwcIDs_:
                     if not isinstance(_ee,  _EFwcID):
-                        vlogif._LogOEC(True, -1233)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00153)
                         break
 
                     if _ee ==  _EFwcID.eFwMain:
@@ -164,11 +156,8 @@ class _AbstractRunnableFWC(_AbstractRunnable):
                     elif _ee ==  _EFwcID.eFwDispatcher:
                         alias = _FwTDbEngine.GetText(_EFwTextID.eAbstractRunnableFWC_AliasName_FwDspr)
 
-                    elif _ee ==  _EFwcID.eTimerManager:
-                        alias = _FwTDbEngine.GetText(_EFwTextID.eAbstractRunnableFWC_AliasName_TmrMgr)
-
                     else:
-                        vlogif._LogOEC(True, -1234)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00154)
                         break
 
                     tbl[_ee.value] = _AbstractRunnableFWC._FwcEntry(_ee, alias)
@@ -179,7 +168,7 @@ class _AbstractRunnableFWC(_AbstractRunnable):
             res = True
             if not isinstance(eFwcID_,  _EFwcID):
                 res = False
-                vlogif._LogOEC(True, -1235)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00155)
             else:
                 tbl = _AbstractRunnableFWC._FwcTable.__dictFWCs
                 if tbl is None:
@@ -189,9 +178,9 @@ class _AbstractRunnableFWC(_AbstractRunnable):
                     if not _kk in tbl:
                         res = False
                         if bWarnOnly_:
-                            pass
+                            pass 
                         else:
-                            vlogif._LogOEC(True, -1236)
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00156)
             return res
 
     __mandatoryCustomApiMethodNames = [ _ERunnableApiID.eOnRunProgressNotification.functionName ]
@@ -208,11 +197,11 @@ class _AbstractRunnableFWC(_AbstractRunnable):
 
         mmn = _AbstractRunnableFWC.GetMandatoryCustomApiMethodNamesList()
         if _Util.GetNumAttributes(self, mmn, bThrowx_=True) != len(mmn):
-            vlogif._LogOEC(True, -1237)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00157)
             self.CleanUp()
             return
         if not (isinstance(eRblType_,  _ERunnableType) and eRblType_.isFwRunnable):
-            vlogif._LogOEC(True, -1238)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00158)
             self.CleanUp()
             return
 
@@ -229,7 +218,7 @@ class _AbstractRunnableFWC(_AbstractRunnable):
             _xp.CleanUp()
 
         if self._eRunnableType is None:
-            vlogif._LogOEC(True, -1239)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00159)
             self.CleanUp()
         else:
             eFwcID  = _EFwcID(self._eRunnableType.value)
@@ -238,14 +227,14 @@ class _AbstractRunnableFWC(_AbstractRunnable):
             _bOK =         _AbstractRunnableFWC.GetFwcInstance(eFwcID) is not None
             _bOK = _bOK and (_AbstractRunnableFWC.GetActiveFwcNum() == numActiveOLD+1)
             if not _bOK:
-                vlogif._LogOEC(True, -1240)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00160)
                 self.CleanUp()
             else:
                 self.__eFwcID = eFwcID
 
     @staticmethod
     def IsDefinedFwc(eFwcID_:  _EFwcID):
-       return _AbstractRunnableFWC._FwcTable.IsDefinedFwc(eFwcID_)
+        return _AbstractRunnableFWC._FwcTable.IsDefinedFwc(eFwcID_)
 
     @staticmethod
     def IsActiveFwc(eFwcID_:  _EFwcID):
@@ -274,9 +263,9 @@ class _AbstractRunnableFWC(_AbstractRunnable):
     @staticmethod
     def _GetMandatoryCustomApiMethodNamesList():
         res = []
-        tmp = _AbstractRunnable._GetMandatoryCustomApiMethodNamesList()
-        if tmp is not None:
-            res += tmp
+        _tmp = _AbstractRunnable._GetMandatoryCustomApiMethodNamesList()
+        if _tmp is not None:
+            res += _tmp
         res += _AbstractRunnableFWC.__mandatoryCustomApiMethodNames
         return res
 

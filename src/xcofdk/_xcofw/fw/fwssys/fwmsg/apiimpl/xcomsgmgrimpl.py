@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from threading import RLock as _PyRLock
 from typing    import Union as _PyUnion
 
@@ -24,20 +23,19 @@ from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiimplshare  import _FwApiImplSha
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskbase import _XTaskBase
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.types.serdes            import SerDes
+
 from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsghdrimpl    import _XMsgHeaderImpl
 from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsgimpl       import _XMsgImpl
+from xcofdk._xcofw.fw.fwssys.fwmsg.msg                      import _SubsysMsgUtil
+from xcofdk._xcofw.fw.fwssys.fwmsg.msg.fwmessage            import _FwMessage
+from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchregistry    import _MessageClusterMap
 
-from xcofdk._xcofw.fw.fwssys.fwmsg.msg           import _SubsysMsgUtil
-from xcofdk._xcofw.fw.fwssys.fwmsg.msg.fwmessage import _FwMessage
-
-from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchregistry import _MessageClusterMap
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _XMsgMgrImpl:
 
@@ -45,7 +43,6 @@ class _XMsgMgrImpl:
 
     __FWD    = None
     __mtxApi = _PyRLock()
-
 
     def __init__(self):
         pass
@@ -63,10 +60,9 @@ class _XMsgMgrImpl:
 
         res = SerDes.DeserializeData(bytes_, bTreatAsUserError_=True)
         if not isinstance(res, _XMsgImpl):
-            logif._LogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_025).format(str(res)))
+            logif._LogFatalEC(_EFwErrorCode.FE_00049, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_025).format(str(res)))
             res = None
         return res
-
 
     @staticmethod
     def _SendXMsg( rcvID_   : _PyUnion[XTask, IntEnum, int]
@@ -86,6 +82,8 @@ class _XMsgMgrImpl:
             res = _msg.uniqueID
             if not _XTaskBase._SendXMsg(_sndXT, _msg):
                 res = 0
+                if _sndXT.currentError is None:
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00192, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_034).format(_msg.header))
             _msg.CleanUp()
         return res
 
@@ -103,9 +101,11 @@ class _XMsgMgrImpl:
             res = _msg.uniqueID
             if not _XTaskBase._SendXMsg(_sndXT, _msg):
                 res = 0
+                if _sndXT.currentError is None:
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00193, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_035).format(_msg.header))
             _msg.CleanUp()
-        return res
 
+        return res
 
     @staticmethod
     def __GetNextUniqueNr():
@@ -133,7 +133,7 @@ class _XMsgMgrImpl:
         _rcvXT = None
         _sndXT = _FwApiConnectorAP._APGetCurXTask()
         if _sndXT is None:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_014).format(_midPart))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00194, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_014).format(_midPart))
             return _failedTuple
 
         _sndID = _sndXT.xtaskUniqueID
@@ -146,11 +146,11 @@ class _XMsgMgrImpl:
 
         if _bDontCareRcv:
             if not _FwSubsystemCoding.IsAnonymousAddressingEnabled():
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_028).format(_midPart, _SubsysMsgUtil.StringizeID(_rcvID)))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00195, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_028).format(_midPart, _SubsysMsgUtil.StringizeID(_rcvID)))
                 return _failedTuple
 
             if _bDontCareLbl and _bDontCareClr:
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_029).format(_midPart, _SubsysMsgUtil.StringizeID(lblID_), _SubsysMsgUtil.StringizeID(clrID_), EPreDefinedMessagingID.MinUserDefinedID.value))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00196, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_029).format(_midPart, _SubsysMsgUtil.StringizeID(lblID_), _SubsysMsgUtil.StringizeID(clrID_), EPreDefinedMessagingID.MinUserDefinedID.value))
                 return _failedTuple
 
         if not (bInternal_ or bBroadcast_):
@@ -158,7 +158,7 @@ class _XMsgMgrImpl:
                 if _bPreDefRcv and (_rcvID == EPreDefinedMessagingID.MainTask):
                     _rcvID = _FwApiImplShare._GetMainXTask()
                     if _rcvID is None:
-                        logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_032).format(_midPart))
+                        logif._XLogErrorEC(_EFwErrorCode.UE_00197, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_032).format(_midPart))
                         return _failedTuple
                 else:
                     _rcvID = _rcvID.value
@@ -168,24 +168,24 @@ class _XMsgMgrImpl:
 
         if _bXTaskRcv:
             if _rcvID.isDetachedFromFW or (_rcvID.xtaskUniqueID is None):
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_019).format(_midPart, rcvID_))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00198, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_019).format(_midPart, rcvID_))
                 return _failedTuple
             _rcvXT = _rcvID
             _rcvID = _rcvID.xtaskUniqueID
         elif not _bIntRcv:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_016).format(_midPart, type(rcvID_).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00199, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_016).format(_midPart, type(rcvID_).__name__))
             return _failedTuple
         elif _rcvID == 0:
             _rcvID = _sndID
 
         if (_rcvID==_sndID) and not (bInternal_ or bBroadcast_):
             if not _FwSubsystemCoding.IsSelfExternalMessagingEnabled():
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_031).format(_midPart, _sndID))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00200, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_031).format(_midPart, _sndID))
                 return _failedTuple
 
         if bInternal_:
             if not _sndXT.xtaskProfile.isInternalQueueEnabled:
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_015).format(_midPart, _sndID))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00201, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_015).format(_midPart, _sndID))
                 return _failedTuple
             _rcvID = _sndID
             _rcvXT = _sndXT
@@ -196,26 +196,27 @@ class _XMsgMgrImpl:
         else:
             if _bDontCareRcv:
                 pass
+
             else:
                 if _bXTaskRcv:
                     pass
                 else:
                     if not _TaskUtil.IsValidUserTaskID(_rcvID):
-                        logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_017).format(_midPart, rcvID_))
+                        logif._XLogErrorEC(_EFwErrorCode.UE_00202, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_017).format(_midPart, rcvID_))
                         return _failedTuple
                     _rcvXT = _FwApiConnectorAP._APGetXTask(_rcvID)
 
                 if _rcvXT is None:
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_018).format(_midPart, rcvID_))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00203, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_018).format(_midPart, rcvID_))
                     return _failedTuple
                 if _rcvXT.isDetachedFromFW:
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_019).format(_midPart, rcvID_))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00204, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_019).format(_midPart, rcvID_))
                     return _failedTuple
-                if not _rcvXT.isRunning:
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_020).format(_midPart, rcvID_))
+                if not (_rcvXT.isRunning or _rcvXT.isStopping):
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00205, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_020).format(_midPart, rcvID_))
                     return _failedTuple
                 if not _rcvXT.xtaskProfile.isExternalQueueEnabled:
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_021).format(_midPart, rcvID_))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00206, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_021).format(_midPart, rcvID_))
                     return _failedTuple
 
                 _rcvID = _rcvXT.xtaskUniqueID
@@ -226,27 +227,27 @@ class _XMsgMgrImpl:
         _arg4 = _SubsysMsgUtil.StringizeID(_rcvID)
         if not _XMsgMgrImpl.__CheckSendRequest(lblID_, clrID_, _bDontCareLbl, _bDontCareClr, bBroadcast_=bBroadcast_):
             if bBroadcast_:
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_027).format(_midPart, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00207, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_027).format(_midPart, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
             else:
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_022).format(_midPart, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00208, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_022).format(_midPart, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
             return _failedTuple
 
         _pld = payload_
         if _pld is not None:
             if not isinstance(_pld, (XPayload, dict)):
                 if not isinstance(_pld, XPayloadIF):
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_023).format(_midPart, XPayloadIF.__name__, dict.__name__, type(payload_).__name__, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00155, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_023).format(_midPart, XPayloadIF.__name__, dict.__name__, type(payload_).__name__, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
                     return _failedTuple
 
                 if _pld.isCustomMarshalingRequired:
                     if not _FwSubsystemCoding.IsCustomPayloadSerDesEnabled():
-                        logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_033).format(_midPart))
+                        logif._XLogErrorEC(_EFwErrorCode.UE_00156, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_033).format(_midPart))
                         return _failedTuple
 
                 _bCustomPLD = True
             elif isinstance(_pld, XPayload):
                 if not _pld.isValidPayload:
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_026).format(_midPart, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00157, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_026).format(_midPart, _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
                     return _failedTuple
                 if _pld.numParameters < 1:
                     _pld = None
@@ -258,7 +259,7 @@ class _XMsgMgrImpl:
                 _pld = XPayload(containerInitializer_=payload_)
                 if not (_pld.isValidPayload and _pld.numParameters==len(payload_)):
                     _pld.DetachContainer()
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_030).format(_midPart, XPayload.__name__, len(payload_), _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00158, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_030).format(_midPart, XPayload.__name__, len(payload_), _arg1, _arg2, _arg3, _arg4, EPreDefinedMessagingID.MinUserDefinedID.value))
                     return _failedTuple
 
         _hdr = _XMsgHeaderImpl(clrID_, lblID_, _rcvID, _sndID, bInternal_=bInternal_)
@@ -320,6 +321,4 @@ class _XMsgMgrImpl:
                         if not _MessageClusterMap.UpdateCluster(_valGrp, _valLbl):
                             return False
         return True
-
-
 

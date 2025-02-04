@@ -44,10 +44,10 @@ class MyService(XTask):
     __slots__ = []
 
     def __init__(self, taskProfile_ : XTaskProfile =None):
-        XTask.__init__(self, taskProfile_=taskProfile_)
+        super().__init__(taskProfile_=taskProfile_)
 
     @override
     def RunXTask(self) -> ETernaryCallbackResultID:
-        xlogif.LogInfo(f'Nothing to do, done run phase of task {self.xtaskAliasName}.')
+        xlogif.LogInfo(f'Nothing to do, done run-phase of task {self.xtaskAliasName}.')
         return ETernaryCallbackResultID.STOP
 #END class MyService

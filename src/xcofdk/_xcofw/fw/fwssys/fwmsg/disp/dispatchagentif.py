@@ -7,14 +7,12 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif   import _CallableIF
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _ETernaryOpResult
 
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg                 import _MessageIF
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchFilter import _DispatchFilter
-
 
 class _DispatchAgentIF(_AbstractSlotsObject):
 
@@ -43,18 +41,6 @@ class _DispatchAgentIF(_AbstractSlotsObject):
     def _agentName(self) -> str:
         pass
 
-    def _SendMessage(self, msg_ : _MessageIF) -> bool:
-        pass
-
     def _PushMessage(self, msg_ : _MessageIF, msgDump_: bytes, pldDump_=None, bCustomPL_=None, customDesCallback_=None, callback_: _CallableIF =None) -> _ETernaryOpResult:
         pass
 
-    def _RegisterDispatchFilter(self, dispFilter_  : _DispatchFilter, callback_ : _CallableIF =None) -> bool:
-        pass
-
-    def _DeregisterDispatchFilter(self, dispFilter_  : _DispatchFilter, callback_ : _CallableIF =None) -> bool:
-        pass
-
-
-    def _TriggerQueueProcessing(self, bExtQueue_ : bool) -> int:
-        pass

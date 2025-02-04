@@ -7,44 +7,37 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging            import logif
-from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif    import _CallableIF
-from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout      import _Timeout
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile     import _AbstractProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import unique
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
-
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex      import _Mutex
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop     import _EATaskOperationID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop     import _ATaskOperationPreCheck
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile import _ExecutionProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge   import _TaskBadge
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate   import _TaskState
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _PyThread
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable import _AbstractExecutable
-
+from xcofdk._xcofw.fw.fwssys.fwcore.logging                    import logif
+from xcofdk._xcofw.fw.fwssys.fwcore.logging                    import vlogif
+from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout              import _Timeout
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex             import _Mutex
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop            import _EATaskOperationID
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.ataskop            import _ATaskOperationPreCheck
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile        import _ExecutionProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge          import _TaskBadge
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate          import _TaskState
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil           import _PyThread
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable        import _AbstractExecutable
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject              import _AbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile             import _AbstractProfile
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes          import _CommonDefines
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes          import unique
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes          import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl                    import xlogifbase
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconnap        import _FwApiConnectorAP
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskerrbase import _XTaskErrorBase
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskprfext  import _XTaskProfileExt
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconnif  import _XTaskConnectorIF
 from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsgimpl          import _XMsgImpl
-
-from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchFilter import _DispatchFilter
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes               import _EFwErrorCode
 
 from xcofdk.fwapi.xtask import XTaskError
 from xcofdk.fwapi.xtask import XTaskProfile
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 @unique
 class _EXTExecState(_FwIntEnum):
@@ -55,10 +48,6 @@ class _EXTExecState(_FwIntEnum):
     eXTaskFailed      = auto()
     eXTaskStopping    = auto()
     eXTaskAborting    = auto()
-
-    @property
-    def isXtInitialized(self):
-        return self.value >= _EXTExecState.eXTaskInitialized.value
 
     @property
     def isXtStarted(self):
@@ -88,27 +77,26 @@ class _EXTExecState(_FwIntEnum):
     def isXtAborting(self):
         return self == _EXTExecState.eXTaskAborting
 
-    @property
-    def isXtblTerminated(self):
-        return self.isXtDone or self.isXtFailed
-
-    @property
-    def isXtblTerminating(self):
-        return self.value > _EXTExecState.eXTaskFailed.value
-
     def _ToString(self, bDetached_ : bool):
 
-        _tmp   = _EFwTextID.eXTaskConnector_EXUExecState_ToString_01.value
-        _myVal = self.value
+        if self.value < _EXTExecState.eXTaskRunning.value:
+            res = _EFwTextID.eXTaskConnector_EXUExecState_ToString_02.value
+        elif self.isXtRunning:
+            res = _EFwTextID.eXTaskConnector_EXUExecState_ToString_03.value
+        elif self.isXtDone:
+            res = _EFwTextID.eXTaskConnector_EXUExecState_ToString_04.value
+        elif self.isXtFailed:
+            res = _EFwTextID.eXTaskConnector_EXUExecState_ToString_05.value
+        elif self.isXtStopping:
+            res = _EFwTextID.eXTaskConnector_EXUExecState_ToString_06.value
+        else:
+            res = _EFwTextID.eXTaskConnector_EXUExecState_ToString_07.value
 
-        res = _tmp+1 if _myVal < _EXTExecState.eXTaskRunning.value else _tmp+_myVal
-        res  = _FwTDbEngine.GetText(_EFwTextID(res))
-
+        res = _FwTDbEngine.GetText(_EFwTextID(res))
         if bDetached_:
             if not (self.isXtDone or self.isXtFailed):
                 res += _FwTDbEngine.GetText(_EFwTextID.eXTaskConnector_EXUExecState_ToString_01)
         return res
-
 
 class _XTaskMirror:
     __slots__ = [ '__xt' , '__xtSt' , '__xtPrf' , '__aname' , '__xtlType' , '__cn' , '__bSync' , '__tuid' ]
@@ -217,7 +205,6 @@ class _XTaskMirror:
             res = self.__cn._xtStateToString
         return res
 
-
 class _XTaskConnector(_XTaskConnectorIF):
 
     class __XConnData(_AbstractSlotsObject):
@@ -236,7 +223,7 @@ class _XTaskConnector(_XTaskConnectorIF):
 
             if not isinstance(mtxApi_, _Mutex):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1095)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00007)
             else:
                 self.__mtxApi = mtxApi_
 
@@ -281,19 +268,19 @@ class _XTaskConnector(_XTaskConnectorIF):
             if self.__isInvalid:
                 return
             if not (isinstance(tskBadge_, _TaskBadge) and tskBadge_.isValid):
-                vlogif._LogOEC(True, -1096)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00007)
                 return
             if not isinstance(linkedPyThrd_, _PyThread):
-                vlogif._LogOEC(True, -1097)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00008)
                 return
             if not (isinstance(tskProfile_, _AbstractProfile) and tskProfile_.isValid and tskProfile_.isFrozen):
-                vlogif._LogOEC(True, -1098)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00009)
                 return
             if not tskProfile_.isDrivingXTaskTaskProfile:
-                vlogif._LogOEC(True, -1099)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00010)
                 return
             if self.__tskPrf is not None:
-                vlogif._LogOEC(True, -1100)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00011)
                 return
 
             with self.__mtxApi:
@@ -307,10 +294,10 @@ class _XTaskConnector(_XTaskConnectorIF):
             if self.__isInvalid:
                 return False
             elif self.__tskPrf is None:
-                vlogif._LogOEC(True, -1101)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00012)
                 return False
             elif not isinstance(tskState_, _TaskState):
-                vlogif._LogOEC(True, -1102)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00013)
                 return False
             with self.__mtxApi:
                 self.__tskState = tskState_
@@ -324,9 +311,7 @@ class _XTaskConnector(_XTaskConnectorIF):
             res       = _EXTExecState.eXTaskInitialized
             _curTskSt = None if self.__tskState is None else self.__tskState.GetStateID()
 
-            if _curTskSt is None:
-                pass
-            else:
+            if _curTskSt is not None:
                 _curTskStVal = _curTskSt.value
                 if _curTskStVal >= _TaskState._EState.eRunProgressAborted.value:
                     _curTskStVal = _EXTExecState.eXTaskAborting.value
@@ -359,12 +344,12 @@ class _XTaskConnector(_XTaskConnectorIF):
         def __isInvalid(self):
             return self.__mtxApi is None
 
-
-    __slots__ = [ '__xtm' , '__xdata' , '__mtxApi' , '__mtxData' , '__xtPrf' , '__execPrf' ]
+    __slots__ = [ '__xtm' , '__xdata' , '__mtxApi' , '__mtxData' , '__xtPrf' , '__execPrf' , '__euNum' ]
     __prfCreator = None
 
     def __init__(self, xtm_ : _XTaskMirror, xtPrf_ : _XTaskProfileExt):
         self.__xtm     = None
+        self.__euNum   = None
         self.__xdata   = None
         self.__mtxApi  = None
         self.__xtPrf   = None
@@ -375,16 +360,16 @@ class _XTaskConnector(_XTaskConnectorIF):
 
         if not isinstance(xtm_, _XTaskMirror):
             self.CleanUp()
-            vlogif._LogOEC(True, -1103)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00014)
         elif not isinstance(xtm_.xtaskInst, _AbstractExecutable):
             self.CleanUp()
-            vlogif._LogOEC(True, -1104)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00015)
         elif not xtm_.xtaskInst.isXtask:
             self.CleanUp()
-            vlogif._LogOEC(True, -1105)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00016)
         elif not (isinstance(xtPrf_, _XTaskProfileExt) and xtPrf_.isValid):
             self.CleanUp()
-            vlogif._LogOEC(True, -1106)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00017)
         else:
             _xp = _ExecutionProfile(xtaskProfileExt_=xtPrf_)
             if not _xp.isValid:
@@ -488,6 +473,12 @@ class _XTaskConnector(_XTaskConnectorIF):
         return self.__GetCurrentError()
 
     @property
+    def _euRNumber(self) -> int:
+        if self.__euNum is None:
+            return -1
+        return self.__euNum
+
+    @property
     def _xtStateToString(self) -> str:
         if self.__isInvalid:
             return None
@@ -495,7 +486,7 @@ class _XTaskConnector(_XTaskConnectorIF):
             _xtSt = None if self.__isFwTaskDisconnected else self.__xdata.xtaskState
             return None if _xtSt is None else _xtSt._ToString(self.__xtm is None)
 
-    def _StartXTask(self) -> bool:
+    def _StartXTask(self, *args_, **kwargs_) -> bool:
         if self.__isInvalid:
             return False
         if self.__isXtDisconnected:
@@ -506,40 +497,49 @@ class _XTaskConnector(_XTaskConnectorIF):
         if self.__isFwUnavailable:
             logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_001).format(_midPart))
             return False
-        elif self.__isLcProxyUnavailable:
-            vlogif._LogOEC(True, -1107)
-            return False
-        elif not self._isLcProxyOperable:
-            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_003).format(_midPart))
-            return False
-        elif not self._lcProxy.isTaskManagerApiAvailable:
-            logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_001).format(_midPart))
-            return False
+
         elif self.__isFwTaskConnected and self._isStarted:
             logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_004).format(_midPart.capitalize()))
             return False
+
+        elif self.__isLcProxyUnavailable:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00018)
+            return False
+
+        elif not self._PcIsLcProxyModeNormal():
+            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_003).format(_midPart))
+            return False
+
+        elif not self._PcIsTaskMgrApiAvailable():
+            logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_001).format(_midPart))
+            return False
+
+        self.__execPrf._SetStartArgs(*args_, **kwargs_)
 
         _bSyncTask = self.__xtPrf.isSynchronousTask
         if not _bSyncTask:
             self.__mtxApi.Take()
 
         if _bSyncTask:
-            res = self._lcProxy.taskManager.StartXTask(self)
+            _midPart2 = _FwTDbEngine.GetText(_EFwTextID.eMisc_TaskType_Sync)
+            res = self._PcGetTaskMgr().StartXTask(self)
         else:
-            res = self._lcProxy.taskManager.StartXTask(self)
+            res = self._PcGetTaskMgr().StartXTask(self)
+            if res:
+                _midPart2 = _FwTDbEngine.GetText(_EFwTextID.eMisc_TaskType_Async)
             self.__mtxApi.Give()
 
         _bErrorFree = self._currentError is None
 
         if self.__isInvalid:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_008).format(_midPart))
+            logif._LogErrorEC(_EFwErrorCode.UE_00010, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_008).format(_midPart))
         elif not res:
             if _bErrorFree:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_008).format(_midPart))
+                logif._LogErrorEC(_EFwErrorCode.UE_00011, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_008).format(_midPart))
         elif self._isFailed:
             res = False
             if _bErrorFree:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_009).format(_midPart))
+                logif._LogErrorEC(_EFwErrorCode.UE_00012, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_009).format(_midPart))
         return res
 
     def _StopXTask(self, cleanupDriver_ =True) -> bool:
@@ -554,17 +554,21 @@ class _XTaskConnector(_XTaskConnectorIF):
         if self.__isFwUnavailable:
             logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_016).format(_midPart))
             return False
-        elif self.__isLcProxyUnavailable:
-            vlogif._LogOEC(True, -1108)
+
+        elif self.__isFwTaskDisconnected:
+            logif._LogErrorEC(_EFwErrorCode.UE_00013, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_019).format(_midPart))
             return False
-        elif not self._isLcProxyOperable:
+
+        elif self.__isLcProxyUnavailable:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00020)
+            return False
+
+        elif not self._PcIsLcProxyModeNormal():
             logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_018).format(_midPart))
             return False
-        elif not self._lcProxy.isTaskManagerApiAvailable:
+
+        elif not self._PcIsTaskMgrApiAvailable():
             logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_016).format(_midPart))
-            return False
-        elif self.__isFwTaskDisconnected:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_019).format(_midPart))
             return False
 
         self.__mtxApi.Take()
@@ -572,11 +576,10 @@ class _XTaskConnector(_XTaskConnectorIF):
         if _oppc.isNotApplicable or _oppc.isIgnorable:
             self.__mtxApi.Give()
             res = _oppc.isIgnorable
-        elif _oppc.isSynchronous:
-            self.__mtxApi.Give()
-            res = self._lcProxy.taskManager.StopXTask(self, cleanupDriver_=cleanupDriver_)
         else:
-            res = self._lcProxy.taskManager.StopXTask(self, cleanupDriver_=cleanupDriver_)
+            if _oppc.isSynchronous:
+                self.__mtxApi.Give()
+            res = self._PcGetTaskMgr().StopXTask(self, cleanupDriver_=cleanupDriver_)
 
             if not self.__isInvalid: self.__mtxApi.Give()
         _oppc.CleanUp()
@@ -594,32 +597,35 @@ class _XTaskConnector(_XTaskConnectorIF):
         if self.__isFwUnavailable:
             logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_021).format(_midPart))
             return False
-        elif self.__isLcProxyUnavailable:
-            vlogif._LogOEC(True, -1109)
+
+        elif self.__isFwTaskDisconnected:
+            logif._LogErrorEC(_EFwErrorCode.UE_00014, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_007).format(_midPart))
             return False
-        elif not self._isLcProxyOperable:
+
+        elif self.__isLcProxyUnavailable:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00021)
+            return False
+
+        elif not self._PcIsLcProxyModeNormal():
             logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_022).format(_midPart))
             return False
-        elif not self._lcProxy.isTaskManagerApiAvailable:
+
+        elif not self._PcIsTaskMgrApiAvailable():
             logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_021).format(_midPart))
             return False
-        elif self._isLcShutdownEnabled:
+
+        elif self._PcIsLcMonShutdownEnabled():
             logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_023).format(_midPart))
-            return False
-        elif self.__isFwTaskDisconnected:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_007).format(_midPart))
             return False
 
         _tout = timeout_
         if timeout_ is not None:
             if not isinstance(timeout_, (int, float)):
-                if isinstance(timeout_, _Timeout):
-                    pass
-                else:
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_002).format(type(timeout_).__name__, _midPart))
+                if not isinstance(timeout_, _Timeout):
+                    logif._LogErrorEC(_EFwErrorCode.UE_00015, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_002).format(type(timeout_).__name__, _midPart))
                     return False
             elif (isinstance(timeout_, int) and timeout_ < 0) or (isinstance(timeout_, float) and timeout_ < 0.0):
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_012).format(str(timeout_), _midPart))
+                logif._LogErrorEC(_EFwErrorCode.UE_00016, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_012).format(str(timeout_), _midPart))
                 return False
 
             if not isinstance(timeout_, _Timeout):
@@ -633,11 +639,10 @@ class _XTaskConnector(_XTaskConnectorIF):
         if _oppc.isNotApplicable or _oppc.isIgnorable:
             self.__mtxApi.Give()
             res = _oppc.isIgnorable
-        elif _oppc.isSynchronous:
-            self.__mtxApi.Give()
-            res = self._lcProxy.taskManager.JoinXTask(self, timeout_=_tout)
         else:
-            res = self._lcProxy.taskManager.JoinXTask(self, timeout_=_tout)
+            if _oppc.isSynchronous:
+                self.__mtxApi.Give()
+            res = self._PcGetTaskMgr().JoinXTask(self, timeout_=_tout)
 
             if not self.__isInvalid: self.__mtxApi.Give()
         _oppc.CleanUp()
@@ -647,25 +652,17 @@ class _XTaskConnector(_XTaskConnectorIF):
                 _tout.CleanUp()
         return res
 
-    def _OnXTaskReadyToRun(self) -> bool:
-        return True
-
-    def _SetXTaskDieAlarm(self):
-        pass
-
     def _DisconnectXTask(self, bDetachApiRequest_ =False):
         if self.__isInvalid:
             return
         with self.__mtxData:
-            if self.__xtm is None:
-                pass
-            else:
-                if self.__isFwTaskDisconnected or not self._isLcProxyOperable:
+            if self.__xtm is not None:
+                if self.__isFwTaskDisconnected or not self._PcIsLcProxyModeNormal():
                     _xtSt = self.__xtm._xtState
                 else:
                     if self._isRunning:
                         if bDetachApiRequest_:
-                            if self._lcProxy.isTaskManagerApiAvailable:
+                            if self._PcIsTaskMgrApiAvailable():
                                 _bDoTryStop = False
                                 _oppc       = self.__PreCheckTaskOperation(_EATaskOperationID.eStop)
 
@@ -673,7 +670,7 @@ class _XTaskConnector(_XTaskConnectorIF):
                                     _bDoTryStop = True
                                 _oppc.CleanUp()
                                 if _bDoTryStop:
-                                    self._lcProxy.taskManager.StopXTask(self, cleanupDriver_=False)
+                                    self._PcGetTaskMgr().StopXTask(self, cleanupDriver_=False)
 
                     _xtSt = self.__xdata.xtaskState
 
@@ -689,33 +686,36 @@ class _XTaskConnector(_XTaskConnectorIF):
             pass
         elif self.__isLcProxyUnavailable:
             pass
-        elif not self._isLcProxyOperable:
+        elif not self._PcIsLcProxyModeNormal():
             pass
-        elif not self._lcProxy.isTaskManagerApiAvailable:
+        elif not self._PcIsTaskMgrApiAvailable():
             pass
+        elif not self._PcGetTaskMgr().IsCurTask(self.__xtaskUniqueID):
+            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_029).format(self.__xtaskUniqueID))
         else:
-            _tskErr = self._lcProxy.taskManager.GetCurTaskError()
+            _tskErr      = self._PcGetTaskMgr().GetTaskError(self.__xtaskUniqueID)
+            _myLogPrefix = self.__logPrefix
+
             if _tskErr is None:
-                vlogif._LogOEC(True, -1110)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00022)
             elif _tskErr.taskBadge is None:
                 pass
             elif not _tskErr.taskBadge.isDrivingXTask:
                 pass
             else:
-                errUID = _tskErr.currentErrorUniqueID
-                if errUID is not None:
+                _errUID = _tskErr.currentErrorUniqueID
+                if _errUID is not None:
                     _bNoImpactFatalErrorDueToFrcLinkage = _tskErr.isNoImpactFatalErrorDueToFrcLinkage
 
-                    res = _tskErr.ClearError()
-                    res = res and _tskErr.isErrorFree
+                    res = _tskErr.ClearError() and _tskErr.isErrorFree
 
                     if not res:
-                        vlogif._LogOEC(True, -1111)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00023)
                 else:
                     res = True
         return res
 
-    def _SetErrorEC(self, errMsg_: str, errCode_: int =None):
+    def _SetTaskError(self, bFatal_ : bool, errMsg_: str, errCode_: int =None):
 
         if self.__isXtDisconnected:
             pass
@@ -723,35 +723,59 @@ class _XTaskConnector(_XTaskConnectorIF):
             pass
         elif self.__isLcProxyUnavailable:
             pass
-        elif not self._isLcProxyOperable:
+        elif not self._PcIsLcProxyModeNormal():
             pass
-        elif not self._lcProxy.isTaskManagerApiAvailable:
+        elif not self._PcIsTaskMgrApiAvailable():
             pass
+        elif not self._PcGetTaskMgr().IsCurTask(self.__xtaskUniqueID):
+            _msgID = _EFwTextID.eLogMsg_XTaskConnector_TextID_033 if bFatal_ else _EFwTextID.eLogMsg_XTaskConnector_TextID_032
+            logif._LogWarning(_FwTDbEngine.GetText(_msgID).format(self.__xtaskUniqueID))
         elif errCode_ is None:
-            xlogifbase._XSetError(errMsg_)
+            if bFatal_:
+                xlogifbase._XSetFatalError(errMsg_)
+            else:
+                xlogifbase._XSetError(errMsg_)
+        elif bFatal_:
+            xlogifbase._XSetFatalErrorEC(errMsg_, errCode_)
         else:
             xlogifbase._XSetErrorEC(errMsg_, errCode_)
 
-    def _SetFatalErrorEC(self, errMsg_: str, errCode_: int =None):
+    def _SendXMsg(self, xmsg_: _XMsgImpl) -> bool:
 
         if self.__isXtDisconnected:
-            pass
-        elif self.__isFwUnavailable:
-            pass
-        elif self.__isLcProxyUnavailable:
-            pass
-        elif not self._isLcProxyOperable:
-            pass
-        elif not self._lcProxy.isTaskManagerApiAvailable:
-            pass
-        elif errCode_ is None:
-            xlogifbase._XSetFatalError(errMsg_)
-        else:
-            xlogifbase._XSetFatalErrorEC(errMsg_, errCode_)
+            return False
+        if not self._PcIsLcProxyModeNormal():
+            return False
+
+        _midPart = self.__GetFormattedXTaskLabel()
+
+        if self.__isFwTaskDisconnected:
+            logif._XLogErrorEC(_EFwErrorCode.UE_00178, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_030).format(_midPart))
+            return False
+
+        _xrbl = None
+        with self.__mtxData:
+            _xdata = self.__xdata
+            if _xdata is None:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00024)
+                return False
+            if not _xdata.isXTaskTask:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00025)
+                return False
+            if (_xdata.taskProfile is None) or (_xdata.taskProfile.runnable is None):
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00026)
+                return False
+            if (_xdata.xtaskState is None) or _xdata.xtaskState.isXtAborting:
+                return False
+            _xrbl = _xdata.taskProfile.runnable
+
+        return _xrbl._SendMessage(xmsg_)
 
     def _TriggerQueueProcessing(self, bExtQueue_ : bool) -> int:
 
         if self.__isXtDisconnected:
+            return False
+        if not self._PcIsLcProxyModeNormal():
             return False
 
         _midPart = self.__GetFormattedXTaskLabel()
@@ -764,33 +788,33 @@ class _XTaskConnector(_XTaskConnectorIF):
         with self.__mtxData:
             _xdata = self.__xdata
             if not _xdata.isXTaskTask:
-                vlogif._LogOEC(True, -1112)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00027)
                 return -1
             if (_xdata.taskProfile is None) or (_xdata.taskProfile.runnable is None):
-                vlogif._LogOEC(True, -1113)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00028)
                 return -1
-            if (_xdata.xtaskState is None) or not _xdata.xtaskState.isXtRunning:
+            if (_xdata.xtaskState is None) or not (_xdata.xtaskState.isXtRunning or _xdata.xtaskState.isXtStopping):
                 return -1
             _xrbl = _xdata.taskProfile.runnable
 
-        return _xrbl._TriggerQueueProcessing(bExtQueue_)
+        return _xrbl._TriggerQueueProc(bExtQueue_)
 
     def _CPrf(self, enclosedPyThread_ : _PyThread =None, profileAttrs_ : dict =None):
-        prfc = _XTaskConnector.__prfCreator
-        if prfc is None:
+        _prfc = _XTaskConnector.__prfCreator
+        if _prfc is None:
             res = None
         else:
-            res = prfc._CreateXTaskProfile(self, enclosedPyThread_=enclosedPyThread_, profileAttrs_=profileAttrs_)
+            res = _prfc._CreateXTaskProfile(self, enclosedPyThread_=enclosedPyThread_, profileAttrs_=profileAttrs_)
         return res
 
     def _UpdateXD( self, tskState_ : _TaskState, tskBadge_ : _TaskBadge =None, tskProfile_ : _AbstractProfile =None, linkedPyThrd_ : _PyThread =None):
         if self.__isInvalid or self.__isFwUnavailable:
             return False
         if (tskBadge_ is not None) and not (isinstance(tskBadge_, _TaskBadge) and tskBadge_.isValid):
-            vlogif._LogOEC(True, -1114)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00029)
             return False
         if not (isinstance(tskState_, _TaskState) and tskState_.isValid):
-            vlogif._LogOEC(True, -1115)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00030)
             return False
 
         with self.__mtxData:
@@ -799,12 +823,13 @@ class _XTaskConnector(_XTaskConnectorIF):
 
             if self.__xdata.taskProfile is None:
                 if (tskBadge_ is None) or (tskProfile_ is None) or (linkedPyThrd_ is None):
-                    vlogif._LogOEC(True, -1116)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00031)
                     return False
                 self.__xdata._SetData(tskBadge_, tskProfile_, linkedPyThrd_)
                 if self.__xdata.taskProfile is None:
                     return False
 
+                self.__euNum = -1
                 if self.__isXtConnected:
                     self.__xtm._TaskIDUpdate(tskBadge_.taskID)
 
@@ -813,7 +838,7 @@ class _XTaskConnector(_XTaskConnectorIF):
                 _bNOK = _bNOK or ((tskProfile_ is not None)   and id(tskProfile_)   != id(self.__xdata.taskProfile))
                 _bNOK = _bNOK or ((linkedPyThrd_ is not None) and id(linkedPyThrd_) != id(self.__xdata.linkedPyThread))
                 if _bNOK:
-                    vlogif._LogOEC(True, -1117)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00032)
                     return False
 
             _xtSt         = self.__xdata.xtaskState
@@ -821,11 +846,11 @@ class _XTaskConnector(_XTaskConnectorIF):
 
             res = self.__xdata._UpdateState(tskState_)
             if not res:
-                vlogif._LogOEC(True, -1118)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00033)
             elif self.__xtm is None:
                 if not tskState_.isTerminated:
                     res = res
-                    vlogif._LogOEC(True, -1119)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00034)
             else:
                 _xtSt        = self.__xdata.xtaskState
                 _bAborting   = tskState_.isAborting
@@ -842,57 +867,10 @@ class _XTaskConnector(_XTaskConnectorIF):
                     self.__xtm._TaskStateUpdate(_xtSt)
             return res
 
-    def _SendXMsg(self, xmsg_: _XMsgImpl) -> bool:
-
-        if self.__isXtDisconnected:
-            return False
-
-        _midPart = self.__GetFormattedXTaskLabel()
-
-        if self.__isFwTaskDisconnected:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_030).format(_midPart))
-            return False
-
-        _xrbl = None
-        with self.__mtxData:
-            _xdata = self.__xdata
-            if not _xdata.isXTaskTask:
-                vlogif._LogOEC(True, -1120)
-                return False
-            if (_xdata.taskProfile is None) or (_xdata.taskProfile.runnable is None):
-                vlogif._LogOEC(True, -1121)
-                return False
-            if (_xdata.xtaskState is None) or not _xdata.xtaskState.isXtRunning:
-                return False
-            _xrbl = _xdata.taskProfile.runnable
-
-        return _xrbl._SendMessage(xmsg_)
-
-    def _ProcessDispFilterRequest(self, dispFilter_ : _DispatchFilter, callback_ : _CallableIF =None, bAdd_ =True) -> bool:
-
-        if self.__isXtDisconnected:
-            return False
-
-
-        _midPart = self.__GetFormattedXTaskLabel()
-
-
-        if self.__isFwTaskDisconnected:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskConnector_TextID_026).format(_midPart))
-            return False
-
-        _xrbl = None
-        with self.__mtxData:
-            _xdata = self.__xdata
-            if not _xdata.isXTaskTask:
-                vlogif._LogOEC(True, -1122)
-                return False
-            if (_xdata.taskProfile is None) or (_xdata.taskProfile.runnable is None):
-                vlogif._LogOEC(True, -1123)
-                return False
-            _xrbl = _xdata.taskProfile.runnable
-
-        return _xrbl._DeregisterDispatchFilter(dispFilter_) if not bAdd_ else _xrbl._RegisterDispatchFilter(dispFilter_)
+    def _IncEuRNumber(self):
+        if self.__euNum is None:
+            return
+        self.__euNum += 1
 
     def _ToString(self, *args_, **kwargs_):
         if self.__isInvalid:
@@ -920,6 +898,7 @@ class _XTaskConnector(_XTaskConnectorIF):
         self.__mtxApi.CleanUp()
         self.__execPrf.CleanUp()
 
+        self.__euNum   = None
         self.__xdata   = None
         self.__xtPrf   = None
         self.__mtxApi  = None
@@ -932,7 +911,7 @@ class _XTaskConnector(_XTaskConnectorIF):
         ak = hash(str(_XTaskConnector._SetPRFC))
         res = ak_ == ak
         if not res:
-            vlogif._LogOEC(True, -1124)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00035)
         else:
             if (prfc_ is not None) and (_XTaskConnector.__prfCreator is not None):
                 pass
@@ -970,12 +949,13 @@ class _XTaskConnector(_XTaskConnectorIF):
 
     @property
     def __isLcProxyUnavailable(self):
-        if self._lcProxy is None:
-            if _XTaskConnector.__prfCreator is not None:
-                rx = _XTaskConnector.__prfCreator._GetLcProxy()
-                if (rx is not None) and rx.isLcModeNormal:
-                    self._SetLcProxy(rx)
-        res = not self._isLcProxyAvailable
+        if not self._PcIsLcProxySet():
+            _prfc = _XTaskConnector.__prfCreator
+            if _prfc is not None:
+                _pxy = _prfc._GetLcProxy()
+                if (_pxy is not None) and _pxy._PxyIsLcProxyModeNormal():
+                    self._PcSetLcProxy(_pxy)
+        res = self._PcIsLcProxyModeShutdown()
         return res
 
     @property
@@ -1014,9 +994,7 @@ class _XTaskConnector(_XTaskConnectorIF):
     def __logPrefixStateUpdate(self):
         res     = _FwTDbEngine.GetText(_EFwTextID.eXTaskConnector_LogPrefix) + _FwTDbEngine.GetText(_EFwTextID.eXTaskConnector_LogPrefix_StateUpdate)
         _xtname = self.__xtaskName
-        if (_xtname is None) or (len(_xtname) < 1):
-            pass
-        else:
+        if (_xtname is not None) and (len(_xtname) > 0):
             res += f'[{_xtname}] '
         return res
 
@@ -1024,9 +1002,7 @@ class _XTaskConnector(_XTaskConnectorIF):
     def __logPrefix(self):
         res     = _FwTDbEngine.GetText(_EFwTextID.eXTaskConnector_LogPrefix)
         _xtname = self.__xtaskName
-        if (_xtname is None) or (len(_xtname) < 1):
-            pass
-        else:
+        if (_xtname is not None) and (len(_xtname) > 0):
             res += f'[{_xtname}] '
         return res
 
@@ -1043,41 +1019,38 @@ class _XTaskConnector(_XTaskConnectorIF):
             return None
         if self.__isFwUnavailable:
             return None
-        if self.__isLcProxyUnavailable or (self._lcProxy.taskManager is None):
+        if self.__isLcProxyUnavailable:
             return None
-        if not self._lcProxy.isTaskManagerApiAvailable:
+        if not self._PcIsTaskMgrApiAvailable():
             return None
 
-        res = None
+        res          = None
+        _tskErr      = self._PcGetTaskMgr().GetTaskError(self.__xtaskUniqueID)
         _myLogPrefix = self.__logPrefix
 
-        _tskErr = self._lcProxy.taskManager.GetCurTaskError(self.__xtaskUniqueID)
         if _tskErr is None:
-            vlogif._LogOEC(True, -1125)
-        elif not _tskErr.taskBadge.isDrivingXTask:
-            pass
-        else:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00036)
+        elif _tskErr.taskBadge.isDrivingXTask:
             _curEE = _tskErr._currentErrorEntry
             if _curEE is not None:
                 _bFatal = _curEE.isFatalError or _curEE.hasNoImpactDueToFrcLinkage
                 _tmp  = _XTaskErrorBase(_curEE.uniqueID, _bFatal, _bFatal and logif._IsFwDieModeEnabled(), _curEE.shortMessage, errCode_=None if _curEE.isAnonymousError else _curEE.errorCode)
+
                 res = XTaskError(xtaskError_=_tmp)
         return res
 
-    def __DisconnectXTaskMirror(self, xuDetachState_ : _EXTExecState, bDetachApiRequest_ =False):
+    def __DisconnectXTaskMirror(self, xtDetachState_ : _EXTExecState, bDetachApiRequest_ =False):
 
         if self.__isInvalid:
             return
         if self.__xtm is None:
             return
-        if not isinstance(xuDetachState_, _EXTExecState):
+        if not isinstance(xtDetachState_, _EXTExecState):
             return
 
-
-        self.__xtm._TaskStateUpdate(xuDetachState_, bDetach_=True)
+        self.__xtm._TaskStateUpdate(xtDetachState_, bDetach_=True)
 
         self.__xtm = None
-
 
     def __PreCheckTaskOperation(self, eTaskOpID_ : _EATaskOperationID) -> _ATaskOperationPreCheck:
 

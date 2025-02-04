@@ -195,8 +195,8 @@ class MainTask(MainXTask, UserAppControllerIF):
     # override of interface inherited from MainXTask
     # --------------------------------------------------------------------------
     @override
-    def RunXTask(self) -> ETernaryCallbackResultID:
-        xlogif.LogInfo(f'Starting run-phase of the main task {self.xtaskUniqueID}...')
+    def RunXTask(self, posArg_ : str, kwArg_='default keyword argument') -> ETernaryCallbackResultID:
+        xlogif.LogInfo(f'Starting run-phase of the main task {self.xtaskUniqueID} called with arguments below:\n\tpasArg_ : {posArg_}\n\tkwArg_  : {kwArg_}')
 
         self.__CreateUserAppModel(UserAppUtil.GetTimestamp())
 
@@ -261,7 +261,7 @@ class MainTask(MainXTask, UserAppControllerIF):
     def __GetMyTaskProfile(bAsync_ : bool) -> XTaskProfile:
         #NOTE:
         #  - The property 'XTaskProfile.runPhaseFrequencyMS' doesn't matter
-        #    as the run-phase of this main task is a single-cycle one.
+        #    as the run-phase of this main task is effectively a single-cycle one.
         #  - see: MainTask.RunXTask()
         #
 

@@ -7,11 +7,12 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum   import auto
 from enum   import IntEnum
 from enum   import unique
 from typing import Union as _PyUnion
+
+from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
 
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
@@ -26,11 +27,10 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _EMessageLabel
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _EMessageChannel
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _SubsysMsgUtil
 
-from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EDispFilterCtorErrorID(IntEnum):
@@ -70,19 +70,18 @@ class _EDispFilterCtorErrorID(IntEnum):
     def isCodingMismatchBroadcastDispatchFilter(self):
         return self == _EDispFilterCtorErrorID.eCodingMismatchBroadcastDispatchFilter
 
-
 class _DispatchFilter(_AbstractSlotsObject):
 
     __slots__ = [ '__clrID' , '__lblID' , '__sndID' , '__rcvID' , '__chlID' , '__typID' , '__bDefault' ]
 
     def __init__( self
-                , typeID_              : _EMessageType
-                , channelID_           : _EMessageChannel
-                , clusterID_             : _PyUnion[_EMessageCluster, IntEnum, int]
-                , labelID_             : _PyUnion[_EMessageLabel, IntEnum, int]
-                , senderID_            : _PyUnion[_EMessagePeer,  IntEnum, int]
-                , receiverID_          : _PyUnion[_EMessagePeer,  IntEnum, int]
-                , bDefaultFilter_        =False):
+                , typeID_         : _EMessageType
+                , channelID_      : _EMessageChannel
+                , clusterID_      : _PyUnion[_EMessageCluster, IntEnum, int]
+                , labelID_        : _PyUnion[_EMessageLabel, IntEnum, int]
+                , senderID_       : _PyUnion[_EMessagePeer,  IntEnum, int]
+                , receiverID_     : _PyUnion[_EMessagePeer,  IntEnum, int]
+                , bDefaultFilter_   =False):
         super().__init__()
 
         self.__typID    = None
@@ -127,9 +126,9 @@ class _DispatchFilter(_AbstractSlotsObject):
                 _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_DispatchFilter_TextID_007).format(_midPart, _err.value)
 
             if _bFatal:
-                logif._LogFatal(_myMsg)
+                logif._LogFatalEC(_EFwErrorCode.FE_00031, _myMsg)
             else:
-                logif._LogError(_myMsg)
+                logif._LogErrorEC(_EFwErrorCode.UE_00120, _myMsg)
             return
 
         self.__typID    = typeID_
@@ -160,12 +159,12 @@ class _DispatchFilter(_AbstractSlotsObject):
         return hash(hash(self.__typID)+hash(self.__clrID)+hash(self.__lblID)+hash(self.__sndID)+hash(self.__chlID)+hash(self.__rcvID)+hash(self.__bDefault))
 
     @staticmethod
-    def CreateDispatchFilter( typeID_              : _EMessageType                          =_EMessageType.eTIntraProcess
-                            , channelID_           : _EMessageChannel                       =_EMessageChannel.eChInterTask
-                            , clusterID_             : _PyUnion[_EMessageCluster, IntEnum, int] =_EMessageCluster.eCDontCare
-                            , labelID_             : _PyUnion[_EMessageLabel, IntEnum, int] =_EMessageLabel.eLDontCare
-                            , senderID_            : _PyUnion[_EMessagePeer,  IntEnum, int] =_EMessagePeer.ePDontCare
-                            , receiverID_          : _PyUnion[_EMessagePeer,  IntEnum, int] =_EMessagePeer.ePDontCare):
+    def CreateDispatchFilter( typeID_     : _EMessageType                            =_EMessageType.eTIntraProcess
+                            , channelID_  : _EMessageChannel                         =_EMessageChannel.eChInterTask
+                            , clusterID_  : _PyUnion[_EMessageCluster, IntEnum, int] =_EMessageCluster.eCDontCare
+                            , labelID_    : _PyUnion[_EMessageLabel, IntEnum, int]   =_EMessageLabel.eLDontCare
+                            , senderID_   : _PyUnion[_EMessagePeer,  IntEnum, int]   =_EMessagePeer.ePDontCare
+                            , receiverID_ : _PyUnion[_EMessagePeer,  IntEnum, int]   =_EMessagePeer.ePDontCare):
 
         res = _DispatchFilter(typeID_=typeID_, channelID_=channelID_, clusterID_=clusterID_, labelID_=labelID_, senderID_=senderID_, receiverID_=receiverID_, bDefaultFilter_=False)
         if not res.isValid:
@@ -281,12 +280,12 @@ class _DispatchFilter(_AbstractSlotsObject):
         return res
 
     @staticmethod
-    def _CreateDefaultDispatchFilter( typeID_              : _EMessageType                          =_EMessageType.eTIntraProcess
-                                    , channelID_           : _EMessageChannel                       =_EMessageChannel.eChInterTask
-                                    , clusterID_             : _PyUnion[_EMessageCluster, IntEnum, int] =_EMessageCluster.eCDontCare
-                                    , labelID_             : _PyUnion[_EMessageLabel, IntEnum, int] =_EMessageLabel.eLDontCare
-                                    , senderID_            : _PyUnion[_EMessagePeer,  IntEnum, int] =_EMessagePeer.ePDontCare
-                                    , receiverID_          : _PyUnion[_EMessagePeer,  IntEnum, int] =_EMessagePeer.ePDontCare):
+    def _CreateDefaultDispatchFilter( typeID_     : _EMessageType                            =_EMessageType.eTIntraProcess
+                                    , channelID_  : _EMessageChannel                         =_EMessageChannel.eChInterTask
+                                    , clusterID_  : _PyUnion[_EMessageCluster, IntEnum, int] =_EMessageCluster.eCDontCare
+                                    , labelID_    : _PyUnion[_EMessageLabel, IntEnum, int]   =_EMessageLabel.eLDontCare
+                                    , senderID_   : _PyUnion[_EMessagePeer,  IntEnum, int]   =_EMessagePeer.ePDontCare
+                                    , receiverID_ : _PyUnion[_EMessagePeer,  IntEnum, int]   =_EMessagePeer.ePDontCare):
         res = _DispatchFilter(typeID_=typeID_, channelID_=channelID_, clusterID_=clusterID_, labelID_=labelID_, senderID_=senderID_, receiverID_=receiverID_, bDefaultFilter_=True)
         if not res.isValid:
             res = None
@@ -294,10 +293,10 @@ class _DispatchFilter(_AbstractSlotsObject):
 
     def _ToString(self, *args_, **kwargs_):
         if len(args_) > 1:
-            vlogif._LogOEC(True, -1665)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00520)
 
         if len(kwargs_) > 0:
-            vlogif._LogOEC(True, -1666)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00521)
 
         _bValuesOnly = False
 
@@ -321,13 +320,13 @@ class _DispatchFilter(_AbstractSlotsObject):
         self.__bDefault = None
 
     @staticmethod
-    def __VerifyFilterParams( typeID_              : _EMessageType
-                            , channelID_           : _EMessageChannel
-                            , clusterID_             : _PyUnion[_EMessageCluster, IntEnum, int]
-                            , labelID_             : _PyUnion[_EMessageLabel, IntEnum, int]
-                            , senderID_            : _PyUnion[_EMessagePeer,  IntEnum, int]
-                            , receiverID_          : _PyUnion[_EMessagePeer,  IntEnum, int]
-                            , bDefaultFilter_        =False):
+    def __VerifyFilterParams( typeID_         : _EMessageType
+                            , channelID_      : _EMessageChannel
+                            , clusterID_      : _PyUnion[_EMessageCluster, IntEnum, int]
+                            , labelID_        : _PyUnion[_EMessageLabel, IntEnum, int]
+                            , senderID_       : _PyUnion[_EMessagePeer,  IntEnum, int]
+                            , receiverID_     : _PyUnion[_EMessagePeer,  IntEnum, int]
+                            , bDefaultFilter_   =False):
 
         _err       = _EDispFilterCtorErrorID.eNone
         _bParamsOK = True
@@ -335,18 +334,17 @@ class _DispatchFilter(_AbstractSlotsObject):
         if not (isinstance(typeID_, _EMessageType) and typeID_.isTIntraProcess):
             _bParamsOK = False
             _err = _EDispFilterCtorErrorID.eBadMsgType
-            vlogif._LogNotSupported(f'[DispFltr] eType: {typeID_}')
-
+            vlogif._LogNotSupportedEC(_EFwErrorCode.UE_00148, f'[DispFltr] eType: {typeID_}')
 
         elif not (isinstance(channelID_, _EMessageChannel) and (channelID_.isChInterTask or channelID_.isChIntraTask or channelID_.isChCustom)):
             _bParamsOK = False
             _err = _EDispFilterCtorErrorID.eBadMsgChannel
-            vlogif._LogNotSupported(f'[DispFltr] eChannel: {channelID_}')
+            vlogif._LogNotSupportedEC(_EFwErrorCode.UE_00149, f'[DispFltr] eChannel: {channelID_}')
 
         elif channelID_.isChIntraTask and receiverID_ != senderID_:
             _bParamsOK = False
             _err = _EDispFilterCtorErrorID.eBadInternalMsgFilter
-            vlogif._LogOEC(True, -1667)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00522)
 
         else:
             if _bParamsOK and not _SubsysMsgUtil.IsValidClusterID(clusterID_):                           _bParamsOK = False
@@ -357,9 +355,8 @@ class _DispatchFilter(_AbstractSlotsObject):
         if not _bParamsOK:
             if not _err.isError:
                 _err = _EDispFilterCtorErrorID.eInvalidParams
-            vlogif._LogOEC(True, -1668)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00523)
             return _err
-
 
         _bMsgPeerRcv = isinstance(receiverID_, _EMessagePeer)
 
@@ -367,7 +364,7 @@ class _DispatchFilter(_AbstractSlotsObject):
 
             if not _FwSubsystemCoding.IsNegativeDispatchFiltersEnabled():
                 _err = _EDispFilterCtorErrorID.eCodingMismatchBroadcastDispatchFilter
-                vlogif._LogOEC(False, -3035)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00039)
         elif bDefaultFilter_:
             _bIntRcv      = (not _bMsgPeerRcv) and isinstance(receiverID_, int)
             _bDontcareGrp = isinstance(clusterID_,  _EMessageCluster) and clusterID_.isCDontCare
@@ -376,6 +373,6 @@ class _DispatchFilter(_AbstractSlotsObject):
 
             if not (_bDontcareGrp and _bDontcareLbl and _bDontcareSnd and _bIntRcv):
                 _err = _EDispFilterCtorErrorID.eBadDefaultDispatchFilter
-                vlogif._LogOEC(False, -3036)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00040)
 
         return _err

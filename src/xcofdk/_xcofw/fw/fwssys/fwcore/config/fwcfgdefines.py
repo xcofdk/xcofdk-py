@@ -7,11 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntEnum
-
 
 @unique
 class _ESubSysID(_FwIntEnum):

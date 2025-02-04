@@ -111,6 +111,12 @@ def StartXcoFW(fwStartOptions_ : Union[list, str] =None) -> bool:
           terminal/console program of the platform, e.g. Windows, does not
           support colored output to stdout/stderr.
 
+        - '--enable-log-callstack'
+          enables/shows callstack of fatal errors (if any), defaults to False.
+
+        - '--suppress-start-preamble'
+          suppresses print output of framework's start preamble
+
     Note:
     ------
         For an introductory presentation of the RTE provided by the framework

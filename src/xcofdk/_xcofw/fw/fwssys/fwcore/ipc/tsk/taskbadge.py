@@ -7,23 +7,22 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.strutil      import _StrUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util         import _Util
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil  import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil  import _ETaskType
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil  import _ETaskRightFlag
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask     import _EBitMask
+from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask    import _EBitMask
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntFlag
 
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil import _TaskUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil import _ETaskType
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil import _ETaskRightFlag
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _TaskBadge(_AbstractSlotsObject):
 
@@ -68,7 +67,6 @@ class _TaskBadge(_AbstractSlotsObject):
         def AddInfoBitFlag(eInfoBitMask_ : _FwIntFlag, eInfoBitFlag_):
             return _EBitMask.AddEnumBitFlag(eInfoBitMask_, eInfoBitFlag_)
 
-
     __slots__ = [
         '__eTskType' , '__eInfoBM' , '__taskID' , '__trMask' , '__taskName' , '__threadNID' , '__threadUID'
     ]
@@ -99,11 +97,11 @@ class _TaskBadge(_AbstractSlotsObject):
         if cloneBy_ is not None:
             if not isinstance(cloneBy_, _TaskBadge):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1316)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00250)
                 return
             if cloneBy_.taskID is None:
                 self.CleanUp()
-                vlogif._LogOEC(True, -1317)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00251)
                 return
 
             self.__taskID    = cloneBy_.__taskID
@@ -128,15 +126,15 @@ class _TaskBadge(_AbstractSlotsObject):
             if threadNID_ is None:
                 if _TaskUtil.IsNativeThreadIdSupported():
                     _bError = True
-                    vlogif._LogOEC(True, -1318)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00252)
             elif not _Util.IsInstance(threadNID_, int, bThrowx_=True):
                 _bError = True
         elif bEnclosingStartupThrd_ or bAutoEnclosedPyThrd_:
             _bError = True
-            vlogif._LogOEC(True, -1319)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00253)
         elif (bExtQueueSupport_ or bIntQueueSupport_) and not taskType_.isFwTask:
             _bError = True
-            vlogif._LogOEC(True, -1320)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00254)
 
         if _bError:
             self.CleanUp()

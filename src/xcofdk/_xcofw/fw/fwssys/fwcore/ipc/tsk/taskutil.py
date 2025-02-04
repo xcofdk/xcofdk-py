@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
 
 import threading
@@ -28,6 +27,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask     import _EBitMask
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _Limits
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 @unique
 class _ETaskType(_FwIntEnum):
@@ -76,7 +76,6 @@ class _ETaskType(_FwIntEnum):
     def isMainXTaskTask(self):
         return self == _ETaskType.eMainXTaskTask
 
-
 @unique
 class _ETaskResourceFlag(IntFlag):
     eNone  = _EBitMask.eNone.value
@@ -96,7 +95,6 @@ class _ETaskResourceFlag(IntFlag):
         if enableTimer_:
             res = _ETaskResourceFlag.AddResourceFlag(res, _ETaskResourceFlag.eTimer)
         return res
-
 
 @unique
 class _ETaskRightFlag(IntFlag):
@@ -126,21 +124,21 @@ class _ETaskRightFlag(IntFlag):
     @staticmethod
     def AddUserTaskRightFlag(trMask_ : IntFlag, trFlags_):
         if _ETaskRightFlag.IsTaskRightFlagSet(trMask_, _ETaskRightFlag.eFwTask):
-            vlogif._LogOEC(True, -1446)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00314)
             return None
         return _EBitMask.AddEnumBitFlag(trMask_, trFlags_)
 
     @staticmethod
     def AddXTaskTaskRight(trMask_ : IntFlag):
         if not _ETaskRightFlag.IsValidTaskRightMask(trMask_):
-            vlogif._LogOEC(True, -1447)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00315)
             return None
         return _EBitMask.AddEnumBitFlag(trMask_, _ETaskRightFlag.eXTaskTask)
 
     @staticmethod
     def AddUnitTestTaskRight(trMask_ : IntFlag):
         if not _ETaskRightFlag.IsValidTaskRightMask(trMask_):
-            vlogif._LogOEC(True, -1448)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00316)
             return None
         return _EBitMask.AddEnumBitFlag(trMask_, _ETaskRightFlag.eUTTask)
 
@@ -236,9 +234,9 @@ class _ETaskRightFlag(IntFlag):
             res &= ~_ee.value
         return _ETaskRightFlag(res)
 
-
 @unique
 class _ETaskExecutionPhaseID(_FwIntEnum):
+
     eNone = 0
     eDummyRunningAutoEnclosedThread         = 11
     eRunningNonDrivingExecutableSyncThread  = 12
@@ -274,10 +272,35 @@ class _ETaskExecutionPhaseID(_FwIntEnum):
     def isXTaskExecution(self):
         return self.value >= _ETaskExecutionPhaseID.eXTaskSetup.value
 
-    @property
-    def isNonDrivingExecutableThreadExecution(self):
-        return (self.value >= _ETaskExecutionPhaseID.eDummyRunningAutoEnclosedThread.value) and (self.value <= _ETaskExecutionPhaseID.eRunningNonDrivingExecutableASyncThread.value)
+@unique
+class _ETaskApiContextID(_FwIntEnum):
 
+    eDontCare     = _ETaskExecutionPhaseID.eNone.value
+    eSetup        = _ETaskExecutionPhaseID.eXTaskSetup.value
+    eTeardown     = _ETaskExecutionPhaseID.eXTaskTeardown.value
+    eRun          = _ETaskExecutionPhaseID.eXTaskRun.value
+    eProcIntQueue = _ETaskExecutionPhaseID.eXTaskProcIntMsg.value
+    eProcExtQueue = _ETaskExecutionPhaseID.eXTaskProcExtMsg.value
+
+    @property
+    def isDontCare(self):
+        return self == _ETaskApiContextID.eDontCare
+
+    @property
+    def isSetup(self):
+        return self == _ETaskApiContextID.eSetup
+
+    @property
+    def isRun(self):
+        return self == _ETaskApiContextID.eRun
+
+    @property
+    def isTeardown(self):
+        return self == _ETaskApiContextID.eTeardown
+
+    @property
+    def isProcessingQueue(self):
+        return self.value > _ETaskApiContextID.eRun.value
 
 @unique
 class _EProcessingFeasibilityID(_FwIntEnum):
@@ -316,7 +339,6 @@ class _EProcessingFeasibilityID(_FwIntEnum):
     @property
     def isOwnLcCompFailureSet(self):
         return self == _EProcessingFeasibilityID.eOwnLcCompFailureSet
-
 
 @unique
 class _EFwApiBookmarkID(_FwIntEnum):
@@ -375,7 +397,6 @@ class _EFwApiBookmarkID(_FwIntEnum):
     def isXTaskApiBeginActionJoin(self):
         return self == _EFwApiBookmarkID.eXTaskApiBeginActionJoin
 
-
 class _TaskIDDefines:
     _STARTUP_THREAD_ID             = 1001
     _TASK_ID_RANGE_SIZE            = 100000
@@ -392,8 +413,6 @@ class _TaskIDDefines:
     def GetStartupThreadID():
         return _TaskIDDefines._STARTUP_THREAD_ID
 
-
-
 class _StartupThread:
     __singleton    = None
     __updateFrozen = False
@@ -407,7 +426,7 @@ class _StartupThread:
         self.__tid    = None
         self.__pythrd = None
         if _StartupThread.__singleton is not None:
-            vlogif._LogOEC(True, -1449)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00317)
         else:
             if taskID_ is None:
                 taskID_ = _TaskIDDefines.GetStartupThreadID()
@@ -463,9 +482,9 @@ class _StartupThread:
 
     def _Update(self, taskID_ : int =None, freezeUpdate_ =True):
         if self.__pythrd is None:
-            vlogif._LogOEC(True, -1450)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00318)
         elif _StartupThread.__updateFrozen and (freezeUpdate_ is not None):
-            vlogif._LogOEC(True, -1451)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00319)
         else:
             _StartupThread.__updateFrozen = False if freezeUpdate_ is None else freezeUpdate_
 
@@ -473,47 +492,47 @@ class _StartupThread:
             if taskID_ is not None:
                 self.__tid = taskID_
 
-
 class _AutoEnclosedThreadsBag:
     __theBag    = None
     __theApiLck = None
 
     @staticmethod
     def IsProcessingCurPyThread(curPyThrd_ =None):
-        res = False
         if _AutoEnclosedThreadsBag.__theApiLck is None:
-            pass
-        else:
-            with _AutoEnclosedThreadsBag.__theApiLck:
-                if _AutoEnclosedThreadsBag.__theBag is not None:
-                    if curPyThrd_ is None:
-                        curPyThrd_ = threading.current_thread()
-                    res = curPyThrd_ in _AutoEnclosedThreadsBag.__theBag
+            return False
+
+        res = False
+        with _AutoEnclosedThreadsBag.__theApiLck:
+            if _AutoEnclosedThreadsBag.__theBag is not None:
+                if curPyThrd_ is None:
+                    curPyThrd_ = threading.current_thread()
+                res = curPyThrd_ in _AutoEnclosedThreadsBag.__theBag
         return res
 
     @staticmethod
     def _AddPyThread(pythrd_ : _PyThread):
         if _AutoEnclosedThreadsBag.__theApiLck is None:
-            pass
-        else:
-            with _AutoEnclosedThreadsBag.__theApiLck:
-                if _AutoEnclosedThreadsBag.__theBag is None:
-                    _AutoEnclosedThreadsBag.__theBag = []
-                if pythrd_ not in _AutoEnclosedThreadsBag.__theBag:
-                    _AutoEnclosedThreadsBag.__theBag.append(pythrd_)
+            return
+
+        with _AutoEnclosedThreadsBag.__theApiLck:
+            if _AutoEnclosedThreadsBag.__theBag is None:
+                _AutoEnclosedThreadsBag.__theBag = []
+            if pythrd_ not in _AutoEnclosedThreadsBag.__theBag:
+                _AutoEnclosedThreadsBag.__theBag.append(pythrd_)
 
     @staticmethod
     def _RemovePyThread(pythrd_ : _PyThread):
         if _AutoEnclosedThreadsBag.__theApiLck is None:
-            pass
-        else:
-            with _AutoEnclosedThreadsBag.__theApiLck:
-                if _AutoEnclosedThreadsBag.__theBag is None:
-                    pass
-                elif pythrd_ in _AutoEnclosedThreadsBag.__theBag:
-                    _AutoEnclosedThreadsBag.__theBag.remove(pythrd_)
-                    if len(_AutoEnclosedThreadsBag.__theBag) == 0:
-                        _AutoEnclosedThreadsBag.__theBag = None
+            return
+
+        with _AutoEnclosedThreadsBag.__theApiLck:
+            if _AutoEnclosedThreadsBag.__theBag is None:
+                return
+
+            if pythrd_ in _AutoEnclosedThreadsBag.__theBag:
+                _AutoEnclosedThreadsBag.__theBag.remove(pythrd_)
+                if len(_AutoEnclosedThreadsBag.__theBag) == 0:
+                    _AutoEnclosedThreadsBag.__theBag = None
 
     @staticmethod
     def _SetUp(set_):
@@ -521,7 +540,6 @@ class _AutoEnclosedThreadsBag:
             _AutoEnclosedThreadsBag.__theBag.clear()
             _AutoEnclosedThreadsBag.__theBag = None
         _AutoEnclosedThreadsBag.__theApiLck = None if not set_ else _PyRLock()
-
 
 class _TaskUtil:
 
@@ -534,7 +552,6 @@ class _TaskUtil:
     def IsNativeThreadIdSupported():
         if _TaskIDDefines._NATIVE_THREAD_ID_SUPPORT_EVAL == -1:
             _verstr = _SystemInfo._GetPythonVer()
-
             _TaskIDDefines._NATIVE_THREAD_ID_SUPPORT_EVAL = 0
             if _SystemInfo._IsPythonVersionCompatible(3, 8):
                 _TaskIDDefines._NATIVE_THREAD_ID_SUPPORT_EVAL = 1
@@ -548,13 +565,13 @@ class _TaskUtil:
 
     @staticmethod
     def IsStartupThread(pythread_ : _PyThread):
-        res, uid = False, _TaskUtil.GetPyThreadUniqueID(pythread_)
-        if uid is None:
+        res, _uid = False, _TaskUtil.GetPyThreadUniqueID(pythread_)
+        if _uid is None:
             pass
         elif _StartupThread.GetInstance() is None:
             pass
         else:
-            res = uid == _StartupThread.GetInstance().uniqueID
+            res = _uid == _StartupThread.GetInstance().uniqueID
         return res
 
     @staticmethod
@@ -630,7 +647,7 @@ class _TaskUtil:
         _tt = None
         if not isinstance(timeout_, _Timeout):
             if not isinstance(timeout_, float):
-                vlogif._LogOEC(False, -3022)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00029)
                 return
 
             _tt = _Timeout.CreateTimeoutSec(timeout_)
@@ -644,12 +661,11 @@ class _TaskUtil:
     def SleepMS(timeSpanMS_ : int):
         _tt = _Timeout.CreateTimeoutMS(timeSpanMS_)
         if not _Timeout.IsFiniteTimeout(_tt, bThrowx_=True):
-            pass
-        else:
-            _tts = _tt.toSec
-            _tt.CleanUp()
-            _PySleep(_tts)
+            return
 
+        _tts = _tt.toSec
+        _tt.CleanUp()
+        _PySleep(_tts)
 
     @staticmethod
     def _SetUp(set_ =False):

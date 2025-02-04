@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum    import auto
 from enum    import unique
 from enum    import IntEnum
@@ -19,9 +18,10 @@ from inspect import Signature  as _PySignature
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EPredefinedCallableID(IntEnum):
@@ -63,7 +63,6 @@ class _EPredefinedCallableID(IntEnum):
     @property
     def isXProcessTarget(self):
         return self == _EPredefinedCallableID.eXProcessTgt
-
 
 class _CallableSignature(_PySignature):
 
@@ -156,9 +155,7 @@ class _CallableSignature(_PySignature):
         res = None
 
         _params = self.parameters
-        if (idx_ < 0) or (idx_ >= len(_params)):
-            pass
-        else:
+        if not ((idx_ < 0) or (idx_ >= len(_params))):
             _ii = 0
             for _vv in _params.values():
                 if _ii == idx_:
@@ -181,9 +178,7 @@ class _CallableSignature(_PySignature):
             res = False
 
         else:
-            if self.callableID.isSetupExecutable or self.callableID.isRunExecutable or self.callableID.isXProcessTarget:
-                pass
-            else:
+            if not (self.callableID.isSetupExecutable or self.callableID.isRunExecutable or self.callableID.isXProcessTarget):
                 _bCHECK_FOR_POSITIONAL_REQ_PARAMS = False
 
                 if _bCHECK_FOR_POSITIONAL_REQ_PARAMS:
@@ -235,4 +230,4 @@ class _CallableSignature(_PySignature):
                 _callbackType = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_CallableSignature_TextID_008)
 
             _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_CallableSignature_TextID_014).format(_callbackType, _context, str(callable_), _expectedSig)
-        logif._LogError(_myMsg)
+        logif._LogErrorEC(_EFwErrorCode.UE_00034, _myMsg)

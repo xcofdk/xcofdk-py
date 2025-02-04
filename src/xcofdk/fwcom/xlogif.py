@@ -174,7 +174,8 @@ def LogErrorEC(xlogMsg_ : str, xlogErrorCode_ : int =None):
         - xlogMsg_ :
           user error message to be submitted.
         - xlogErrorCode_ :
-          error code of the user error message to be submitted.
+          positive integer value as error code of the user error message to be
+          submitted.
 
     Note:
     ------
@@ -214,7 +215,8 @@ def LogFatalEC(xlogMsg_ : str, xlogErrorCode_ : int =None):
         - xlogMsg_ :
           fatal error message to be submitted.
         - xlogErrorCode_ :
-          error code of the fatal error message to be submitted.
+          positive integer value as error code of the fatal error message to be
+          submitted.
 
     Note:
     ------
@@ -258,7 +260,8 @@ def LogExceptionEC(xlogMsg_ : str, xlogXcp_ : Exception, xlogErrorCode_ : int):
         - xlogXcp_ :
           caught exception object
         - xlogErrorCode_ :
-          error code of the fatal error message to be submitted.
+          positive integer value as error code of the fatal error message to be
+          submitted.
 
     Note:
     ------

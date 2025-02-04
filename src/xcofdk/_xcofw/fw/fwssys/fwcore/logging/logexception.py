@@ -7,8 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines   import _ELogType
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry   import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _EXcoXcpType
@@ -18,7 +16,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _CommonDefines
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _LogException(_XcoException):
 
@@ -122,13 +119,9 @@ class _LogException(_XcoException):
     @classmethod
     def _CloneBase(cls_, self_):
         res = None
-        if self_._enclosedFatalEntry is None:
-            pass
-        else:
+        if self_._enclosedFatalEntry is not None:
             _cfe = self_._enclosedFatalEntry._Clone(calledByLogException_=True)
-            if _cfe is None:
-                pass
-            else:
+            if _cfe is not None:
                 if self_.isNestedErrorException:
                     nestedXcp = self_._nestedLogException.Clone()
                     res = cls_(_cfe, nestedXcp)
@@ -221,7 +214,6 @@ class _LogException(_XcoException):
             self.__enclFE = None
         super()._CleanUp()
 
-
 class _LogExceptionFatal(_LogException):
     def __init__( self, errCode_ : int =None, taskName_ : str =None, taskID_ : int =None
                 , shortMsg_ : str =None, longMsg_ : str =None, callstackLevelOffset_ =None, euRNum_ =None, initByFE_ =None, bFwApiLog_ =False):
@@ -233,7 +225,6 @@ class _LogExceptionFatal(_LogException):
     def _Clone(self):
         res = _LogExceptionFatal._CloneBase(self)
         return res
-
 
 class _LogExceptionBadUse(_LogException):
     def __init__( self, errCode_ : int =None, taskName_ : str =None, taskID_ : int =None
@@ -247,7 +238,6 @@ class _LogExceptionBadUse(_LogException):
         res = _LogExceptionBadUse._CloneBase(self)
         return res
 
-
 class _LogExceptionImplError(_LogException):
     def __init__( self, errCode_ : int =None, taskName_ : str =None, taskID_ : int =None
                 , shortMsg_ : str =None, longMsg_ : str =None, callstackLevelOffset_ =None, euRNum_ =None, initByFE_ =None, bFwApiLog_ =False):
@@ -259,7 +249,6 @@ class _LogExceptionImplError(_LogException):
     def _Clone(self):
         res = _LogExceptionImplError._CloneBase(self)
         return res
-
 
 class _LogExceptionNotImplemented(_LogException):
     def __init__( self, errCode_ : int =None, taskName_ : str =None, taskID_ : int =None
@@ -273,7 +262,6 @@ class _LogExceptionNotImplemented(_LogException):
         res = _LogExceptionNotImplemented._CloneBase(self)
         return res
 
-
 class _LogExceptionSystemOpERR(_LogException):
     def __init__( self, errCode_ : int =None, taskName_ : str =None, taskID_ : int =None
                 , shortMsg_ : str =None, longMsg_ : str =None, callstackLevelOffset_ =None, euRNum_ =None, initByFE_ =None, bFwApiLog_ =False):
@@ -285,7 +273,6 @@ class _LogExceptionSystemOpERR(_LogException):
     def _Clone(self):
         res = _LogExceptionSystemOpERR._CloneBase(self)
         return res
-
 
 class _LogExceptionSystemOpXCP(_LogException):
     def __init__( self, sysOpXcp_ : BaseException, xcpTraceback_ : str, errCode_ : int =None
@@ -304,7 +291,6 @@ class _LogExceptionSystemOpXCP(_LogException):
     def _Clone(self):
         res = _LogExceptionSystemOpXCP._CloneBase(self)
         return res
-
 
 class _LogExceptionNestedError(_LogException):
 

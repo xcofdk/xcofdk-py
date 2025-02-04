@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import traceback
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
@@ -18,6 +17,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging.errorentry import _ErrorEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _FatalEntry(_ErrorEntry):
 
@@ -36,12 +36,12 @@ class _FatalEntry(_ErrorEntry):
 
         if cloneby_ is not None:
             if not (isinstance(cloneby_, _FatalEntry) and cloneby_.isValid):
-                vlogif._LogOEC(True, -1082)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00431)
                 super().__init__(None, doSkipSetup_=True)
                 return
         elif eXcpLogType_._absoluteValue == _ELogType.FTL_SYS_OP_XCP.value:
             if xcoBaseXcp_ is None:
-                vlogif._LogOEC(True, -1083)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00432)
                 super().__init__(None, doSkipSetup_=True)
                 return
 
@@ -56,7 +56,6 @@ class _FatalEntry(_ErrorEntry):
             if self.__xcoBaseXcp is not None:
                 self.__xcoBaseXcp.CleanUp()
                 self.__xcoBaseXcp = None
-
 
             self.__callstack = cloneby_.__callstack
 
@@ -135,7 +134,6 @@ class _FatalEntry(_ErrorEntry):
                 if _errImp is not None:
                     if _errImp != _EErrorImpact.eNoImpactBySharedCleanup:
                         self._UpdateErrorImpact(_EErrorImpact.eNoImpactBySharedCleanup)
-
             else:
                 super()._CleanUp()
                 if self.__xcoBaseXcp is not None:

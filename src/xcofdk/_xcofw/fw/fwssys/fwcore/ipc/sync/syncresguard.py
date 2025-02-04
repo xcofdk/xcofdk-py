@@ -7,13 +7,12 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from threading import RLock as _PyRLock
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging       import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AbstractSlotsObject
 
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _SyncResourcesGuard(_AbstractSlotsObject):
 
@@ -49,9 +48,7 @@ class _SyncResourcesGuard(_AbstractSlotsObject):
             return None
 
         def _CleanUp(self):
-            if self.taskID is None:
-                pass
-            else:
+            if self.taskID is not None:
                 self.__taskID   = None
                 self.__numLocks = None
 
@@ -103,11 +100,11 @@ class _SyncResourcesGuard(_AbstractSlotsObject):
                     _te = _SyncResourcesGuard._TaskEntry(taskID_, True)
                     self.__tasks.append(_te)
             else:
-                lstTE = [ _te for _te in self.__tasks if _te.taskID == taskID_ ]
-                _LGHT = len(lstTE)
+                _lstTE = [ _te for _te in self.__tasks if _te.taskID == taskID_ ]
+                _LGHT = len(_lstTE)
                 if _LGHT > 1:
-                    vlogif._LogOEC(True, -1241)
-                _te = None if _LGHT == 0 else lstTE[0]
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00174)
+                _te = None if _LGHT == 0 else _lstTE[0]
                 if _te is None:
                     if not adding_:
                         _te = self.__tasks[0]
@@ -130,9 +127,7 @@ class _SyncResourcesGuard(_AbstractSlotsObject):
             return None
 
         def _CleanUp(self):
-            if self.__sres is None:
-                pass
-            else:
+            if self.__sres is not None:
                 for _te in self.__tasks:
                     _te.CleanUp()
                 self.__tasks.clear()
@@ -150,7 +145,7 @@ class _SyncResourcesGuard(_AbstractSlotsObject):
         super().__init__()
 
         if _SyncResourcesGuard.__singleton is not None:
-            vlogif._LogOEC(True, -1242)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00175)
             self.CleanUp()
         else:
             self.__rlock  = _PyRLock()
@@ -173,26 +168,26 @@ class _SyncResourcesGuard(_AbstractSlotsObject):
             return
 
         self.__rlock.acquire()
-        tbr = []
-        for re in self.__allRes:
-            if not re.sres._isValid:
+        _lstTbr = []
+        for _re in self.__allRes:
+            if not _re.sres._isValid:
                 continue
 
-            lstTE = [_te for _te in re.tasks if _te.taskID==taskID_]
-            _LGHT = len(lstTE)
+            _lstTE = [_te for _te in _re.tasks if _te.taskID==taskID_]
+            _LGHT = len(_lstTE)
             if _LGHT > 1:
-                vlogif._LogOEC(True, -1243)
-            _te = None if _LGHT==0 else lstTE[0]
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00176)
+            _te = None if _LGHT==0 else _lstTE[0]
             if _te is not None:
-                numRel = re.sres._TryRelease(maxTryNum_=_te.numLocks)
-                re.DecNumLocks(_te.numLocks)
-                re.tasks.remove(_te)
+                numRel = _re.sres._TryRelease(maxTryNum_=_te.numLocks)
+                _re.DecNumLocks(_te.numLocks)
+                _re.tasks.remove(_te)
                 _te.CleanUp()
-            if re.numTasks <= 0:
-                tbr.append(re)
-        for re in tbr:
-            self.__allRes.remove(re)
-            re.CleanUp()
+            if _re.numTasks <= 0:
+                _lstTbr.append(_re)
+        for _re in _lstTbr:
+            self.__allRes.remove(_re)
+            _re.CleanUp()
         self.__rlock.release()
 
     @staticmethod
@@ -227,39 +222,39 @@ class _SyncResourcesGuard(_AbstractSlotsObject):
 
         self.__rlock.acquire()
 
-        teAd = None
-        lstRes = [ re for re in self.__allRes if id(re.sres) == id(sres_) ]
-        if len(lstRes) > 1:
-            vlogif._LogOEC(True, -1244)
-        re = None if len(lstRes) == 0 else lstRes[0]
-        if re is None:
+        _teAd = None
+        _lstRes = [ _re for _re in self.__allRes if id(_re.sres) == id(sres_) ]
+        if len(_lstRes) > 1:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00177)
+        _re = None if len(_lstRes) == 0 else _lstRes[0]
+        if _re is None:
             if not adding_:
                 pass
             else:
-                re = _SyncResourcesGuard._SResEntry(sres_)
-                self.__allRes.append(re)
-        if re is None:
+                _re = _SyncResourcesGuard._SResEntry(sres_)
+                self.__allRes.append(_re)
+        if _re is None:
             pass
         else:
-            _te = re.UpdateTask(taskID_, adding_)
+            _te = _re.UpdateTask(taskID_, adding_)
             if (syncPeer_ is not None) and adding_:
-                teAd = _te
-            if re.numTasks <= 0:
-                self.__allRes.remove(re)
-                re.CleanUp()
+                _teAd = _te
+            if _re.numTasks <= 0:
+                self.__allRes.remove(_re)
+                _re.CleanUp()
 
-        if teAd is None:
+        if _teAd is None:
             pass
         else:
-            lstRes = [re for re in self.__allRes if id(re.sres)==id(syncPeer_)]
-            if len(lstRes) > 1:
-                vlogif._LogOEC(True, -1245)
+            _lstRes = [_re for _re in self.__allRes if id(_re.sres)==id(syncPeer_)]
+            if len(_lstRes) > 1:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00178)
 
-            pr = None if len(lstRes)==0 else lstRes[0]
+            _pr = None if len(_lstRes)==0 else _lstRes[0]
 
-            if pr is None:
+            if _pr is None:
                 pass
             else:
-                pr.UpdateTask(taskID_, True)
+                _pt = _pr.UpdateTask(taskID_, True)
 
         self.__rlock.release()

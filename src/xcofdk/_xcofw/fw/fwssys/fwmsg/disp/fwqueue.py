@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from collections import deque as _PyDeque
 from enum        import IntFlag
 from enum        import unique
@@ -24,10 +23,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObje
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask     import _EBitMask
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _FwQueue(_AbstractSlotsObject):
 
@@ -48,7 +47,6 @@ class _FwQueue(_AbstractSlotsObject):
         @staticmethod
         def RemoveQOptionFlag(qoptMask_, qoptFlags_):
             return _EBitMask.RemoveEnumBitFlag(qoptMask_, qoptFlags_)
-
 
     @unique
     class EQState(IntFlag):
@@ -93,7 +91,6 @@ class _FwQueue(_AbstractSlotsObject):
         def RemoveQState(qsMask_, qsFlags_):
             return _EBitMask.RemoveEnumBitFlag(qsMask_, qsFlags_)
 
-
     class __InvalidQueueEntry:
         def __init__(self):
             pass
@@ -130,7 +127,6 @@ class _FwQueue(_AbstractSlotsObject):
         else:
             if maxSize_ is None:
                 maxSize_ = _FwQueue.GetFiniteQueueMinSize()
-
             if _FwQueue.EQOption.IsQOptionFlagSet(_optMask, _FwQueue.EQOption.eBlockOnQueueSize):
                 if _FwQueue.EQOption.IsQOptionFlagSet(_optMask, _FwQueue.EQOption.eExceptionOnQueueSize):
                     _optMask = _FwQueue.EQOption.RemoveQOptionFlag(_optMask, _FwQueue.EQOption.eExceptionOnQueueSize)
@@ -142,12 +138,12 @@ class _FwQueue(_AbstractSlotsObject):
             self.CleanUp()
             return
         if maxSize_ == 1:
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_005))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00454, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_005))
             self.CleanUp()
             return
         if _optMask != _FwQueue.EQOption.eNone:
             if maxSize_ == 0:
-                logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_006))
+                logif._LogBadUseEC(_EFwErrorCode.FE_00455, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_006))
                 self.CleanUp()
                 return
 
@@ -162,7 +158,6 @@ class _FwQueue(_AbstractSlotsObject):
 
         if _FwQueue.EQOption.IsQOptionFlagSet(self.__optMask, _FwQueue.EQOption.eBlockOnQueueSize):
             _FwQueue.EQState.AddQState(self.__qstMask, _FwQueue.EQState.eEmpty)
-
         self.__semSize = _BinarySemaphore()
 
     @staticmethod
@@ -205,7 +200,6 @@ class _FwQueue(_AbstractSlotsObject):
     @property
     def isFull(self):
         return (self.__maxSize != 0) and (self.qsize == self.__maxSize)
-
 
     @property
     def isBlockingOnQueueSize(self) -> bool:
@@ -254,11 +248,10 @@ class _FwQueue(_AbstractSlotsObject):
     def PopNowait(self):
         return self.__Pop(False)
 
-
     def PopBlockingQueue(self, sleepTimeMS_ =None):
 
         if not self.isBlockingOnQueueSize:
-            vlogif._LogOEC(True, -1664)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00529)
             return None
         res = self.__Pop(False)
         if res is None:
@@ -289,17 +282,15 @@ class _FwQueue(_AbstractSlotsObject):
         self.__maxSize = None
 
     def _ToString(self, *args_, **kwargs_):
-        res = _CommonDefines._STR_EMPTY
-        return res
+        return _CommonDefines._STR_EMPTY
 
     def __Push(self, elem_, bBlock_ : bool, timeout_ =None):
 
         if bBlock_:
             if timeout_ is not None:
                 if not _Timeout.IsFiniteTimeout(timeout_):
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_001).format(str(timeout_)))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00132, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_001).format(str(timeout_)))
                     return False
-
         with self.__mtxData:
             if _FwQueue.EQState.IsBlockingState(self.__qstMask):
                 if _FwQueue.EQState.IsBlockingDtorState(self.__qstMask):
@@ -385,13 +376,11 @@ class _FwQueue(_AbstractSlotsObject):
 
     def __Pop(self, bBlock_ : bool, timeout_ =None):
 
-
         if bBlock_:
             if timeout_ is not None:
                 if not _Timeout.IsFiniteTimeout(timeout_):
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_002).format(str(timeout_)))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00133, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TextID_002).format(str(timeout_)))
                     return None
-
         with self.__mtxData:
             if _FwQueue.EQState.IsBlockingState(self.__qstMask):
                 if _FwQueue.EQState.IsBlockingDtorState(self.__qstMask):

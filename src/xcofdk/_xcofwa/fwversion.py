@@ -7,10 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 class _FwVersion:
 
-    __VERSION_INFO_MIT = (2, 0, 1, None, None)
+    __VERSION_INFO_MIT = (2, 1, None, None, None)
 
     @staticmethod
     def _GetVersionInfo(bShort_ =False, bSkipPrefix_ =False) -> str:
@@ -32,3 +31,4 @@ class _FwVersion:
             if _stageSeqNum is not None:
                 res += f'{_stageSeqNum}'
         return res
+

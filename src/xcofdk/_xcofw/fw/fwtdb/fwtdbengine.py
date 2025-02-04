@@ -3,10 +3,9 @@
 # ------------------------------------------------------------------------------
 # File   : fwtdbengine.py
 #
-# Copyright(c) 2023 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
-
 
 import os.path
 import time
@@ -18,13 +17,12 @@ from xcofdk._xcofw.fw.fwtdb.fwtextid import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtextdb import _FwTextDB
 from xcofdk._xcofw.fw.fwtdb.fwtextdb import _ETextDBCreateStatus
 
-
 class _FwTDbEngine:
     __slots__ = []
 
-    __txtDB      = None
+    __txtDB        = None
     __bPkgDist   = True
-    __bLiveCheck = True
+    __bLiveCheck   = True
 
     __PDRDN   = None
     __PDRDPN  = None

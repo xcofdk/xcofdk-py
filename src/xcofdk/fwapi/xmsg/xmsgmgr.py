@@ -464,4 +464,7 @@ class XMessageManager:
             - XMessageManager.SendMessage()
         """
         return _XMsgMgrImpl._BroadcastXMsg(msgLabelID_, msgClusterID_,payload_=msgPayload_)
+    # ------------------------------------------------------------------------------
+    #END API - Messaging
+    # ------------------------------------------------------------------------------
 ##END class XMessageManager

@@ -7,16 +7,16 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                            import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _ESubSysID
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwSSysConfigBase
+from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines                       import _ELcScope
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject                     import _ProtectedAbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes                  import _FwIntEnum
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines                       import _ELcScope
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _LcSSysDeputy(_ProtectedAbstractSlotsObject):
 
@@ -47,7 +47,6 @@ class _LcSSysDeputy(_ProtectedAbstractSlotsObject):
         @property
         def isSSysDFailed(self):
             return self == _LcSSysDeputy._ELcSSysDeputyState.eSSysDFailed
-
 
     @unique
     class _EDDeputyCmd(_FwIntEnum):
@@ -82,10 +81,10 @@ class _LcSSysDeputy(_ProtectedAbstractSlotsObject):
         super().__init__(ppass_)
 
         if not isinstance(eSSysID_, _ESubSysID):
-            vlogif._LogOEC(True, -1559)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00405)
             self.CleanUpByOwnerRequest(ppass_)
         if not (isinstance(highestScope_, _ELcScope) and (highestScope_!=_ELcScope.eIdle)):
-            vlogif._LogOEC(True, -1560)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00406)
             self.CleanUpByOwnerRequest(ppass_)
         else:
             self.__eState       = _LcSSysDeputy._ELcSSysDeputyState.eIdle
@@ -177,7 +176,7 @@ class _LcSSysDeputy(_ProtectedAbstractSlotsObject):
     def __DetermineDeputyCmd(self, tgtScope_: _ELcScope, srcScope_: _ELcScope, bForceReinject_ =False, bFinalize_ =False) -> _EDDeputyCmd:
 
         if not (isinstance(srcScope_, _ELcScope) and isinstance(tgtScope_, _ELcScope)):
-            vlogif._LogOEC(True, -1561)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00407)
             return None
 
         res = _LcSSysDeputy._EDDeputyCmd.eDontCare
@@ -191,5 +190,4 @@ class _LcSSysDeputy(_ProtectedAbstractSlotsObject):
             res = _LcSSysDeputy._EDDeputyCmd.eInject
         elif not self.isDeputyIdle:
             res = _LcSSysDeputy._EDDeputyCmd.eDeInject
-
         return res

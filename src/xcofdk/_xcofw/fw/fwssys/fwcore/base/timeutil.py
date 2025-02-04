@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import sys
 import time
 from datetime import datetime  as _PyDateTime
@@ -18,10 +17,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.base.util         import _Util
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes      import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _TimeUtil:
     SEC_PER_HOUR   = 60*60
@@ -34,7 +33,6 @@ class _TimeUtil:
     TICKS_PER_MSECOND = 10**6
     TICKS_PER_USECOND = 10**3
     TICKS_PER_NSECOND = 1
-
 
     @staticmethod
     def GetCurTicksMS():
@@ -86,6 +84,7 @@ class _TimeUtil:
 
     @staticmethod
     def GetFromIsoFormat(isoFormat_ : str ) -> _PyDateTime:
+
         if not (isinstance(isoFormat_, str) and len(isoFormat_)):
             return None
         return _PyDateTime.fromisoformat(isoFormat_)
@@ -120,7 +119,6 @@ class _TimeUtil:
         res = hash(str(res)+str(_TimeUtil.GetCurTicksNS())+str(_TimeUtil.GetCurTicksSEC()))
         return res
 
-
 class _TimeAlert:
     def __init__(self, alertTimespanNS_):
         _Util.IsInstance(alertTimespanNS_, int)
@@ -141,7 +139,6 @@ class _TimeAlert:
             self.__ticks = _curTicks
         return res
 
-
 class _TimeParts(_AbstractSlotsObject):
 
     __slots__ = [ '__bTD' , '__dd' , '__hh' , '__mm' , '__ss' , '__ms' ]
@@ -159,7 +156,7 @@ class _TimeParts(_AbstractSlotsObject):
             if dateTime_ is None:
                 dateTime_ = _PyDateTime.now()
             elif not isinstance(dateTime_, _PyDateTime):
-                vlogif._LogOEC(True, -1126)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00041)
                 self.CleanUp()
                 return
 
@@ -172,7 +169,7 @@ class _TimeParts(_AbstractSlotsObject):
             return
 
         if not isinstance(timeDelta_, _PyTimeDelta):
-            vlogif._LogOEC(True, -1127)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00042)
             self.CleanUp()
             return
 
@@ -256,7 +253,6 @@ class _TimeParts(_AbstractSlotsObject):
         self.__ms  = None
         self.__bTD = None
 
-
 class _TimeDelta(_AbstractSlotsObject):
     __slots__ = [ '__td' , '__tp' ]
 
@@ -270,14 +266,14 @@ class _TimeDelta(_AbstractSlotsObject):
         _bNonZeroOffset = False
         for _ee in _lstParams:
             if not isinstance(_ee, (int, float)):
-                vlogif._LogOEC(True, -1128)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00043)
                 self.CleanUp()
                 return
             _bNonZeroOffset = _bNonZeroOffset or float(_ee) != 0.0
 
         if timeDelta_ is not None:
             if not isinstance(timeDelta_, _PyTimeDelta):
-                vlogif._LogOEC(True, -1129)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00044)
                 self.CleanUp()
                 return
 
@@ -384,9 +380,8 @@ class _TimeDelta(_AbstractSlotsObject):
 
         res = _bTimeDelta or _bPyTimeDelta
         if not res:
-            vlogif._LogOEC(True, -1130)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00045)
         return res
-
 
 class _StopWatch(_AbstractSlotsObject):
     __slots__ = [ '__start' , '__stop' , '__td' ]
@@ -400,13 +395,13 @@ class _StopWatch(_AbstractSlotsObject):
         if usTimeTicksStop_ is not None:
             if not isinstance(usTimeTicksStop_, int):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1131)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00046)
                 return
 
         if usTimeTicksStart_ is not None:
             if not isinstance(usTimeTicksStart_, int):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1132)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00047)
                 return
         else:
             usTimeTicksStart_ = _TimeUtil.GetCurTicksUS()
@@ -444,13 +439,13 @@ class _StopWatch(_AbstractSlotsObject):
         if usTimeTicksStop_ is not None:
             if not isinstance(usTimeTicksStop_, int):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1133)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00048)
                 return False
 
         if usTimeTicksStart_ is not None:
             if not isinstance(usTimeTicksStart_, int):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1134)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00049)
                 return False
         else:
             usTimeTicksStart_ = _TimeUtil.GetCurTicksUS()
@@ -495,7 +490,7 @@ class _StopWatch(_AbstractSlotsObject):
             return None
         if usTimeTicksStop_ is not None:
             if not isinstance(usTimeTicksStop_, int):
-                vlogif._LogOEC(True, -1135)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00050)
                 return None
         else:
             usTimeTicksStop_ = _TimeUtil.GetCurTicksUS()
@@ -506,7 +501,7 @@ class _StopWatch(_AbstractSlotsObject):
             _usTimeTicksRef = self.__start
 
         if usTimeTicksStop_ < _usTimeTicksRef:
-            vlogif._LogOEC(True, -1136)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00051)
             return None
 
         if self.__td is not None:
@@ -514,7 +509,6 @@ class _StopWatch(_AbstractSlotsObject):
         self.__td   = _TimeDelta(microseconds_=usTimeTicksStop_ - _usTimeTicksRef)
         self.__stop = usTimeTicksStop_
         return self.__td
-
 
 class _KpiLogBook(_AbstractSlotsObject):
     __slots__ = [ '__lb' , '__startID' ]
@@ -550,13 +544,13 @@ class _KpiLogBook(_AbstractSlotsObject):
             return None
 
         if not isinstance(eKPI_, _FwEnum):
-            vlogif._LogOEC(True, -1137)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00052)
             return None
         if (eKPI_ in self.__lb) and not bForceOverwrite_:
             return self.__lb[eKPI_]
         if usTimeTicksKPI_ is not None:
             if not isinstance(usTimeTicksKPI_, int):
-                vlogif._LogOEC(True, -1138)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00053)
                 return None
             res = usTimeTicksKPI_
         else:
@@ -570,11 +564,11 @@ class _KpiLogBook(_AbstractSlotsObject):
             return None
 
         if not (isinstance(rhsKPI_, _FwEnum) and (rhsKPI_ in self.__lb)):
-            vlogif._LogOEC(True, -1139)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00054)
             return None
         if lhsKPI_ is not None:
             if not (isinstance(lhsKPI_, _FwEnum) and (lhsKPI_ in self.__lb)):
-                vlogif._LogOEC(True, -1140)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00055)
                 return None
         else:
             lhsKPI_ = self.eStartKPI

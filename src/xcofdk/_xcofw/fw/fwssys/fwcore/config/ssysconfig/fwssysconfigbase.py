@@ -7,17 +7,16 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
 
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwcfgdefines    import _ESubSysID
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartupconfig import _FwStartupConfig
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwstartuppolicy import _FwStartupPolicy
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject         import _ProtectedAbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes           import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _FwSSysConfigBase(_ProtectedAbstractSlotsObject):
 
@@ -30,7 +29,7 @@ class _FwSSysConfigBase(_ProtectedAbstractSlotsObject):
         super().__init__(ppass_)
         if not (isinstance(eSSysID_, _ESubSysID) and suPolicy_.isValid and startupCfg_._isValid):
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._LogOEC(True, -1625)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00056)
         else:
             self.__fwSUP   = suPolicy_
             self.__fwSCfg  = startupCfg_

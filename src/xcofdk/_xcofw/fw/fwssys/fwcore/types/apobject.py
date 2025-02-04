@@ -7,13 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging       import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AbstractObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AOCommon
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes  import _EFwErrorCode
 
 class _ProtectedAbstractObject(_AbstractObject):
 
@@ -26,7 +24,7 @@ class _ProtectedAbstractObject(_AbstractObject):
             super().__init__()
             if not isinstance(ppass_, int):
                 _AbstractObject.CleanUp(self)
-                vlogif._LogOEC(True, -1024)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00485)
             else:
                 self.__ppass      = ppass_
                 self.__banCleanup = banCleanup_
@@ -57,7 +55,6 @@ class _ProtectedAbstractObject(_AbstractObject):
     def _myPPass(self):
         return self.__ppass
 
-
 class _ProtectedAbstractSlotsObject(_AbstractSlotsObject):
 
     __slots__ = [ '__ppass' , '__banCleanup' ]
@@ -71,7 +68,7 @@ class _ProtectedAbstractSlotsObject(_AbstractSlotsObject):
             super().__init__()
             if not isinstance(ppass_, int):
                 _AbstractSlotsObject.CleanUp(self)
-                vlogif._LogOEC(True, -1025)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00486)
             else:
                 self.__ppass      = ppass_
                 self.__banCleanup = banCleanup_

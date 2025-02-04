@@ -13,6 +13,7 @@
 from xcofdk.fwcom          import xlogif
 from xcofdk.fwcom          import ETernaryCallbackResultID
 from xcofdk.fwcom          import override
+from xcofdk.fwcom          import fwutil
 from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
 
 from xcofdk.fwapi.xtask        import XTask
@@ -165,6 +166,19 @@ class ServiceTask(XTask):
         if not self.isRunning:
             return False
 
+        #NOTE:
+        #  - optional:
+        #      turn on flag below to pre-check the availability of the main task before trying to send next message to.
+        #      This is basically useful to avoid annoying user errors reported by the framework.
+        #  - by application design, the main task stops all its services before leaving its run-phase,
+        #  - so, a pre-check is not really necessary, as the main task is expected to be available and running
+        #    as long as its services are still running.
+        #
+        _bPreCheckForMainTaskAvailability = False
+        if _bPreCheckForMainTaskAvailability:
+            if not fwutil.IsXTaskRunning(self.__mainTaskID):
+                return False
+
         self.__ctrSnd += 1
 
         if self.__bCustomPLD:
@@ -179,17 +193,21 @@ class ServiceTask(XTask):
             if self.__bSkipSerDes:
                 payload = XPayload(containerInitializer_=payload, bBypassSerDes_=True)
 
-        xmsgUID = XMessageManager.SendMessage(self.__mainTaskID, msgLabelID_=EMsgLabelID.eServiceTaskInfo, msgPayload_=payload)
+        # clear current error (if any)
+        self.ClearCurrentError()
 
+        xmsgUID = XMessageManager.SendMessage(self.__mainTaskID, msgLabelID_=EMsgLabelID.eServiceTaskInfo, msgPayload_=payload)
         res = xmsgUID > 0
 
         # failed to send message?
         if not res:
             # something went wrong, decrement sent counter
-            self.__ctrErrSnd -= 1
+            self.__ctrSnd    -= 1
+            self.__ctrErrSnd += 1
 
-            self.ClearCurrentError()
-            xlogif.LogWarning(f'[mtGuiAppService][#sendErrors={self.__ctrErrSnd}] Failed to send xco message to xtask {self.__mainTaskID}.')
+            #NOTE: 'self.currentError' is always set upon send failure  !!
+            #
+            xlogif.LogWarning(f'[mtGuiAppService][errCode={self.currentError.errorCode}][#sendErrors={self.__ctrErrSnd}] Failed to send xco message to task {self.__mainTaskID}.')
         else:
             #xlogif.LogDebug('[mtGuiAppService] Sent xco-message {}.'.format(xmsgUID))
             pass

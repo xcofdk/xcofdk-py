@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import  re
 import  platform
 import  sys
@@ -15,7 +14,6 @@ import  sysconfig
 from   typing import Tuple as _PyTuple
 
 from multiprocessing import cpu_count as _PyCpuCount
-
 
 class _SystemInfo:
 
@@ -116,7 +114,6 @@ class _SystemInfo:
         except NotImplementedError as _xcp:
             res = 0
         return res
-
 
     @staticmethod
     def __IsPlatform(platformName_):

@@ -1,12 +1,11 @@
 # #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------------------------
-# File   : message.py
+# File   : fwmessage.py
 #
 # Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
-
 
 from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
 
@@ -25,9 +24,10 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.msg           import _FwMessageHeader
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg.fwpayload import _FwPayload
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg.messageif import _MessageIF
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _FwMessage(_MessageIF):
 
@@ -48,7 +48,7 @@ class _FwMessage(_MessageIF):
         self.__pld = None
 
         if not msgCreator_ == _FwMessage.__MSG_CREATOR:
-            vlogif._LogOEC(True, -1651)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00530)
             return
 
         header = _FwMessageHeader(typeID_, channelID_, clusterID_, labelID_, senderID_, receiverID_)
@@ -57,8 +57,6 @@ class _FwMessage(_MessageIF):
         else:
             self.__hdr = header
             self.__uid = _FwMessage._GetNextUniqueNr(bFwMsg_=True)
-
-
 
     @staticmethod
     def CreateMessage(senderID_ : _EMessagePeer, receiverID_ =_EMessagePeer.ePDontCare, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
@@ -77,30 +75,6 @@ class _FwMessage(_MessageIF):
         return res
 
     @staticmethod
-    def CreateInMessageIPC(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
-        return _FwMessage.__CreateMessageIPC(senderID_, receiverID_, labelID_, clusterID_, _EMessageType.eTIncoming)
-
-    @staticmethod
-    def CreateOutMessageIPC(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
-        return  _FwMessage.__CreateMessageIPC(senderID_, receiverID_, labelID_, clusterID_, _EMessageType.eTOutgoing)
-
-    @staticmethod
-    def CreateInMessageInterCPU(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
-        return  _FwMessage.__CreateMessageInterCPU(senderID_, receiverID_, labelID_, clusterID_, _EMessageType.eTIncoming)
-
-    @staticmethod
-    def CreateOutMessageInterCPU(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
-        return  _FwMessage.__CreateMessageInterCPU(senderID_, receiverID_, labelID_, clusterID_, _EMessageType.eTOutgoing)
-
-    @staticmethod
-    def CreateInMessageNetwork(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
-        return  _FwMessage.__CreateMessageNetwork(senderID_, receiverID_, labelID_, clusterID_, _EMessageType.eTIncoming)
-
-    @staticmethod
-    def CreateOutMessageNetwork(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_ =_EMessageCluster.eCDontCare):
-        return  _FwMessage.__CreateMessageNetwork(senderID_, receiverID_, labelID_, clusterID_, _EMessageType.eTOutgoing)
-
-    @staticmethod
     def CreateMessageCustom(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ =_EMessageLabel.eLDontCare, clusterID_=_EMessageCluster.eCDontCare, typeID_=_EMessageType.eTIntraProcess):
         res = _FwMessage(_FwMessage.__MSG_CREATOR, senderID_, receiverID_, labelID_, clusterID_, channelID_=_EMessageChannel.eChCustom, typeID_=typeID_)
         if res.header is None:
@@ -111,35 +85,33 @@ class _FwMessage(_MessageIF):
     @staticmethod
     def SerializeFwMsg(msgObj_) -> bytes:
         if not (isinstance(msgObj_, _FwMessage) and msgObj_.isValid):
-            vlogif._LogOEC(True, -1652)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00532)
             return None
 
         if msgObj_.header.channelID != _EMessageChannel.eChIntraTask:
             if msgObj_.header.channelID != _EMessageChannel.eChInterTask:
-                vlogif._LogOEC(True, -1653)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00533)
         return SerDes.SerializeObject(msgObj_)
 
     @staticmethod
     def DeserializeFwMsg(bytes_ : bytes):
         if not isinstance(bytes_, bytes):
-            vlogif._LogOEC(True, -1654)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00534)
             return None
 
         res = SerDes.DeserializeData(bytes_)
         if not (isinstance(res, _FwMessage) and res.isValid):
-            vlogif._LogOEC(True, -1655)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00535)
             return None
 
         if res.header.channelID != _EMessageChannel.eChIntraTask:
             if res.header.channelID != _EMessageChannel.eChInterTask:
-                vlogif._LogOEC(True, -1656)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00536)
         return res
-
 
     @property
     def isValid(self):
         return (self.__hdr is not None) and self.__hdr.isValid
-
 
     @property
     def uniqueID(self):
@@ -162,9 +134,9 @@ class _FwMessage(_MessageIF):
             if not (isinstance(payld_, _FwPayload) and payld_.isValidPayload):
                 _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwMessage_TextID_002).format(XPayloadIF.__name__, type(payld_).__name__)
                 if not isinstance(payld_, _FwPayload):
-                    logif._LogBadUse(_msg)
+                    logif._LogBadUseEC(_EFwErrorCode.FE_00462, _msg)
                 else:
-                    logif._LogError(_msg)
+                    logif._LogErrorEC(_EFwErrorCode.UE_00134, _msg)
             else:
                 self.__pld = payld_
         return res
@@ -187,7 +159,6 @@ class _FwMessage(_MessageIF):
             self.__pld = None
         super()._CleanUp()
 
-
     @staticmethod
     def _GetNextUniqueNr(bFwMsg_ =False):
         if _FwMessage.__nextUniqueNr is None:
@@ -197,25 +168,3 @@ class _FwMessage(_MessageIF):
         if bFwMsg_:
             res *= -1
         return res
-
-
-    @staticmethod
-    def __CreateMessageIPC(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ : _EMessageLabel, clusterID_ : _EMessageCluster, typeID_ : _EMessageType):
-        if typeID_ == _EMessageType.eTDontCare or typeID_ == _EMessageType.eTIntraProcess:
-            vlogif._LogOEC(True, -1657)
-        logif._LogNotImplemented(_FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError))
-        return None
-
-    @staticmethod
-    def __CreateMessageInterCPU(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ : _EMessageLabel, clusterID_ : _EMessageCluster, typeID_ : _EMessageType):
-        if typeID_ == _EMessageType.eTDontCare or typeID_ == _EMessageType.eTIntraProcess:
-            vlogif._LogOEC(True, -1658)
-        logif._LogNotImplemented(_FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError))
-        return None
-
-    @staticmethod
-    def __CreateMessageNetwork(senderID_ : _EMessagePeer, receiverID_ : _EMessagePeer, labelID_ : _EMessageLabel, clusterID_ : _EMessageCluster, typeID_ : _EMessageType):
-        if typeID_ == _EMessageType.eTDontCare or typeID_ == _EMessageType.eTIntraProcess:
-            vlogif._LogOEC(True, -1659)
-        logif._LogNotImplemented(_FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError))
-        return None

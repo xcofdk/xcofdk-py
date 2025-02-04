@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging               import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry    import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate        import _LcFailure
@@ -23,9 +22,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore    import _BinarySemaphor
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _ETaskRightFlag
 
-from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
-from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _FwMain(_FwTask, _FwMainIF):
 
@@ -40,20 +37,18 @@ class _FwMain(_FwTask, _FwMainIF):
         _iImplErr = None
 
         if _FwMain.__fwmSgltn is not None:
-            _iImplErr = 901
+            _iImplErr = _EFwErrorCode.FE_LCSF_010
         elif not isinstance(lcMon_, _LcMonitorImpl):
-            _iImplErr = 902
+            _iImplErr = _EFwErrorCode.FE_LCSF_011
 
         if _iImplErr is not None:
             self.CleanUp()
+            _LcFailure.CheckSetLcSetupFailure(_iImplErr)
 
-            _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
-
-            if _iImplErr == 901:
-                vlogif._LogOEC(True, -1507)
+            if _iImplErr == _EFwErrorCode.FE_LCSF_010:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00079)
             else:
-                vlogif._LogOEC(True, -1508)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00080)
             return
 
         _lstTR = [ _ETaskRightFlag.eDieXcpTarget, _ETaskRightFlag.eErrorObserver, _ETaskRightFlag.eDieXcpDelegateTarget ]
@@ -71,22 +66,24 @@ class _FwMain(_FwTask, _FwMainIF):
         _mrbl = _MainRunnable(lcMon_)
         if _mrbl._lcMonitorImpl is None:
             _mrbl     = None
-            _iImplErr = 903
+            _iImplErr = _EFwErrorCode.FE_LCSF_012
 
         if _iImplErr is not None:
             pass
+
         else:
             _mtp = _TaskProfile(runnable_=_mrbl, taskProfileAttrs_=_ta)
             if not _mtp.isValid:
-                _iImplErr = 904
+                _iImplErr = _EFwErrorCode.FE_LCSF_013
+
             else:
                 _FwTask.__init__(self, taskPrf_=_mtp, bFwMain_=True)
                 if self.taskBadge is None:
-                    _myErrID = 905
+                    _myErrID = _EFwErrorCode.FE_LCSF_014
                     _FwTask.CleanUp(self)
 
-        _ccID      = None
-        _myErrCode = None
+        _ccID    = None
+        _errCode = None
 
         if _iImplErr is not None:
             if _mtp is not None:
@@ -95,16 +92,16 @@ class _FwMain(_FwTask, _FwMainIF):
             if _mrbl is not None:
                 _mrbl.CleanUp()
 
-            _implErrMsg = _FwTDbEngine.GetText(_EFwTextID.eMisc_ImplError_Param).format(_iImplErr)
-            _LcFailure.CheckSetLcSetupFailure(errMsg_=_implErrMsg)
+            _LcFailure.CheckSetLcSetupFailure(_iImplErr)
 
-            if _iImplErr == 903:
-                vlogif._LogOEC(True, -1509)
-            elif _iImplErr == 904:
-                vlogif._LogOEC(True, -1510)
-            else: #if _iImplErr == 905:
-                vlogif._LogOEC(True, -1511)
-
+            if _iImplErr == _EFwErrorCode.FE_LCSF_012:
+                vlogif._LogOEC(True, _iImplErr)
+            elif _iImplErr == _EFwErrorCode.FE_LCSF_013:
+                vlogif._LogOEC(True, _iImplErr)
+            elif _iImplErr == _EFwErrorCode.FE_LCSF_014:
+                vlogif._LogOEC(True, _iImplErr)
+            else:  
+                vlogif._LogOEC(True, _errCode)
         else:
             _FwMain.__fwmSgltn = self
             self.__mtp  = _mtp
@@ -117,31 +114,31 @@ class _FwMain(_FwTask, _FwMainIF):
     def StartFwMain(self, semStart_: _BinarySemaphore) -> bool:
         res = _FwTask.StartTask(self, semStart_=semStart_)
         if not res:
-            vlogif._LogOEC(False, -3023)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00002)
         else:
             res = self.isRunning
             if not res:
-                vlogif._LogOEC(False, -3024)
+                vlogif._LogOEC(False, _EFwErrorCode.VUE_00003)
         return res
 
     def StopFwMain(self, semStop_: _BinarySemaphore =None) -> bool:
         res = _FwTask.StopTask(self, semStop_=semStop_)
         if not res:
-            vlogif._LogOEC(False, -3025)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00004)
         return res
 
     def FinalizeCustomSetup(self) -> bool:
-        if not self._isLcProxyOperable:
-            vlogif._LogOEC(True, -1512)
+        if not self._PcIsLcProxyModeNormal():
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00081)
             return False
 
-        _tspanMS = self.__mrbl.executionProfile.runPhaseFreqMS
+        _tspanMS = self.__mrbl._executionProfile.runPhaseFreqMS
         while self.__mrbl._isAwaitingCustomSetup:
             _TaskUtil.SleepMS(_tspanMS)
 
         res = self.__mrbl._isCustomSetupDone
         if not res:
-            vlogif._LogOEC(False, -3026)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00005)
         return res
 
     def ProcessShutdownAction(self, eShutdownAction_: _ELcShutdownRequest, eFailedCompID_: _ELcCompID =None, frcError_: _FatalEntry =None, atask_: _AbstractTask =None):
@@ -149,14 +146,13 @@ class _FwMain(_FwTask, _FwMainIF):
             return
         self.__mrbl.ProcessShutdownAction(eShutdownAction_, eFailedCompID_=eFailedCompID_, frcError_=frcError_, atask_=atask_)
 
-
     def _CleanUp(self):
         if _FwMain.__fwmSgltn is None:
             return
 
         _FwMain.__fwmSgltn = None
 
-        _FwTask._CleanUp(self)
+        super()._CleanUp()
 
         if self.__mrbl is not None:
             self.__mrbl.CleanUp()

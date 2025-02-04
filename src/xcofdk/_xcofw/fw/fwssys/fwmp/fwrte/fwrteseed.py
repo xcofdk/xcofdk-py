@@ -7,9 +7,7 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from os import getpid as _PyGetPID
-
 
 class _FwRteSeed:
 
@@ -19,11 +17,13 @@ class _FwRteSeed:
     __bFW_RTE_MASTER = None
 
     def __new__(cls, *args_, **kwargs_):
+
         if _FwRteSeed.__FW_RTE_SEED is None:
             _FwRteSeed.__FW_RTE_SEED = _PyGetPID()
         if _FwRteSeed.__bFW_RTE_MASTER is None:
             _FwRteSeed.__bFW_RTE_MASTER = False
         return super().__new__(cls)
+
     def __init__(self):
 
         self.__seed    = int(_FwRteSeed.__FW_RTE_SEED)
@@ -31,7 +31,6 @@ class _FwRteSeed:
 
     def __str__(self):
         return f'FwRteSeed: seed={self.seed} , bMaster={self.isMasterSeed}'
-
 
     @staticmethod
     def IsRteSeedInitialized():

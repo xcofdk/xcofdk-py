@@ -7,14 +7,13 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum   import IntFlag
 from enum   import unique
 from typing import Union as _PyUnion
 
-from xcofdk._xcofw.fwadapter                  import rlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.util import _Util
-
+from xcofdk._xcofw.fwadapter                     import rlogif
+from xcofdk._xcofw.fw.fwssys.fwcore.base.util    import _Util
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 @unique
 class _EBitMask(IntFlag):
@@ -29,9 +28,7 @@ class _EBitMask(IntFlag):
             iBitMask_ = iBitMask_.value
 
         res = []
-        if iBitMask_ == 0:
-            pass
-        else:
+        if iBitMask_ != 0:
             for _ii in range(iBitMask_.bit_length()):
                 bitFlag = (0x1 << _ii)
                 if (bitFlag & iBitMask_) != 0:
@@ -47,13 +44,14 @@ class _EBitMask(IntFlag):
         if not _Util.IsInstance(eBitFlags_, list, bThrowx_=False):
             _myFlags = [eBitFlags_]
 
-        for bb in _myFlags:
-            if not bCheckTypeMatch_: pass
-            elif type(eBitMask_) != type(bb):
-                rlogif._LogOEC(True, -1015)
+        for _bb in _myFlags:
+            if not bCheckTypeMatch_:
+                pass
+            elif type(eBitMask_) != type(_bb):
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00424)
                 return False
-            if not _Util.IsInstance(bb, IntFlag, bThrowx_=True): return False
-            _bHit = (eBitMask_ & bb).value != _EBitMask.eNone.value
+            if not _Util.IsInstance(_bb, IntFlag, bThrowx_=True): return False
+            _bHit = (eBitMask_ & _bb).value != _EBitMask.eNone.value
             if bAny_:
                 if _bHit:
                     return True
@@ -72,9 +70,9 @@ class _EBitMask(IntFlag):
         _myFlags = iBitFlags_
         if not _Util.IsInstance(iBitFlags_, list, bThrowx_=False):
             _myFlags = [iBitFlags_]
-        for bb in _myFlags:
-            if not _Util.IsInstance(bb, int, bThrowx_=True): return False
-            if (iBitMask_ & bb) == _EBitMask.eNone.value:
+        for _bb in _myFlags:
+            if not _Util.IsInstance(_bb, int, bThrowx_=True): return False
+            if (iBitMask_ & _bb) == _EBitMask.eNone.value:
                 return False
         return True
 
@@ -86,13 +84,13 @@ class _EBitMask(IntFlag):
         _myFlags = eBitFlags_
         if not _Util.IsInstance(eBitFlags_, list, bThrowx_=False):
             _myFlags = [eBitFlags_]
-        for bb in _myFlags:
-            if not _Util.IsInstance(bb, IntFlag, bThrowx_=True): return None
+        for _bb in _myFlags:
+            if not _Util.IsInstance(_bb, IntFlag, bThrowx_=True): return None
             if not bCheckTypeMatch_: pass
-            elif type(eBitMask_) != type(bb):
-                rlogif._LogOEC(True, -1016)
+            elif type(eBitMask_) != type(_bb):
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00425)
                 return None
-            eBitMask_ |= bb
+            eBitMask_ |= _bb
         return eBitMask_
 
     @staticmethod
@@ -102,9 +100,9 @@ class _EBitMask(IntFlag):
         _myFlags = iBitFlags_
         if not _Util.IsInstance(iBitFlags_, list, bThrowx_=False):
             _myFlags = [iBitFlags_]
-        for bb in _myFlags:
-            if not _Util.IsInstance(bb, int, bThrowx_=True): return None
-            iBitMask_ |= bb
+        for _bb in _myFlags:
+            if not _Util.IsInstance(_bb, int, bThrowx_=True): return None
+            iBitMask_ |= _bb
         return iBitMask_
 
     @staticmethod
@@ -115,13 +113,13 @@ class _EBitMask(IntFlag):
         _myFlags = eBitFlags_
         if not _Util.IsInstance(eBitFlags_, list, bThrowx_=False):
             _myFlags = [eBitFlags_]
-        for bb in _myFlags:
-            if not _Util.IsInstance(bb, IntFlag, bThrowx_=True): return None
+        for _bb in _myFlags:
+            if not _Util.IsInstance(_bb, IntFlag, bThrowx_=True): return None
             if not bCheckTypeMatch_: pass
-            elif type(eBitMask_) != type(bb):
-                rlogif._LogOEC(True, -1017)
+            elif type(eBitMask_) != type(_bb):
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00426)
                 return None
-            eBitMask_ &= ~bb
+            eBitMask_ &= ~_bb
         return eBitMask_
 
     @staticmethod
@@ -131,7 +129,7 @@ class _EBitMask(IntFlag):
         _myFlags = iBitFlags_
         if not _Util.IsInstance(iBitFlags_, list, bThrowx_=False):
             _myFlags = [iBitFlags_]
-        for bb in _myFlags:
-            if not _Util.IsInstance(bb, int, bThrowx_=True): return None
-            iBitMask_ &= ~bb
+        for _bb in _myFlags:
+            if not _Util.IsInstance(_bb, int, bThrowx_=True): return None
+            iBitMask_ &= ~_bb
         return iBitMask_

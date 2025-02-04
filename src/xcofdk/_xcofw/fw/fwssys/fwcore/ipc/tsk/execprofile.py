@@ -7,16 +7,17 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging       import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout import _Timeout
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AbstractSlotsObject
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes  import _EFwErrorCode
 
 class _ExecutionProfile(_AbstractSlotsObject):
 
     __slots__ = [
-        '__bReCalc'
+        '__args'
+      , '__kwargs'
+      , '__bReCalc'
       , '__uniqueName'
       , '__cyclicCeaseTimespanMS'
       , '__runPhaseMaxProcTimeMS'
@@ -52,6 +53,8 @@ class _ExecutionProfile(_AbstractSlotsObject):
 
         super().__init__()
 
+        self.__args                                  = None
+        self.__kwargs                                = None
         self.__bReCalc                               = None
         self.__uniqueName                            = None
         self.__bStrictTiming                         = None
@@ -67,12 +70,14 @@ class _ExecutionProfile(_AbstractSlotsObject):
 
         if cloneBy_ is not None:
             if not isinstance(cloneBy_, _ExecutionProfile):
-                vlogif._LogOEC(True, -1307)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00187)
             elif not cloneBy_.isValid:
-                vlogif._LogOEC(True, -1308)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00188)
             else:
                 cloneBy_.__CheckForReCalculation()
 
+                self.__args                                  = cloneBy_.__args
+                self.__kwargs                                = cloneBy_.__kwargs
                 self.__bReCalc                               = cloneBy_.__bReCalc
                 self.__uniqueName                            = str(cloneBy_.__uniqueName)
                 self.__bStrictTiming                         = cloneBy_.__bStrictTiming
@@ -86,7 +91,7 @@ class _ExecutionProfile(_AbstractSlotsObject):
 
         if bLcMonitor_:
             if _ExecutionProfile._GetLcMonitorCyclicRunPauseTimespanMS() is None:
-                vlogif._LogOEC(True, -1309)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00189)
                 return
 
             if runPhaseFreqMS_ is None:
@@ -107,14 +112,14 @@ class _ExecutionProfile(_AbstractSlotsObject):
         for _ee in _lstBoolParams:
             if _ee is not None:
                 if not isinstance(_ee, bool):
-                    vlogif._LogOEC(True, -1310)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00190)
                     return
 
         _lstMsParams = [ runPhaseFreqMS_ , runPhaseMaxProcTimeMS_, cyclicCeaseTimespanMS_ ]
         for _ee in _lstMsParams:
             if _ee is not None:
                 if not isinstance(_ee, (int, float, _Timeout)):
-                    vlogif._LogOEC(True, -1311)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00191)
                     return
 
         self.__uniqueName = uniqueName_
@@ -122,7 +127,7 @@ class _ExecutionProfile(_AbstractSlotsObject):
         if runPhaseFreqMS_ is not None:
             _tout = _Timeout.TimespanToTimeout(runPhaseFreqMS_)
             if _tout is None:
-                vlogif._LogOEC(True, -1312)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00192)
                 return
             self.__runPhaseFreqMS = _tout.toMSec
             _tout.CleanUp()
@@ -132,7 +137,7 @@ class _ExecutionProfile(_AbstractSlotsObject):
         if runPhaseMaxProcTimeMS_ is not None:
             _tout = _Timeout.TimespanToTimeout(runPhaseMaxProcTimeMS_)
             if (_tout is None) or _tout.isInfiniteTimeout:
-                vlogif._LogOEC(True, -1313)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00193)
                 if _tout is not None:
                     _tout.CleanUp()
                 return
@@ -144,7 +149,7 @@ class _ExecutionProfile(_AbstractSlotsObject):
         if cyclicCeaseTimespanMS_ is not None:
             _tout = _Timeout.TimespanToTimeout(cyclicCeaseTimespanMS_)
             if (_tout is None) or _tout.isInfiniteTimeout:
-                vlogif._LogOEC(True, -1314)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00194)
                 if _tout is not None:
                     _tout.CleanUp()
                 return
@@ -203,9 +208,20 @@ class _ExecutionProfile(_AbstractSlotsObject):
             self.__bLcFailureReportPermission = bEnabled_
 
     @property
+    def args(self):
+        if self.__args is None:
+            self.__args = ()
+        return self.__args
+
+    @property
+    def kwargs(self):
+        if self.__kwargs is None:
+            self.__kwargs = {}
+        return self.__kwargs
+
+    @property
     def uniqueName(self):
         return self.__uniqueName
-
 
     @property
     def runPhaseFreqMS(self) -> int:
@@ -262,6 +278,14 @@ class _ExecutionProfile(_AbstractSlotsObject):
     def _revisedPerLcMonCycleTotalProcTimespanMS(self) -> int:
         return self.__revisedPerLcMonCycleMaxProcTimespanMS + self.__runPhaseFreqMS
 
+    def _SetStartArgs(self, *args_, **kwargs_):
+        if not isinstance(args_, tuple):
+            args_ = ()
+        if not isinstance(kwargs_, dict):
+            kwargs_ = {}
+        self.__args   = tuple(args_)
+        self.__kwargs = kwargs_.copy()
+
     @staticmethod
     def _GetLcMonitorCyclicRunPauseTimespanMS():
         return _ExecutionProfile.__LC_MONITOR_CYCLIC_RUN_PAUSE_TIMESPAN_MS
@@ -270,16 +294,14 @@ class _ExecutionProfile(_AbstractSlotsObject):
     def _SetLcMonitorCyclicRunPauseTimespanMS(lcMonCyclicRunPauseTimespanMS_ : int):
         if lcMonCyclicRunPauseTimespanMS_ is not None:
             if _ExecutionProfile.__LC_MONITOR_CYCLIC_RUN_PAUSE_TIMESPAN_MS is not None:
-                vlogif._LogOEC(True, -1315)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00195)
         _ExecutionProfile.__LC_MONITOR_CYCLIC_RUN_PAUSE_TIMESPAN_MS = lcMonCyclicRunPauseTimespanMS_
 
     def _UpdateUniqueName(self, uniqueName_ : str):
         if self.__isInvalid:
             return
 
-        _bChanged = False
         if isinstance(uniqueName_, str) and len(uniqueName_):
-            _bChanged = uniqueName_ != self.__uniqueName
             self.__uniqueName = uniqueName_
         if self.__bReCalc:
             self.__CheckForReCalculation()
@@ -315,6 +337,8 @@ class _ExecutionProfile(_AbstractSlotsObject):
         if self.__isInvalid:
             return
 
+        self.__args                                  = None
+        self.__kwargs                                = None
         self.__bReCalc                               = None
         self.__uniqueName                            = None
         self.__bStrictTiming                         = None
@@ -362,17 +386,17 @@ class _ExecutionProfile(_AbstractSlotsObject):
         self.__RecalculateRevisedAttributes()
 
     def __RecalculateRevisedAttributes(self):
-        tmp = self.__runPhaseMaxProcTimeMS
-        if tmp <= 0:
+        _tmp = self.__runPhaseMaxProcTimeMS
+        if _tmp <= 0:
             self.__revisedPerLcMonCycleMaxProcTimespanMS = 0
         else:
-            if (tmp-_ExecutionProfile.__PROC_TIMESPAN_DEVIATION_MIN_THRESHOLD) > _ExecutionProfile.__GetLcMonCyclicRunPauseTimespanMS():
+            if (_tmp-_ExecutionProfile.__PROC_TIMESPAN_DEVIATION_MIN_THRESHOLD) > _ExecutionProfile.__GetLcMonCyclicRunPauseTimespanMS():
                 pass
             else:
                 _bCC = False
                 if _bCC:
-                    _factor = -(-_ExecutionProfile.__GetLcMonCyclicRunPauseTimespanMS() // tmp)
+                    _factor = -(-_ExecutionProfile.__GetLcMonCyclicRunPauseTimespanMS() // _tmp)
                 else:
-                    _factor = _ExecutionProfile.__GetLcMonCyclicRunPauseTimespanMS() // tmp
-                tmp = tmp * _factor
-            self.__revisedPerLcMonCycleMaxProcTimespanMS = _ExecutionProfile.__GetDeviatedTimespan(tmp)
+                    _factor = _ExecutionProfile.__GetLcMonCyclicRunPauseTimespanMS() // _tmp
+                _tmp = _tmp * _factor
+            self.__revisedPerLcMonCycleMaxProcTimespanMS = _ExecutionProfile.__GetDeviatedTimespan(_tmp)

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum   import IntEnum
 from typing import Union as _PyUnion
 
@@ -24,9 +23,10 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.msg              import _FwMessageHeader
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg              import _SubsysMsgUtil
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg.messagehdrif import _MessageHeaderIF
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _XMsgHeaderImpl(_MessageHeaderIF):
 
@@ -55,11 +55,11 @@ class _XMsgHeaderImpl(_MessageHeaderIF):
             return
 
         if not isinstance(senderID_, int):
-            vlogif._LogOEC(True, -1626)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00515)
             self.CleanUp()
             return
         if isinstance(clusterID_, _EMessageCluster) or isinstance(labelID_, _EMessageLabel) or isinstance(receiverID_, _EMessagePeer):
-            vlogif._LogOEC(True, -1627)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00516)
             self.CleanUp()
             return
 
@@ -74,7 +74,7 @@ class _XMsgHeaderImpl(_MessageHeaderIF):
             _lblID = _EMessageLabel.eLDontCare
         if isinstance(receiverID_, EPreDefinedMessagingID):
             if receiverID_.value > EPreDefinedMessagingID.Broadcast.value:
-                vlogif._LogOEC(True, -1628)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00517)
                 self.CleanUp()
                 return
             if receiverID_ == EPreDefinedMessagingID.DontCare:
@@ -135,7 +135,6 @@ class _XMsgHeaderImpl(_MessageHeaderIF):
     def isXTaskBroadcastMsg(self) -> bool:
         return False if self.__isInvalid else self.__fwMHdr.isXTaskBroadcastMsg
 
-
     @property
     def typeID(self) -> _EMessageType:
         return None if self.__isInvalid else self.__fwMHdr.typeID
@@ -176,10 +175,10 @@ class _XMsgHeaderImpl(_MessageHeaderIF):
             return None
 
         if len(args_) > 1:
-            vlogif._LogOEC(True, -1629)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00518)
 
         if len(kwargs_) > 0:
-            vlogif._LogOEC(True, -1630)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00519)
 
         _bValuesOnly = False
 
@@ -193,13 +192,10 @@ class _XMsgHeaderImpl(_MessageHeaderIF):
         return res
 
     def _CleanUp(self):
-        if self.__fwMHdr is None:
-            pass
-        else:
+        if self.__fwMHdr is not None:
             self.__fwMHdr.CleanUp()
             self.__fwMHdr = None
             super()._CleanUp()
-
 
     @property
     def __isInvalid(self) -> bool:

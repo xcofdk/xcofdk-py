@@ -7,21 +7,20 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import re
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util         import _Util
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _StrUtil:
 
     __cpHexString = re.compile(r'^\s*0x([0-9A-F]+)\s*$', re.RegexFlag.IGNORECASE)
-
 
     @staticmethod
     def Length(str_ : str) -> int:
@@ -48,7 +47,7 @@ class _StrUtil:
         res = isinstance(obj_, str)
         if not res:
             if bThrowx_:
-                logif._LogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_001).format(_Util.TypeName(obj_)))
+                logif._LogFatalEC(_EFwErrorCode.FE_00032, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_001).format(_Util.TypeName(obj_)))
         return res
 
     @staticmethod
@@ -58,7 +57,7 @@ class _StrUtil:
             res = _StrUtil.IsEmpty(obj_, stripBefore_)
             if not res:
                 if bThrowx_:
-                    logif._LogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_002).format(obj_))
+                    logif._LogFatalEC(_EFwErrorCode.FE_00033, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_002).format(obj_))
         return res
 
     @staticmethod
@@ -68,11 +67,12 @@ class _StrUtil:
             res = _StrUtil.IsNonEmpty(obj_, stripBefore_)
             if not res:
                 if bThrowx_:
-                    logif._LogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_003))
+                    logif._LogFatalEC(_EFwErrorCode.FE_00034, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_003))
         return res
 
     @staticmethod
     def IsHexString(hexStr_):
+
         return not _StrUtil.__cpHexString.match(hexStr_) is None
 
     @staticmethod
@@ -81,7 +81,7 @@ class _StrUtil:
         res &= str_.isidentifier()
         if not res:
             if bThrowx_:
-                logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_004).format(str_))
+                logif._LogBadUseEC(_EFwErrorCode.FE_00089, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_004).format(str_))
         return res
 
     @staticmethod
@@ -90,7 +90,7 @@ class _StrUtil:
         if res is None:
             if bThrowx_:
                 res = False
-                logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_006).format(str_))
+                logif._LogBadUseEC(_EFwErrorCode.FE_00090, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_006).format(str_))
         return res
 
     @staticmethod
@@ -138,7 +138,7 @@ class _StrUtil:
                 res = astr_.replace(substrOld_, substrNew_, count_)
 
         if res is None:
-            logif._LogBadUse(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_005).format(str(astr_), str(substrOld_), str(substrNew_), str(count_)))
+            logif._LogBadUseEC(_EFwErrorCode.FE_00091, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_StrUtil_TextID_005).format(str(astr_), str(substrOld_), str(substrNew_), str(count_)))
         return res
 
     @staticmethod

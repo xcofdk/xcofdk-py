@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import pickle as _PyPickle
 from   enum import Enum
 from   enum import unique
@@ -18,9 +17,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.base.fsutil       import _FSUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EPPVersion(Enum):
@@ -32,11 +32,9 @@ class _EPPVersion(Enum):
     eVersion4 =4
     eVersion5 =5
 
-
 class SerDes(_AbstractObject):
 
     __ppVersion  = _EPPVersion(_PyPickle.HIGHEST_PROTOCOL)
-
 
     def __init__(self, filePath_ =None, binaryFormat_ =True):
         super().__init__()
@@ -48,13 +46,13 @@ class SerDes(_AbstractObject):
         self.__binaryFormat = True
 
         if not binaryFormat_:
-            logif._LogNotSupported(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_001).format(str(self.filePath)))
+            logif._LogNotSupportedEC(_EFwErrorCode.UE_00145, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_001).format(str(self.filePath)))
 
     @staticmethod
     def SerializeObject(obj_, bTreatAsUserError_ =False) -> bytes:
         res = None
         if obj_ is None:
-            rlogif._LogOEC(True, -1007)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00433)
             return res
 
         try:
@@ -62,16 +60,16 @@ class SerDes(_AbstractObject):
         except( _PyPickle.PickleError, Exception, BaseException ) as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_003).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), xcp)
             if bTreatAsUserError_:
-                logif._LogError(_msg)
+                logif._LogErrorEC(_EFwErrorCode.UE_00111, _msg)
             else:
-                logif._LogFatal(_msg)
+                logif._LogFatalEC(_EFwErrorCode.FE_00045, _msg)
         return res
 
     @staticmethod
     def DeserializeData(data_ : bytes, bTreatAsUserError_ =False):
         res = None
         if not isinstance(data_, bytes):
-            rlogif._LogOEC(True, -1008)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00434)
             return res
 
         try:
@@ -79,9 +77,9 @@ class SerDes(_AbstractObject):
         except( _PyPickle.PickleError, Exception, BaseException ) as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_004).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), xcp)
             if bTreatAsUserError_:
-                logif._LogError(_msg)
+                logif._LogErrorEC(_EFwErrorCode.UE_00112, _msg)
             else:
-                logif._LogFatal(_msg)
+                logif._LogFatalEC(_EFwErrorCode.FE_00046, _msg)
         return res
 
     @property
@@ -95,32 +93,32 @@ class SerDes(_AbstractObject):
     def Serialize(self, obj_) -> bytes:
         res = None
         if obj_ is None:
-            rlogif._LogOEC(True, -1009)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00435)
             return res
 
         try:
             res = _PyPickle.dumps(obj_, SerDes.__ppVersion.value)
         except (_PyPickle.PickleError, BaseException) as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_005).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), self)
-            logif._LogSysException(_msg, xcp, logif._GetFormattedTraceback())
+            logif._LogSysExceptionEC(_EFwErrorCode.FE_00006, _msg, xcp, logif._GetFormattedTraceback())
         return res
 
     def Deserialize(self, data_ : bytes):
         res = None
         if data_ is None:
-            rlogif._LogOEC(True, -1010)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00436)
             return res
 
         try:
             res = _PyPickle.loads(data_)
         except ( _PyPickle.PickleError, BaseException) as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_006).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), self)
-            logif._LogSysException(_msg, xcp, logif._GetFormattedTraceback())
+            logif._LogSysExceptionEC(_EFwErrorCode.FE_00007, _msg, xcp, logif._GetFormattedTraceback())
         return res
 
     def SerializeToFile(self, obj_, autoCloseFile_ =True):
         if obj_ is None:
-            rlogif._LogOEC(True, -1011)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00437)
             return False
 
         dirPath = _FSUtil.GetDirPath(self.__filePath)
@@ -134,7 +132,7 @@ class SerDes(_AbstractObject):
             _PyPickle.dump(obj_, self.__fh, SerDes.__ppVersion.value)
         except BaseException as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_007).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), self)
-            logif._LogSysException(_msg, xcp, logif._GetFormattedTraceback())
+            logif._LogSysExceptionEC(_EFwErrorCode.FE_00008, _msg, xcp, logif._GetFormattedTraceback())
 
             self.CloseFile()
             return False
@@ -155,7 +153,7 @@ class SerDes(_AbstractObject):
             res = None
         except BaseException as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_008).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), self)
-            logif._LogSysException(_msg, xcp, logif._GetFormattedTraceback())
+            logif._LogSysExceptionEC(_EFwErrorCode.FE_00009, _msg, xcp, logif._GetFormattedTraceback())
 
         if autoCloseFile_ or res is None:
             self.CloseFile()
@@ -170,11 +168,11 @@ class SerDes(_AbstractObject):
 
     def _ToString(self, *args_, **kwargs_):
         if len(args_) > 1:
-            rlogif._LogOEC(True, -1012)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00368)
             return _CommonDefines._STR_EMPTY
 
         if len(kwargs_) > 0:
-            rlogif._LogOEC(True, -1013)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00369)
             return _CommonDefines._STR_EMPTY
 
         bPropsOnly = False
@@ -197,14 +195,14 @@ class SerDes(_AbstractObject):
 
     def __OpenFile(self, writeMode_):
         if self.filePath is None:
-            rlogif._LogOEC(True, -1014)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00438)
             return False
 
         if self.__IsFileOpen(not writeMode_):
             if self.__writeOpened:
-                logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_009).format(self))
+                logif._LogImplErrorEC(_EFwErrorCode.FE_00828, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_009).format(self))
             else:
-                logif._LogImplError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_010).format(self))
+                logif._LogImplErrorEC(_EFwErrorCode.FE_00829, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_010).format(self))
             return False
 
         if self.__IsFileOpen(writeMode_):
@@ -216,7 +214,7 @@ class SerDes(_AbstractObject):
             _fh = open(self.filePath, _mode)
         except (FileNotFoundError, BaseException) as xcp:
             _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_011).format(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SerDes_TextID_002), self)
-            logif._LogSysException(_msg, xcp, logif._GetFormattedTraceback())
+            logif._LogSysExceptionEC(_EFwErrorCode.FE_00010, _msg, xcp, logif._GetFormattedTraceback())
             return False
 
         self.__fh = _fh

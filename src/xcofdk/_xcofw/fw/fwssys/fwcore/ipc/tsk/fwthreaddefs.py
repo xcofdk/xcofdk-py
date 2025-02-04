@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
@@ -20,10 +19,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes       import _CommonDefine
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes       import _ETernaryOpResult
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _ETaskExecutionPhaseID
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 @unique
 class _EXTaskApiFuncTag(_FwIntFlag):
@@ -87,7 +86,6 @@ class _EXTaskApiFuncTag(_FwIntFlag):
     def RemoveApiFuncTag(eApiMask_: _FwIntFlag, eApiFuncTag_ : _FwIntFlag):
         return _EBitMask.RemoveEnumBitFlag(eApiMask_, eApiFuncTag_)
 
-
 class _XTaskApiGuide(_AbstractSlotsObject):
     __slots__ = [
         '__fwthrd'
@@ -113,24 +111,24 @@ class _XTaskApiGuide(_AbstractSlotsObject):
         super().__init__()
 
         if fwthrd_ is None:
-            vlogif._LogOEC(True, -1253)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00245)
             self.CleanUp()
             return
         if fwthrd_._linkedExecutable is None:
-            vlogif._LogOEC(True, -1254)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00246)
             self.CleanUp()
             return
 
         _exclApiFuncs = None
         if excludedXuM_ is not None:
             if not isinstance(excludedXuM_, _EXTaskApiFuncTag):
-                vlogif._LogOEC(True, -1255)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00247)
                 self.CleanUp()
                 return
 
             _exclApiFuncs = _EBitMask.GetIntegerBitFlagsList(excludedXuM_)
             if _exclApiFuncs is None:
-                vlogif._LogOEC(True, -1256)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00248)
                 self.CleanUp()
                 return
             elif len(_exclApiFuncs) == 0:
@@ -140,8 +138,8 @@ class _XTaskApiGuide(_AbstractSlotsObject):
         self.__eApiMask     = _EXTaskApiFuncTag.DefaultApiMask()
         self.__eExclApiMask = excludedXuM_
 
-        _errMsg  = _CommonDefines._STR_EMPTY
-        _xtsk = fwthrd_._linkedExecutable
+        _xtsk   = fwthrd_._linkedExecutable
+        _errMsg = _CommonDefines._STR_EMPTY
         for name, member in _EXTaskApiFuncTag.__members__.items():
             if member == _EXTaskApiFuncTag.eNone:
                 continue
@@ -161,7 +159,6 @@ class _XTaskApiGuide(_AbstractSlotsObject):
             elif member == _EXTaskApiFuncTag.eXFTSetUpXTask:    self.setUpXTask    = _apiFunc
             elif member == _EXTaskApiFuncTag.eXFTTearDownXTask: self.tearDownXTask = _apiFunc
 
-
             else:
                 self.__eApiMask = None
                 break
@@ -174,7 +171,19 @@ class _XTaskApiGuide(_AbstractSlotsObject):
             self.__eExclApiMask = None
             self.CleanUp()
 
-            vlogif._LogOEC(True, -1257)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00249)
+
+    @property
+    def isProvidingRunXTask(self):
+        return False if self.__eApiMask is None else _EXTaskApiFuncTag.IsEnabledRunXTask(self.__eApiMask)
+
+    @property
+    def isProvidingSetUpXTask(self):
+        return False if self.__eApiMask is None else _EXTaskApiFuncTag.IsEnabledSetUpXTask(self.__eApiMask)
+
+    @property
+    def isProvidingTearDownXTask(self):
+        return False if self.__eApiMask is None else _EXTaskApiFuncTag.IsEnabledTearDownXTask(self.__eApiMask)
 
     @property
     def runXTask(self):
@@ -207,18 +216,6 @@ class _XTaskApiGuide(_AbstractSlotsObject):
     @property
     def eExcludedApiMask(self) -> _EXTaskApiFuncTag:
         return self.__eExclApiMask
-
-    @property
-    def isProvidingRunXTask(self):
-        return False if self.__eApiMask is None else _EXTaskApiFuncTag.IsEnabledRunXTask(self.__eApiMask)
-
-    @property
-    def isProvidingSetUpXTask(self):
-        return False if self.__eApiMask is None else _EXTaskApiFuncTag.IsEnabledSetUpXTask(self.__eApiMask)
-
-    @property
-    def isProvidingTearDownXTask(self):
-        return False if self.__eApiMask is None else _EXTaskApiFuncTag.IsEnabledTearDownXTask(self.__eApiMask)
 
     @property
     def _fwThread(self):

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import sys
 
 from argparse import HelpFormatter  as _PyHelpFormatter
@@ -20,12 +19,10 @@ from xcofdk.fwcom import override
 from xcofdk._xcofw.fw.fwssys.fwcore.base.listutil import _ListUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.swpfm.sysinfo import _SystemInfo
 
-
 class _ParsedNamespace:
 
     def __init__(self):
         pass
-
 
 class _FwArgParser(_PyArgumentParser):
 
@@ -78,7 +75,6 @@ class _FwArgParser(_PyArgumentParser):
                             , allow_abbrev=bAllowAbbrev_
                             , exit_on_error=bExitOnError_)
 
-
     @staticmethod
     def PrintNamespace(ns_):
         _maxLen = _ListUtil.GetMaxLen(ns_.__dict__)
@@ -125,9 +121,9 @@ class _FwArgParser(_PyArgumentParser):
         self.__cntErr = 0
         self.__errMsg = None
 
-
     @override
     def error(self, message):
+
         self.__cntErr += 1
 
         _args = { 'prog': self.prog, 'message': message }
@@ -142,7 +138,6 @@ class _FwArgParser(_PyArgumentParser):
     @override
     def exit(self, status=0, message=None):
         self.__Exit(status_=status, message_=message)
-
 
     def __Exit(self, status_=0, message_=None):
         if message_:

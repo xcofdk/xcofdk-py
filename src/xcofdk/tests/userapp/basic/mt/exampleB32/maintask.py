@@ -177,15 +177,6 @@ class MainTaskGIL2(MainXTask, UserAppControllerIF):
         # release referece to gui/Tk's root window
         self.__gui = None
 
-        #NOTE:
-        # - stopping running service tasks while still being in run-phase is
-        #   necessary due to the current asymmetric state transition of tasks
-        #   (see section 'Asymmetric task state transition' in class description
-        #   of XTask),
-        # - an appropriate remedy is in progress and will be provided accordingly.
-        #
-        self.__StopServiceTasks()
-
         if res.isSTOP:
             xlogif.LogInfo(f'[mtGuiAppMain] Finished run-phase of the main task {self.xtaskUniqueID}.')
         return res
@@ -270,7 +261,14 @@ class MainTaskGIL2(MainXTask, UserAppControllerIF):
 
         # is gui going to be destroyed?
         if bOnDestroy_:
-            # stop all (running) service tasks
+            #NOTE:
+            #  a) make sure all services are stopped before the main task leaves its run-phase,
+            #     i.e. its 'running' state,
+            #  b) alternatively, a) could be skipped in which case service instances are
+            #     recommended to perform a pre-check on the avilability of the main task
+            #     before attempting to send out their next message, see impl of method below:
+            #         ServiceTaskGIL2.__PostMessage():
+            #
             self.__StopServiceTasks()
 
             # stop own task, i.e. the main task
@@ -442,7 +440,7 @@ class MainTaskGIL2(MainXTask, UserAppControllerIF):
     def __PostMessage(self, msgLabelID_ : EMsgLabelID =None) -> bool:
         # all service tasks stopped running?
         if self.__GetRunningServiceTasksCount() < 1:
-            _errMsg = f'Unexpected runtime condition, all {self.__srvTaskCount} service tasks stopped running.'
+            _errMsg = f'Unexpected runtime condition of {self.__guiTitle}, all {self.__srvTaskCount} service tasks stopped running already.'
             xlogif.LogError(_errMsg)
 
             # wait for a few seconds, then throw an exception

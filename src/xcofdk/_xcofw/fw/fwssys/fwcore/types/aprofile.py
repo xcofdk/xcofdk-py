@@ -7,16 +7,15 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fwadapter                          import rlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util         import _Util
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import unique
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes      import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _AbstractProfile(_AbstractSlotsObject):
 
@@ -53,10 +52,8 @@ class _AbstractProfile(_AbstractSlotsObject):
         def optAttrsNames(self):
             return self.__optAttrsNames
 
-
     __dictProfileHandlersList = {}
     __slots__ = [ '__ptype' , '__pstatus' , '__pAttrs' ]
-
 
     _ATTR_KEY_ARGS                         = _FwTDbEngine.GetText(_EFwTextID.eAbstractProfile_AttrName_ATTR_KEY_ARGS)
     _ATTR_KEY_AUTO_START_ENCLOSED_PYTHREAD = _FwTDbEngine.GetText(_EFwTextID.eAbstractProfile_AttrName_ATTR_KEY_AUTO_START_ENCLOSED_PYTHREAD)
@@ -66,7 +63,6 @@ class _AbstractProfile(_AbstractSlotsObject):
     _ATTR_KEY_TASK_RIGHTS                  = _FwTDbEngine.GetText(_EFwTextID.eAbstractProfile_AttrName_ATTR_KEY_TASK_RIGHTS)
     _ATTR_KEY_TASK_ID                      = _FwTDbEngine.GetText(_EFwTextID.eAbstractProfile_AttrName_ATTR_KEY_TASK_ID)
 
-
     def __init__(self, ptype_ : _FwIntEnum, profileAttrs_ : dict =None):
         super().__init__()
 
@@ -75,7 +71,7 @@ class _AbstractProfile(_AbstractSlotsObject):
         self.__pstatus = _AbstractProfile._EValidationStatus.eNone
 
         if not isinstance(ptype_, _AbstractProfile._EProfileType):
-            rlogif._LogOEC(True, -1018)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00416)
         else:
             self.__ptype = ptype_
             self._Validate(profileAttrs_)
@@ -122,7 +118,7 @@ class _AbstractProfile(_AbstractSlotsObject):
 
     def Freeze(self, *args_, **kwargs_):
         if not self.isValid:
-            rlogif._LogOEC(True, -1019)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00417)
             return False
         if not self.isFrozen:
             self.__pstatus = _AbstractProfile._EValidationStatus.eFrozen
@@ -135,7 +131,7 @@ class _AbstractProfile(_AbstractSlotsObject):
 
         _phlist =  _AbstractProfile.__GetProfileHandlersList(className_)
         if _phlist is not None:
-            rlogif._LogOEC(True, -1020)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00826)
             return False
 
         _AbstractProfile.__dictProfileHandlersList[className_] = profileHandlersList_
@@ -152,7 +148,7 @@ class _AbstractProfile(_AbstractSlotsObject):
                     _numMEA += 1
             res = _numMEA < 2
         if not res:
-            rlogif._LogOEC(True, -1021)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00418)
         return res
 
     @property
@@ -163,9 +159,7 @@ class _AbstractProfile(_AbstractSlotsObject):
         return '{}: (valid)=({})'.format(_Util.TypeName(self), self.isValid)
 
     def _CleanUp(self):
-        if self.__pAttrs is None:
-            pass
-        else:
+        if self.__pAttrs is not None:
             self.__pAttrs.clear()
 
             self.__pstatus     = None
@@ -185,11 +179,11 @@ class _AbstractProfile(_AbstractSlotsObject):
     def _Validate(self, dictAttrs_ : dict):
         if self._GetProfileHandlersList() is None:
             self.__pstatus = _AbstractProfile._EValidationStatus.eInvalid
-            rlogif._LogOEC(True, -1022)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00419)
             return
         elif self.__pstatus != _AbstractProfile._EValidationStatus.eNone:
             self.__pstatus = _AbstractProfile._EValidationStatus.eInvalid
-            rlogif._LogOEC(True, -1023)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00827)
             return
         elif (dictAttrs_ is None) or (len(dictAttrs_) == 0):
             return

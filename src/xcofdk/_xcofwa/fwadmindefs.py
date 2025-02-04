@@ -7,11 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum   import IntFlag
 from enum   import unique
 from typing import Union as _PyUnion
-
 
 class _FwAdapterConfig:
 
@@ -49,19 +47,12 @@ class _FwAdapterConfig:
     def _EnableLogIFUTSwitchMode():
         _FwAdapterConfig.__bLOGIF_UT_SWITCH_MODE_ENABLED = True
 
-
 class _FwSubsystemCoding:
     @unique
     class _ESubSysFlag(IntFlag):
         eNone                    = 0x0000
-        eSubsysTmrMgr            = (0x0001 <<  1)
         eSubsysMsg               = (0x0001 <<  2)
-        eIntQueueSupport         = (0x0001 <<  3)
-        eSelfExtMessaging        = (0x0001 <<  4)
         eAutoCreateCluster       = (0x0001 <<  5)
-        eAnonymousAddressing     = (0x0001 <<  6)
-        eCustomPayloadSerDes     = (0x0001 <<  7)
-        eNegativeDispatchFilters = (0x0001 <<  8)
         eMandatorySenderExtQueue = (0x0001 <<  9)
 
         @property
@@ -74,15 +65,11 @@ class _FwSubsystemCoding:
 
         @staticmethod
         def IsIntQueueSupportSet(eSubsysMask_: IntFlag) -> bool:
-            return _FwSubsystemCoding._ESubSysFlag.__IsSubsysFlagSet(eSubsysMask_, _FwSubsystemCoding._ESubSysFlag.eIntQueueSupport)
+            return False
 
         @staticmethod
         def IsSelfExtMessaging(eSubsysMask_: IntFlag) -> bool:
-            return _FwSubsystemCoding._ESubSysFlag.__IsSubsysFlagSet(eSubsysMask_, _FwSubsystemCoding._ESubSysFlag.eSelfExtMessaging)
-
-        @staticmethod
-        def IsSubsysTmrMgrSet(eSubsysMask_: IntFlag) -> bool:
-            return _FwSubsystemCoding._ESubSysFlag.__IsSubsysFlagSet(eSubsysMask_, [_FwSubsystemCoding._ESubSysFlag.eSubsysMsg, _FwSubsystemCoding._ESubSysFlag.eSubsysTmrMgr])
+            return False
 
         @staticmethod
         def IsAutoCreateClusterSet(eSubsysMask_: IntFlag) -> bool:
@@ -90,11 +77,11 @@ class _FwSubsystemCoding:
 
         @staticmethod
         def IsAnonymousAddressingSet(eSubsysMask_: IntFlag) -> bool:
-            return _FwSubsystemCoding._ESubSysFlag.__IsSubsysFlagSet(eSubsysMask_, _FwSubsystemCoding._ESubSysFlag.eAnonymousAddressing)
+            return False
 
         @staticmethod
         def IsNegativeDispatchFiltersSet(eSubsysMask_: IntFlag) -> bool:
-            return _FwSubsystemCoding._ESubSysFlag.__IsSubsysFlagSet(eSubsysMask_, _FwSubsystemCoding._ESubSysFlag.eNegativeDispatchFilters)
+            return False
 
         @staticmethod
         def IsMandatorySenderExtQueueSet(eSubsysMask_: IntFlag) -> bool:
@@ -102,7 +89,7 @@ class _FwSubsystemCoding:
 
         @staticmethod
         def IsCustomPayloadSerDesSet(eSubsysMask_: IntFlag) -> bool:
-            return _FwSubsystemCoding._ESubSysFlag.__IsSubsysFlagSet(eSubsysMask_, _FwSubsystemCoding._ESubSysFlag.eCustomPayloadSerDes)
+            return False
 
         @staticmethod
         def _AddBitFlag(eBitMask_: IntFlag, eBitFlags_: _PyUnion[IntFlag, list], bCheckTypeMatch_: bool =True):
@@ -149,16 +136,10 @@ class _FwSubsystemCoding:
                 if (eSubsysMask_ & _bf).value == 0x0: return False
             return True
 
-
     __SUBSYSTEM_CONFIG_BM   = _ESubSysFlag.eNone
     __SUBSYSTEM_CONFIG_BM  |= _ESubSysFlag.eSubsysMsg
     __SUBSYSTEM_CONFIG_BM  |= _ESubSysFlag.eAutoCreateCluster
     __SUBSYSTEM_CONFIG_BM  |= _ESubSysFlag.eMandatorySenderExtQueue
-
-
-    @staticmethod
-    def IsSubsystemTimerManagerConfigured():
-        return _FwSubsystemCoding._ESubSysFlag.IsSubsysTmrMgrSet(_FwSubsystemCoding.__SUBSYSTEM_CONFIG_BM)
 
     @staticmethod
     def IsSubsystemMessagingConfigured():
@@ -205,3 +186,4 @@ class _FwSubsystemCoding:
         res = _FwSubsystemCoding.IsSubsystemMessagingConfigured()
         res = res and _FwSubsystemCoding._ESubSysFlag.IsMandatorySenderExtQueueSet(_FwSubsystemCoding.__SUBSYSTEM_CONFIG_BM)
         return res
+

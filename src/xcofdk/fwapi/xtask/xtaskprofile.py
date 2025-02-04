@@ -97,7 +97,7 @@ class XTaskProfile(_XTaskProfileBase):
     # 1) API construction
     # --------------------------------------------------------------------------
     @staticmethod
-    def CreateSynchronousTaskProfile(aliasName_ : str =None, bPrivilegedTask_ =False):
+    def CreateSynchronousTaskProfile(aliasName_ : str =None, bPrivilegedTask_ =False, runPhaseFreqMS_ : Union[int, float] =0):
         """
         Create a new task profile which can be used to create a synchronous task.
 
@@ -122,8 +122,9 @@ class XTaskProfile(_XTaskProfileBase):
             - XTaskProfile.isPrivilegedTask
         """
         res = XTaskProfile()
-        res.isPrivilegedTask  = bPrivilegedTask_
-        res.isSynchronousTask = True
+        res.isPrivilegedTask    = bPrivilegedTask_
+        res.isSynchronousTask   = True
+        res.runPhaseFrequencyMS = runPhaseFreqMS_
 
         if aliasName_ is not None:
             res.aliasName = aliasName_
@@ -730,7 +731,11 @@ class XTaskProfile(_XTaskProfileBase):
 
         Note:
         ------
-            3-PhXF is described in class description of XTask.
+            - 3-PhXF is described in class description of XTask.
+            - The framework never evaluates this property when executing a task.
+              The application code, however, may use it as a supplementary
+              property controlling the return value of the callback method
+              'RunXTask()' programmatically for advanced use cases.
 
         See:
         -----
@@ -867,8 +872,8 @@ class XTaskProfile(_XTaskProfileBase):
 
         Note:
         ------
-            - Property below of the returned object will still resolve to False
-              regardless of the respective configuration of this instance:
+            - The property below of the returned object will still resolve to
+              False regardless of the respective configuration of this instance:
                   >>> XTaskProfile.isMainTask == False
 
         See:

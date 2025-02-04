@@ -3,13 +3,11 @@
 # ------------------------------------------------------------------------------
 # File   : fwtextdef.py
 #
-# Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwtdb.fwtextid import _EFwTextID
-
 
 def _GetFwTextDefines():
     res = {
@@ -33,7 +31,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eMisc_ImplError                                : '[impl-err]'
         , _EFwTextID.eMisc_EnclPyThread                             : 'ePyThread'
         , _EFwTextID.eMisc_ThreadTarget                             : 'threadTarget'
-        , _EFwTextID.eMisc_ImplError_Param                          : '[impl-err] #{}'
         , _EFwTextID.eMisc_TaskNamePrefix_Task                      : 'Tk_'
         , _EFwTextID.eMisc_TaskNamePrefix_XTask                     : 'XTk_'
         , _EFwTextID.eMisc_TaskNamePrefix_Thread                    : 'Td_'
@@ -53,10 +50,12 @@ def _GetFwTextDefines():
         , _EFwTextID.eMisc_PyParserArgAction_StoreTrue              : 'store_true'
         , _EFwTextID.eMisc_PyParserArgAction_StoreFalse             : 'store_false'
         , _EFwTextID.eMisc_PyModuleName_DateTime                    : 'datetime'
+        , _EFwTextID.eMisc_TaskType_Sync                            : 'Sync'
+        , _EFwTextID.eMisc_TaskType_Async                           : 'Async'
         , _EFwTextID.eMisc_QueueType_Internal                       : 'internal'
         , _EFwTextID.eMisc_QueueType_External                       : 'external'
 
-        , _EFwTextID.eMisc_LogPrefix_ExecCounter                    : '[#ec={}]'
+        , _EFwTextID.eMisc_LogPrefix_ExecCounter                    : '[#xc={}]'
         , _EFwTextID.eMisc_LogPrefix_Task                           : ''
         , _EFwTextID.eMisc_LogPrefix_Thread                         : ''
         , _EFwTextID.eMisc_LogPrefix_Runnable                       : ''
@@ -96,6 +95,9 @@ def _GetFwTextDefines():
         , _EFwTextID.eMisc_Shared_Name_Comp                         : 'Comp'
         , _EFwTextID.eMisc_Shared_Name_Main                         : 'Main'
         , _EFwTextID.eMisc_Shared_Name_MainXco                      : 'MainXTask'
+        , _EFwTextID.eMisc_Shared_Logging_001                       : 'Igonring invalid error code passed in: {}'
+        , _EFwTextID.eMisc_Shared_Logging_002                       : 'Encountered negative error code {} while positive values are expected for application error log entries.'
+        , _EFwTextID.eMisc_Shared_Logging_003                       : 'Encountered positive error code {} while negative values are expected for framework error log entries.'
 
         , _EFwTextID.eFwConfig_FwCoreRelPath                        : '_xcofw/fw/fwssys/fwcore'
         , _EFwTextID.eFwConfig_FwCfgDirRelPath                      : 'config'
@@ -164,7 +166,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLcStateImpl_ELcStateTransReq_MiscCompFailed   : 'MiscCompFailed'
         , _EFwTextID.eLcStateImpl_ELcStateTransReq_MiscCompStarted  : 'MiscCompStarted'
         , _EFwTextID.eLcStateImpl_ELcStateTransReq_MiscCompStopped  : 'MiscCompStopped'
-        , _EFwTextID.eLcStateImpl_FrcEntry_ToString_001             : 'FRC[{}][{}:{}] : [{}] - {}'
         , _EFwTextID.eLcStateImpl_FrcList_ToString_001              : '\n\nAdditional FRCs:'
         , _EFwTextID.eLcStateImpl_FrcList_ToString_002              : '\n\t{:<2} : '
 
@@ -217,15 +218,12 @@ def _GetFwTextDefines():
         , _EFwTextID.eThreadProfile_ToString_03                                         : '({}, valid, trMask, #args, #kwargs)=({}, True, {}, {}, {})'
         , _EFwTextID.eThreadProfile_ToString_04                                         : '({}, valid, taskName, trMask, delayedStartMS, #args, #kwargs)=({}, True, {}, {}, {}, {}))'
 
-
-
         , _EFwTextID.eLoggingEnvConfig_EnvVarName_DieMode   : 'XCO_LOG_DIE_MODE'
         , _EFwTextID.eLoggingEnvConfig_EnvVarName_XcpMode   : 'XCO_LOG_XCP_MODE'
         , _EFwTextID.eLoggingEnvConfig_EnvVarName_LogLevel  : 'XCO_LOG_LOG_LEVEL'
 
         , _EFwTextID.eAbstractRunnableFWC_AliasName_FwMain  : 'FwMain'
         , _EFwTextID.eAbstractRunnableFWC_AliasName_FwDspr  : 'FwDspr'
-        , _EFwTextID.eAbstractRunnableFWC_AliasName_TmrMgr  : 'TmrMgr'
 
         , _EFwTextID.eXTaskProfileBase_ToString_01        : '\tXTask profile :\n'
         , _EFwTextID.eXTaskProfileBase_ToString_02        : 'aliasName'
@@ -243,7 +241,6 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eXTaskProfileExt_ToString_01         : 'isUnitTest'
 
-
         , _EFwTextID.eLcConfig_ToString                     : 'tgtScope={}'
 
         , _EFwTextID.eLcManager_MsgPrefix                   : ''
@@ -253,21 +250,16 @@ def _GetFwTextDefines():
         , _EFwTextID.eELcExecutionStateHistory_ToString_02 : ' -> '
         , _EFwTextID.eELcExecutionStateHistory_ToString_03 : ' := '
 
-        , _EFwTextID.eLcSetupFailure_ToString_01            : ' errorCode={}'
-        , _EFwTextID.eLcSetupFailure_ToString_02            : ' errorMessage : {}'
-
         , _EFwTextID.eLcFailure_ToString_01                 : 'LC failure root cause: '
         , _EFwTextID.eLcFailure_ToString_02                 : '\n\nAdditional fatal error(s):'
         , _EFwTextID.eLcFailure_ToString_03                 : '\n\t{:<2d} : '
-        , _EFwTextID.eLcFailure_PrintLcResult_FmtStr_01     : '\n{}  {}'
         , _EFwTextID.eLcFailure_PrintLcResult_FmtStr_02     : '{} LC failure details:\n'
 
         , _EFwTextID.eLcDepManager_ToString_01              : '{}: lcScope={}, lcState={}'
 
         , _EFwTextID.eLcProxyImpl_ToString_01               : 'LcPxy: fwMain={} , lcScope={} , lcState={}\n\t{}'
 
-        , _EFwTextID.eLcFrcView_ToString_01                 : 'FRC[{}][{}] : [{}] - {}'
-        , _EFwTextID.eLcFrcView_ToString_02                 : 'FRC[{}][{}]'
+        , _EFwTextID.eLcFrcView_ToString_01                 : '\nFRC: [UID:{}][COMP:{}][EC:{}][{}]'
 
         , _EFwTextID.eEuErrorBin_ToString_01                : 'ownerTID={}, '
         , _EFwTextID.eEuErrorBin_ToString_02                : 'binTID={}'
@@ -314,15 +306,12 @@ def _GetFwTextDefines():
         , _EFwTextID.eVLogIF_PrintSummary_FmtStr_06         : ' [LC] END:    vLogIF-Summary  '
         , _EFwTextID.eVLogIF_PrintException_FmtStr_01       : '[{}] Printing caught exception: {}'
         , _EFwTextID.eVLogIF_VPrint_FmtStr_01               : '[{} v{}]'
-        , _EFwTextID.eVLogIF_VPrint_FmtStr_02               : '[errCode={}]'
         , _EFwTextID.eVLogIF_VPrint_FmtStr_03               : '[{} {}]'
         , _EFwTextID.eVLogIF_VPrint_FmtStr_04               : '{}[{}]{}'
         , _EFwTextID.eVLogIF_SetVSystemExitStatus           : 'Switched VSystemExitMode: from {} to {}'
         , _EFwTextID.eVLogIF_ClearLogHistory                : 'Cleared vlog history: #vlogCtr={}'
 
         , _EFwTextID.eCallableIF_ToString_01                : ', methodName={}'
-
-
 
         , _EFwTextID.eMutex_ToString_01                     : '{}: (ownerID, numLocks)=({}, {})'
 
@@ -339,9 +328,17 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eLcStateImpl_ToString_01                                       : ' LcIdle'
         , _EFwTextID.eLcStateImpl_ToString_02                                       : 'LcState[{}] :{}'
+        , _EFwTextID.eLcStateImpl_ToString_03                                       : 'LcState :{}'
+        , _EFwTextID.eLcStateImpl_ToString_04                                       : '\n\tFRC error code    : {}'
         , _EFwTextID.eLcStateImpl_UpdateLcState_PreCheckSetRequest_FmtStr_01        : '\n\tcurBM={}  compID={}  bSSF={}  stReq={}  frcErr={}  absTask={}'
 
         , _EFwTextID.eXTaskConnector_EXUExecState_ToString_01                     : 'AtDetachTime'
+        , _EFwTextID.eXTaskConnector_EXUExecState_ToString_02                     : 'PreRunning'
+        , _EFwTextID.eXTaskConnector_EXUExecState_ToString_03                     : 'Running'
+        , _EFwTextID.eXTaskConnector_EXUExecState_ToString_04                     : 'Done'
+        , _EFwTextID.eXTaskConnector_EXUExecState_ToString_05                     : 'Failed'
+        , _EFwTextID.eXTaskConnector_EXUExecState_ToString_06                     : 'Stopping'
+        , _EFwTextID.eXTaskConnector_EXUExecState_ToString_07                     : 'Aborting'
         , _EFwTextID.eXTaskConnector_XTaskMirror_ToString_01                      : '[{}] state: {}'
         , _EFwTextID.eXTaskConnector_LogPrefix                                    : ''
         , _EFwTextID.eXTaskConnector_LogPrefix_StateUpdate                        : ''
@@ -377,19 +374,13 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eXMPUtilImpl_ToString_01                                       : '  ({})'
 
-
-
-
         , _EFwTextID.eLogMsg_Shared_TextID_001            : '{} Deteced aborting {} state, will try to set fatal error accordingly as no one was set before.'
         , _EFwTextID.eLogMsg_Shared_TextID_002            : '{} API function returned with abort/failure indicated.'
         , _EFwTextID.eLogMsg_Shared_TextID_003            : ' of {}[{}:{}] below:\n\t{}'
         , _EFwTextID.eLogMsg_Shared_TextID_004            : 'Label ID to be passed to must not be a list of labels: {}'
 
-        , _EFwTextID.eLogMsg_LogIF_TextID_001             : 'Bad _XcoBaseException object: {}'
-
         , _EFwTextID.eLogMsg_FwThread_TextID_001          : 'Ignoring user error below received by detached host/Python thread \'{}\':\n\t[{}] - {}'
         , _EFwTextID.eLogMsg_FwThread_TextID_002          : 'Ignoring fatal error below received by detached host/Python thread \'{}\':\n\t[{}] - {}'
-
 
         , _EFwTextID.eLogMsg_TaskError_TextID_001         : 'Ignoring request from task {} to clear current fatal error [{}] due to die-mode.'
 
@@ -439,10 +430,12 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XTaskBase_TextID_018       : 'Found negative value of {} as run phase frequency while construction of xtask instance of {}.'
         , _EFwTextID.eLogMsg_XTaskBase_TextID_021       : 'Found non-positive value of {} as expected maximum cyclic processing timespan while construction of xtask instance of {}.'
         , _EFwTextID.eLogMsg_XTaskBase_TextID_022       : 'Run phase instance method \'{}.{}\' will be ignored acc. to external queue settings of passed in xtask profile.'
-        , _EFwTextID.eLogMsg_XTaskBase_TextID_023       : 'Ignoring request to trigger processing of pending {} messages of xtask {} with its {} queue set to be blocking.'
+        , _EFwTextID.eLogMsg_XTaskBase_TextID_023       : 'Ignoring request to trigger processing of pending {} messages of xtask {} with its {} queue configured to be blocking.'
         , _EFwTextID.eLogMsg_XTaskBase_TextID_024       : 'Ignoring request to trigger processing of pending {} messages of xtask {} which is not current running xtask: {}'
         , _EFwTextID.eLogMsg_XTaskBase_TextID_025       : 'Ignoring request to set current error of xtask {} which is not current running xtask.'
         , _EFwTextID.eLogMsg_XTaskBase_TextID_026       : 'Ignoring request to set current fatal error of xtask {} which is not current running xtask.'
+        , _EFwTextID.eLogMsg_XTaskBase_TextID_027       : 'Framework has encountered an LC failure, ignoring attempt to create new task instance.'
+        , _EFwTextID.eLogMsg_XTaskBase_TextID_028       : 'Coordinated shutdown is running, ignoring attempt to create new task instance.'
 
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_001  : 'Framework is not available (yet/anymore), ignoring attempt to start {}.'
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_002  : 'Bad timeout object of type {} passed in for join {}.'
@@ -459,9 +452,11 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_022  : 'Ignoring attempt to join {} due to current operational state of framework.'
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_023  : 'Ignoring attempt to join {} while coordinated shutdown is running.'
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_024  : '{} failed.'
-        , _EFwTextID.eLogMsg_XTaskConnector_TextID_026  : 'Ignoring attempt to add/remove dispatch filter for XTask {} which is not started yet.'
+        , _EFwTextID.eLogMsg_XTaskConnector_TextID_029  : 'Ignoring attempt to clear current error of XTask {} which is not current running task.'
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_030  : 'Ignoring attempt to send message for XTask {} which is not started yet.'
         , _EFwTextID.eLogMsg_XTaskConnector_TextID_031  : 'Ignoring request to trigger processing of pending external messages of task {} which is not running anymore: {}'
+        , _EFwTextID.eLogMsg_XTaskConnector_TextID_032  : 'Ignoring attempt to set current error of XTask {} which is not current running task.'
+        , _EFwTextID.eLogMsg_XTaskConnector_TextID_033  : 'Ignoring attempt to set current fatal error of XTask {} which is not current running task.'
 
         , _EFwTextID.eLogMsg_XTaskProfileBase_TextID_002  : 'Ignored attempt to enable external queue of task instance as this version of framework does not support that feature.'
         , _EFwTextID.eLogMsg_XTaskProfileBase_TextID_003  : 'Ignored attempt to enable blocking external queue of task instance as this version of framework does not support that feature.'
@@ -476,7 +471,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XTaskProfileExt_TextID_001   : 'Bad/invalid task profile instance: {}'
         , _EFwTextID.eLogMsg_XTaskProfileExt_TextID_002   : 'Failed to assign by task profile instance: {}'
         , _EFwTextID.eLogMsg_XTaskProfileExt_TextID_003   : 'Detected configuration mismatch of task profile: runPhaseEnabled={} , externalQueueEnabled={} , blockingExternalQueue={}'
-
 
         , _EFwTextID.eLogMsg_FSUtil_TextID_001              : 'Directory exists already: {}'
         , _EFwTextID.eLogMsg_FSUtil_TextID_002              : 'Unexpected (system) error while trying to create dir: (dirPath, exception)=({:<s}, \'{:<s}\''
@@ -518,7 +512,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_Util_TextID_014                : 'Expected non-None objects, fromNamespace is None.'
         , _EFwTextID.eLogMsg_Util_TextID_015                : 'Expected non-None objects, toNamespace is None.'
 
-
         , _EFwTextID.eLogMsg_EuErrorHandler_TextID_001      : '[{}] Got unexpected error handler call.'
 
         , _EFwTextID.eLogMsg_MainRunnable_TextID_001        : 'Observing task(s) with LSA status change:{}'
@@ -553,7 +546,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcManager_TextID_040           : 'Missing failure state(s) of current execution history: {}'
         , _EFwTextID.eLogMsg_LcManager_TextID_041           : 'Encountered severe error due to mismatch of starup result and current execution history:\n\t{}'
         , _EFwTextID.eLogMsg_LcManager_TextID_043           : 'Got request to join framework.'
-        , _EFwTextID.eLogMsg_LcManager_TextID_044           : '{}Waiting for {} to terminate execution'
         , _EFwTextID.eLogMsg_LcManager_TextID_045           : 'Retrieval of requested xtask instance {} not possible (any more).'
         , _EFwTextID.eLogMsg_LcManager_TextID_046           : 'Requested xtask instance {} is not available (any more).'
         , _EFwTextID.eLogMsg_LcManager_TextID_047           : 'Requested xtask instance {} is detached from framework.'
@@ -566,14 +558,13 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_004     : 'Expecting list of LC runtime failure(s), got: {}'
         , _EFwTextID.eLogMsg_LcExecutionStateHistory_TextID_005     : 'Found invalid LC runtime failure: {}'
 
-        , _EFwTextID.eLogMsg_LcSetupFailure_TextID_001      : 'Bad error message object: {}'
-        , _EFwTextID.eLogMsg_LcSetupFailure_TextID_002      : 'Empty error message.'
-        , _EFwTextID.eLogMsg_LcSetupFailure_TextID_003      : 'Bad error code object/value: {}'
+        , _EFwTextID.eLogMsg_LcSetupFailure_TextID_001      : 'Bad LcSF error message object: {}'
+        , _EFwTextID.eLogMsg_LcSetupFailure_TextID_002      : 'Empty LcSF error message.'
+        , _EFwTextID.eLogMsg_LcSetupFailure_TextID_003      : 'Bad/invalid LcSF error code object/value: {}'
 
         , _EFwTextID.eLogMsg_LcRuntimeFailure_TextID_001    : '[LcRF] Bad/invalid FRC view object: {}'
 
-        , _EFwTextID.eLogMsg_LcFailure_TextID_001           : 'A severe error occurred while setup of LC.'
-        , _EFwTextID.eLogMsg_LcFailure_TextID_002           : '[{}] - {}'
+        , _EFwTextID.eLogMsg_LcFailure_TextID_001           : 'A severe error occurred during setup phase of LC.'
         , _EFwTextID.eLogMsg_LcFailure_TextID_003           : 'Permission denied: Overwriting LC runtime failure with setup failure: {}'
         , _EFwTextID.eLogMsg_LcFailure_TextID_005           : 'Failed to set LC setup failure.'
         , _EFwTextID.eLogMsg_LcFailure_TextID_006           : 'Attempt to set LC setup failure while setup already has passed.'
@@ -589,13 +580,16 @@ def _GetFwTextDefines():
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserLogLevel               : '--log-level'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserDisableLogTimestamp    : '--disable-log-timestamp'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserDisableLogHighlighting : '--disable-log-highlighting'
+        , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_UserEnableLogCallstack     : '--enable-log-callstack'
+        , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_SuppressStartPreamble      : '--suppress-start-preamble'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Name_FwCrashCookie              : '--xco-crash-cookie'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserLogLevel                : 'user log level'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserDisableLogTimestamp     : 'disable/hide timestamp of user log entries'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserDisableLogHighlighting  : 'disable highlighting of log entries'
+        , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_UserEnableLogCallstack      : 'enable callstack of user error logs'
+        , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Help_SuppressStartPreamble       : 'suppress start preamble'
         , _EFwTextID.eFwStartOptionsImpl_ArgSpec_Choices_UserLogLevel             : 'trace debug info warning error'
         , _EFwTextID.eFwStartOptionsImpl_ParserProgName                           : 'StartXcoFW'
-        , _EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_091                        : 'Encountered mismatch of exclusive options:\n\t{}'
         , _EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_092                        : 'Caught exception below while trying to parse start options:\n\t{}'
         , _EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_093                        : 'Failed to parse framework start options, see usage below:\n\tpassed in start options: {}\n{}'
         , _EFwTextID.eLogMsg_FwStartOptionsImpl_TextID_094                        : '{}\nNote:\n\tThis version of the framework does not support below options:\n\t\t{}\n'
@@ -630,6 +624,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LogException_TextID_008        : 'Invalid nested exception object.'
 
         , _EFwTextID.eLogMsg_LcGuardImpl_TextID_001         : 'Detected LC monitor aliveness alarm, missing since {}ms.'
+        , _EFwTextID.eLogMsg_LcGuardImpl_TextID_002         : 'Maximum execution time of framework expired, initiating coordinated shutdown...'
         , _EFwTextID.eLogMsg_LcGuardImpl_TextID_003         : 'Finished coordinated shutdown.'
 
         , _EFwTextID.eLogMsg_LcStateImpl_TextID_001         : 'Missing valid component ID.'
@@ -645,8 +640,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcStateImpl_TextID_012         : 'Unexpected impl-error #{} due to ffrc mismatch:{}'
         , _EFwTextID.eLogMsg_LcStateImpl_TextID_013         : 'Bad LC component ID object for setting new state: type={}'
         , _EFwTextID.eLogMsg_LcStateImpl_TextID_014         : 'Mismatch of passed in params #{}: {}'
-
-
 
         , _EFwTextID.eLogMsg_Mutex_TextID_001               : 'Failed to release mutex due to exception: {}: {}'
 
@@ -688,6 +681,8 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_031       : '{}disallowed attempt by XTask {} to send ans external message to itself.'
         , _EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_032       : '{}singleton instance of class MainXTask not created yet or not available anymore.'
         , _EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_033       : '{}custom payload (de-)serialization is not available in this version of the software.'
+        , _EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_034       : 'Send operation for message below failed for some unspecified reason::\n\t{}'
+        , _EFwTextID.eLogMsg_XcoMsgMgrImpl_TextID_035       : 'Broadcast operation for message below failed for some unspecified reason::\n\t{}'
 
         , _EFwTextID.eLogMsg_SubsysMsgUtil_TextID_001       : ' passed in as member of cluster {}'
         , _EFwTextID.eLogMsg_SubsysMsgUtil_TextID_002       : 'Invalid (list of) label ID(s){}: {}'
@@ -735,23 +730,24 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_SerDes_TextID_010              : 'File currently opened for reading: {}'
         , _EFwTextID.eLogMsg_SerDes_TextID_011              : '{}open/create dump file: {}'
 
-        , _EFwTextID.eLogMsg_FwDispatcher_TextID_001        : 'Ignoring dispatch request due to missing registration(s):\n\t{}'
+        , _EFwTextID.eLogMsg_FwDispatcher_TextID_001        : 'Ignoring dispatch request due to missing registration(s) (of receiver tasks most probably not running anymore):\n\t{}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_002        : 'Ignoring dispatch target {} for message below due to its current operational state:\n\t{}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_003        : 'FW dispatcher\'s internal queue full (#{}), dropping dispatch to task \'{}\' for message below:\n\t{}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_004        : 'Exceeded maximum retry number of {}, dropping dispatch to task(s) \'{}\' for message {} below:\n\t{}'
-        , _EFwTextID.eLogMsg_FwDispatcher_TextID_005        : 'Dispatch target for message below has become invalid, ignoring send request:\n\t{}'
+        , _EFwTextID.eLogMsg_FwDispatcher_TextID_005        : 'Dispatch target for message below has become unreachable, ignoring send request:\n\t{}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_007        : 'Custom serializer raised exception for message below:\n\tmessage: {}\n\texception: {}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_008        : 'Custom serializer failed for message below:\n\tmessage: {}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_009        : 'Failed to de-serialize byte-stream of message {} while dispatching.'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_010        : 'Custom de-serializer raised exception for message {}:\n\texception: {}'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_011        : 'Custom de-serializer failed for message {}.'
         , _EFwTextID.eLogMsg_FwDispatcher_TextID_012        : 'Reached threshold value of {} consecutive failed attempts of message delivery to task {}.\n\tSubsequent message delivery attempts to this task will be applied without retry anymore until first successful delivery is accomplished.'
+        , _EFwTextID.eLogMsg_FwDispatcher_TextID_013        : 'Receiver task denied to queue message, dropping dispatch to task \'{}\' for message {} below:\n\t{}'
 
         , _EFwTextID.eLogMsg_AbstractRunnable_TextID_001    : 'Ignoring attempt to send internal message for task {} due to full internal queue: queueSize={}'
         , _EFwTextID.eLogMsg_AbstractRunnable_TextID_002    : 'Task {} has reached its max. external queue size of {}, currently unable to queue message {}, dispatch re-try will take place (if applicable).'
-        , _EFwTextID.eLogMsg_AbstractRunnable_TextID_003    : 'Run phase of task {} not started yet, ignoring request to trigger {} queue processing.'
+        , _EFwTextID.eLogMsg_AbstractRunnable_TextID_003    : 'Task {} is currently not within its run phase, ignoring request to trigger {} queue processing.'
         , _EFwTextID.eLogMsg_AbstractRunnable_TextID_004    : 'Task {} is processing internal/external queue already, ignoring request to trigger {} queue processing.'
-        , _EFwTextID.eLogMsg_AbstractRunnable_TextID_005    : 'Task {} is currently unable to queue message {}, dispatch re-try will take place (if applicable).'
+        , _EFwTextID.eLogMsg_AbstractRunnable_TextID_006    : 'Task {} is currently within its teardown phase, ignoring request to trigger {} queue processing.'
 
         , _EFwTextID.eLogMsg_CallableIF_TextID_004          : 'Ignored passed in parameter method: {}'
         , _EFwTextID.eLogMsg_CallableIF_TextID_008          : 'Callable spec for methodName={}: {}'
@@ -779,9 +775,11 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XProcessConnector_TextID_001   : 'Refused to create new xprocess instance due to change of MP process start method.'
         , _EFwTextID.eLogMsg_XProcessConnector_TextID_002   : 'Encountered invlaid or out of range max. data size of {} passed in to create process instance, valid range: [{}..{}]'
         , _EFwTextID.eLogMsg_XProcessConnector_TextID_003   : 'Failed to create RTE data: {}'
+        , _EFwTextID.eLogMsg_XProcessConnector_TextID_004   : 'Framework has encountered an LC failure, ignoring attempt to create new process instance.'
         , _EFwTextID.eLogMsg_XProcessConnector_TextID_006   : 'Failed to retrieve RTE data of process {} with exit code {}.'
         , _EFwTextID.eLogMsg_XProcessConnector_TextID_007   : 'Process {} terminated with exit code {}.'
         , _EFwTextID.eLogMsg_XProcessConnector_TextID_008   : 'Process {} terminated with exit code set to success, but transferred result data indicates failure.'
+        , _EFwTextID.eLogMsg_XProcessConnector_TextID_010   : 'Coordinated shutdown is running, ignoring attempt to create new process instance.'
 
         , _EFwTextID.eLogMsg_MPStartPolicy_TextID_001       : 'Encountered invalid object of type {} passed in as process start method ID, expecting object of type {} instead.'
         , _EFwTextID.eLogMsg_MPStartPolicy_TextID_007       : 'MP process start method (SM) status:\n\tplatform       : {}\n\tinitial     SM : {}\n\tprevious    SM : {}\n\tcurrent     SM : {}\n\tfirst fixed SM : {}'

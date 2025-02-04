@@ -7,10 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import unique
-
 
 class _AbstractExecutable:
 

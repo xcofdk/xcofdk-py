@@ -3,17 +3,13 @@
 # ------------------------------------------------------------------------------
 # File   : fwtextid.py
 #
-# Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
-
 
 from enum import auto
 from enum import Enum
 from enum import unique
-
-
-
 
 @unique
 class _EFwTextID(Enum):
@@ -37,7 +33,6 @@ class _EFwTextID(Enum):
     eMisc_ImplError                             = auto()
     eMisc_EnclPyThread                          = auto()
     eMisc_ThreadTarget                          = auto()
-    eMisc_ImplError_Param                       = auto()
     eMisc_TaskNamePrefix_Task                   = auto()
     eMisc_TaskNamePrefix_XTask                  = auto()
     eMisc_TaskNamePrefix_Thread                 = auto()
@@ -57,6 +52,8 @@ class _EFwTextID(Enum):
     eMisc_PyParserArgAction_StoreTrue           = auto()
     eMisc_PyParserArgAction_StoreFalse          = auto()
     eMisc_PyModuleName_DateTime                 = auto()
+    eMisc_TaskType_Sync                         = auto()
+    eMisc_TaskType_Async                        = auto()
     eMisc_QueueType_Internal                    = auto()
     eMisc_QueueType_External                    = auto()
 
@@ -100,7 +97,9 @@ class _EFwTextID(Enum):
     eMisc_Shared_Name_Comp                      = auto()
     eMisc_Shared_Name_Main                      = auto()
     eMisc_Shared_Name_MainXco                   = auto()
-
+    eMisc_Shared_Logging_001                    = auto()
+    eMisc_Shared_Logging_002                    = auto()
+    eMisc_Shared_Logging_003                    = auto()
 
     eFwConfig_FwCoreRelPath                     = auto()
     eFwConfig_FwCfgDirRelPath                   = auto()
@@ -169,7 +168,6 @@ class _EFwTextID(Enum):
     eLcStateImpl_ELcStateTransReq_MiscCompFailed    = auto()
     eLcStateImpl_ELcStateTransReq_MiscCompStarted   = auto()
     eLcStateImpl_ELcStateTransReq_MiscCompStopped   = auto()
-    eLcStateImpl_FrcEntry_ToString_001              = auto()
     eLcStateImpl_FrcList_ToString_001               = auto()
     eLcStateImpl_FrcList_ToString_002               = auto()
 
@@ -230,7 +228,6 @@ class _EFwTextID(Enum):
 
     eAbstractRunnableFWC_AliasName_FwMain   = auto()
     eAbstractRunnableFWC_AliasName_FwDspr   = auto()
-    eAbstractRunnableFWC_AliasName_TmrMgr   = auto()
 
     eXTaskProfileBase_ToString_01         = auto()
     eXTaskProfileBase_ToString_02         = auto()
@@ -258,13 +255,9 @@ class _EFwTextID(Enum):
     eELcExecutionStateHistory_ToString_02   = auto()
     eELcExecutionStateHistory_ToString_03   = auto()
 
-    eLcSetupFailure_ToString_01             = auto()
-    eLcSetupFailure_ToString_02             = auto()
-
     eLcFailure_ToString_01                  = auto()
     eLcFailure_ToString_02                  = auto()
     eLcFailure_ToString_03                  = auto()
-    eLcFailure_PrintLcResult_FmtStr_01      = auto()
     eLcFailure_PrintLcResult_FmtStr_02      = auto()
 
     eLcDepManager_ToString_01               = auto()
@@ -272,7 +265,6 @@ class _EFwTextID(Enum):
     eLcProxyImpl_ToString_01                = auto()
 
     eLcFrcView_ToString_01                  = auto()
-    eLcFrcView_ToString_02                  = auto()
 
     eEuErrorBin_ToString_01                 = auto()
     eEuErrorBin_ToString_02                 = auto()
@@ -319,7 +311,6 @@ class _EFwTextID(Enum):
     eVLogIF_PrintSummary_FmtStr_06          = auto()
     eVLogIF_PrintException_FmtStr_01        = auto()
     eVLogIF_VPrint_FmtStr_01                = auto()
-    eVLogIF_VPrint_FmtStr_02                = auto()
     eVLogIF_VPrint_FmtStr_03                = auto()
     eVLogIF_VPrint_FmtStr_04                = auto()
     eVLogIF_SetVSystemExitStatus            = auto()
@@ -344,9 +335,17 @@ class _EFwTextID(Enum):
 
     eLcStateImpl_ToString_01                                        = auto()
     eLcStateImpl_ToString_02                                        = auto()
+    eLcStateImpl_ToString_03                                        = auto()
+    eLcStateImpl_ToString_04                                        = auto()
     eLcStateImpl_UpdateLcState_PreCheckSetRequest_FmtStr_01         = auto()
 
     eXTaskConnector_EXUExecState_ToString_01                      = auto()  
+    eXTaskConnector_EXUExecState_ToString_02                      = auto()  
+    eXTaskConnector_EXUExecState_ToString_03                      = auto()  
+    eXTaskConnector_EXUExecState_ToString_04                      = auto()  
+    eXTaskConnector_EXUExecState_ToString_05                      = auto()  
+    eXTaskConnector_EXUExecState_ToString_06                      = auto()  
+    eXTaskConnector_EXUExecState_ToString_07                      = auto()  
     eXTaskConnector_XTaskMirror_ToString_01                       = auto()
     eXTaskConnector_LogPrefix                                     = auto()
     eXTaskConnector_LogPrefix_StateUpdate                         = auto()
@@ -382,15 +381,11 @@ class _EFwTextID(Enum):
 
     eXMPUtilImpl_ToString_01                                        = auto()
 
-
-
-
     eLogMsg_Shared_TextID_001           = auto()
     eLogMsg_Shared_TextID_002           = auto()
     eLogMsg_Shared_TextID_003           = auto()
     eLogMsg_Shared_TextID_004           = auto()
 
-    eLogMsg_LogIF_TextID_001            = auto()
 
     eLogMsg_FwThread_TextID_001         = auto()
     eLogMsg_FwThread_TextID_002         = auto()
@@ -448,6 +443,8 @@ class _EFwTextID(Enum):
     eLogMsg_XTaskBase_TextID_024      = auto()
     eLogMsg_XTaskBase_TextID_025      = auto()
     eLogMsg_XTaskBase_TextID_026      = auto()
+    eLogMsg_XTaskBase_TextID_027      = auto()
+    eLogMsg_XTaskBase_TextID_028      = auto()
 
     eLogMsg_XTaskConnector_TextID_001 = auto()
     eLogMsg_XTaskConnector_TextID_002 = auto()
@@ -464,9 +461,11 @@ class _EFwTextID(Enum):
     eLogMsg_XTaskConnector_TextID_022 = auto()
     eLogMsg_XTaskConnector_TextID_023 = auto()
     eLogMsg_XTaskConnector_TextID_024 = auto()
-    eLogMsg_XTaskConnector_TextID_026 = auto()
+    eLogMsg_XTaskConnector_TextID_029 = auto()
     eLogMsg_XTaskConnector_TextID_030 = auto()
     eLogMsg_XTaskConnector_TextID_031 = auto()
+    eLogMsg_XTaskConnector_TextID_032 = auto()
+    eLogMsg_XTaskConnector_TextID_033 = auto()
 
     eLogMsg_XTaskProfileBase_TextID_002   = auto()
     eLogMsg_XTaskProfileBase_TextID_003   = auto()
@@ -558,7 +557,6 @@ class _EFwTextID(Enum):
     eLogMsg_LcManager_TextID_040            = auto()
     eLogMsg_LcManager_TextID_041            = auto()
     eLogMsg_LcManager_TextID_043            = auto()
-    eLogMsg_LcManager_TextID_044            = auto()
     eLogMsg_LcManager_TextID_045            = auto()
     eLogMsg_LcManager_TextID_046            = auto()
     eLogMsg_LcManager_TextID_047            = auto()
@@ -578,7 +576,6 @@ class _EFwTextID(Enum):
     eLogMsg_LcRuntimeFailure_TextID_001     = auto()
 
     eLogMsg_LcFailure_TextID_001            = auto()
-    eLogMsg_LcFailure_TextID_002            = auto()
     eLogMsg_LcFailure_TextID_003            = auto()
     eLogMsg_LcFailure_TextID_005            = auto()
     eLogMsg_LcFailure_TextID_006            = auto()
@@ -594,13 +591,16 @@ class _EFwTextID(Enum):
     eFwStartOptionsImpl_ArgSpec_Name_UserLogLevel               = auto()
     eFwStartOptionsImpl_ArgSpec_Name_UserDisableLogTimestamp    = auto()
     eFwStartOptionsImpl_ArgSpec_Name_UserDisableLogHighlighting = auto()
+    eFwStartOptionsImpl_ArgSpec_Name_UserEnableLogCallstack     = auto()
+    eFwStartOptionsImpl_ArgSpec_Name_SuppressStartPreamble      = auto()
     eFwStartOptionsImpl_ArgSpec_Name_FwCrashCookie              = auto()
     eFwStartOptionsImpl_ArgSpec_Help_UserLogLevel               = auto()
     eFwStartOptionsImpl_ArgSpec_Help_UserDisableLogTimestamp    = auto()
     eFwStartOptionsImpl_ArgSpec_Help_UserDisableLogHighlighting = auto()
+    eFwStartOptionsImpl_ArgSpec_Help_UserEnableLogCallstack     = auto()
+    eFwStartOptionsImpl_ArgSpec_Help_SuppressStartPreamble      = auto()
     eFwStartOptionsImpl_ArgSpec_Choices_UserLogLevel            = auto()
     eFwStartOptionsImpl_ParserProgName                          = auto()
-    eLogMsg_FwStartOptionsImpl_TextID_091                       = auto()
     eLogMsg_FwStartOptionsImpl_TextID_092                       = auto()
     eLogMsg_FwStartOptionsImpl_TextID_093                       = auto()
     eLogMsg_FwStartOptionsImpl_TextID_094                       = auto()
@@ -635,6 +635,7 @@ class _EFwTextID(Enum):
     eLogMsg_LogException_TextID_008         = auto()
 
     eLogMsg_LcGuardImpl_TextID_001          = auto()
+    eLogMsg_LcGuardImpl_TextID_002          = auto()
     eLogMsg_LcGuardImpl_TextID_003          = auto()
 
     eLogMsg_LcStateImpl_TextID_001          = auto()
@@ -693,6 +694,8 @@ class _EFwTextID(Enum):
     eLogMsg_XcoMsgMgrImpl_TextID_031        = auto()
     eLogMsg_XcoMsgMgrImpl_TextID_032        = auto()
     eLogMsg_XcoMsgMgrImpl_TextID_033        = auto()
+    eLogMsg_XcoMsgMgrImpl_TextID_034        = auto()
+    eLogMsg_XcoMsgMgrImpl_TextID_035        = auto()
 
     eLogMsg_SubsysMsgUtil_TextID_001        = auto()
     eLogMsg_SubsysMsgUtil_TextID_002        = auto()
@@ -751,12 +754,13 @@ class _EFwTextID(Enum):
     eLogMsg_FwDispatcher_TextID_010          = auto()
     eLogMsg_FwDispatcher_TextID_011          = auto()
     eLogMsg_FwDispatcher_TextID_012          = auto()
+    eLogMsg_FwDispatcher_TextID_013          = auto()
 
     eLogMsg_AbstractRunnable_TextID_001      = auto()
     eLogMsg_AbstractRunnable_TextID_002      = auto()
     eLogMsg_AbstractRunnable_TextID_003      = auto()
     eLogMsg_AbstractRunnable_TextID_004      = auto()
-    eLogMsg_AbstractRunnable_TextID_005     = auto()
+    eLogMsg_AbstractRunnable_TextID_006      = auto()
 
     eLogMsg_CallableIF_TextID_004            = auto()
     eLogMsg_CallableIF_TextID_008            = auto()
@@ -784,9 +788,11 @@ class _EFwTextID(Enum):
     eLogMsg_XProcessConnector_TextID_001     = auto()
     eLogMsg_XProcessConnector_TextID_002     = auto()
     eLogMsg_XProcessConnector_TextID_003     = auto()
+    eLogMsg_XProcessConnector_TextID_004     = auto()
     eLogMsg_XProcessConnector_TextID_006     = auto()
     eLogMsg_XProcessConnector_TextID_007     = auto()
     eLogMsg_XProcessConnector_TextID_008     = auto()
+    eLogMsg_XProcessConnector_TextID_010     = auto()
 
     eLogMsg_MPStartPolicy_TextID_001         = auto()
     eLogMsg_MPStartPolicy_TextID_007         = auto()
@@ -796,8 +802,6 @@ class _EFwTextID(Enum):
 
     eLogMsg_XMPUtilImpl_TextID_001           = auto()
     eLogMsg_XMPUtilImpl_TextID_002           = auto()
-
-
 
     @property
     def compactName(self):

@@ -7,9 +7,7 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofwa.fwadmindefs import _FwAdapterConfig
-
 
 if _FwAdapterConfig._IsRedirectPyLoggingEnabled():
     import logging as _PyLogger
@@ -31,5 +29,4 @@ else:
         from xcofdk._xcofw.fw.fwssys.fwcore.logging import logif as rlogif
     else:
         from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif as rlogif
-
 

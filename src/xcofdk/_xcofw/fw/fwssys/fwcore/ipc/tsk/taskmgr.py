@@ -7,12 +7,10 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from typing import Union as _PyUnion
 
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject        import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _XcoExceptionRoot
-
 
 class _TaskManager(_AbstractSlotsObject):
 
@@ -23,8 +21,11 @@ class _TaskManager(_AbstractSlotsObject):
         super().__init__()
 
     @property
-    def isTaskManagerApiAvailable(self):
-        return self._isTaskManagerApiAvailable
+    def isTMgrApiFullyAvailable(self):
+        return self._isTMgrApiFullyAvailable
+
+    def IsCurTask(self, taskID_: int) -> bool:
+        return self._IsCurTask(taskID_)
 
     def CreateTask( self
                   , taskPrf_                       =None 
@@ -74,12 +75,8 @@ class _TaskManager(_AbstractSlotsObject):
                                  , threadProfileAttrs_=threadProfileAttrs_
                                  , tskOpPreCheck_=tskOpPreCheck_)
 
-
     def GetCurTaskBadge(self):
         return self._GetCurTaskBadge()
-    
-    def GetCurTaskError(self, taskID_ =None):
-        return self._GetCurTaskError(taskID_)
     
     def GetTask(self, taskID_, bDoWarn_ =True):
         return self._GetTask(taskID_, bDoWarn_=bDoWarn_)
@@ -89,6 +86,9 @@ class _TaskManager(_AbstractSlotsObject):
 
     def GetTaskBadge(self, taskID_, bDoWarn_ =True):
         return self._GetTaskBadge(taskID_, bDoWarn_=bDoWarn_)
+
+    def GetTaskError(self, taskID_=None):
+        return self._GetTaskError(taskID_)
 
     def StartTask(self, taskID_, tskOpPreCheck_ =None) -> bool:
         return self._StartTask(taskID_, tskOpPreCheck_=tskOpPreCheck_)
@@ -111,15 +111,8 @@ class _TaskManager(_AbstractSlotsObject):
     def JoinXTask(self, xtConn_, timeout_ =None, tskOpPreCheck_ =None) -> bool:
         return self._JoinXTask(xtConn_, timeout_=timeout_, tskOpPreCheck_=tskOpPreCheck_)
 
-    def PrintTaskTable(self, tabPrefixed_ =False, printNavtiveID_ =False, printIdent_ =False):
-        self._PrintTaskTable(tabPrefixed_=tabPrefixed_, printNavtiveID_=printNavtiveID_, printIdent_=printIdent_)
-
     def _ProcUnhandledException(self, xcp_: _XcoExceptionRoot):
         return self._ProcUnhandledXcp(xcp_)
-
-    def _CleanUp(self):
-        pass
-
 
 def _TaskMgr() -> _TaskManager:
     return _TaskManager._theTMgrImpl

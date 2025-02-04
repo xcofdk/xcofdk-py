@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwcom                 import override
 from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
 
@@ -17,9 +16,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject  import _AbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject import _ProtectedAbstractObject
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject import _ProtectedAbstractSlotsObject
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _FwPayload(_AbstractSlotsObject, XPayloadIF):
     __slots__ = [ '__cont' , '__bSerDes' ]
@@ -34,12 +34,11 @@ class _FwPayload(_AbstractSlotsObject, XPayloadIF):
             cont_ = dict()
         elif not isinstance(cont_, dict):
             self.CleanUp()
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Payload_TextID_001).format(type(cont_).__name__))
+            logif._LogErrorEC(_EFwErrorCode.UE_00136, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Payload_TextID_001).format(type(cont_).__name__))
         elif bShallowCopy_:
             cont_ = cont_.copy()
         self.__cont    = cont_
         self.__bSerDes = not bSkipSerDes_
-
 
     @staticmethod
     def CustomSerializePayload(payload_) -> bytes:
@@ -79,7 +78,6 @@ class _FwPayload(_AbstractSlotsObject, XPayloadIF):
         self.__cont = None
         return res
 
-
     @property
     def container(self) -> dict:
         return self.__cont
@@ -99,13 +97,10 @@ class _FwPayload(_AbstractSlotsObject, XPayloadIF):
     def UpdateContainerNoOverwrite(self, dictParams_: dict, bShallowCopy_ =True):
         return self.__UpdateContainer(dictParams_, bShallowCopy_=bShallowCopy_, bOverwrite_=False)
 
-
     def _CleanUp(self):
         if self.__cont is not None:
             _bSerDes = self.isMarshalingRequired
-            if not _bSerDes:
-                pass
-            else:
+            if _bSerDes:
                 for _kk in self.__cont:
                     _vv = self.__cont[_kk]
                     if isinstance(_vv, (_AbstractObject, _AbstractSlotsObject)):

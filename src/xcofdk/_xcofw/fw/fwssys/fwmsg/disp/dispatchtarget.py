@@ -7,13 +7,12 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif   import _CallableIF
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes      import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchagentif import _DispatchAgentIF
-
 
 class _DispatchTarget(_AbstractSlotsObject):
 
@@ -27,7 +26,7 @@ class _DispatchTarget(_AbstractSlotsObject):
 
         if not self.__IsValid(agent_=agent_, callback_=callback_):
             self.CleanUp()
-            vlogif._LogOEC(True, -1669)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00528)
             return
 
         self.__dispAgent    = agent_

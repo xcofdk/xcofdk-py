@@ -28,7 +28,8 @@ class UserAppUtil:
     __slots__ = []
 
     __FW_START_OPTION_LOGLEVEL       = '--log-level'
-    __CMD_LINE_DUAL_OPTIONS_LIST     = [ __FW_START_OPTION_LOGLEVEL , '--service-tasks-count' , '--fibonacci-input 20' ]
+    __CMD_LINE_DUAL_OPTIONS_LIST     = [ __FW_START_OPTION_LOGLEVEL , '--service-tasks-count' , '--fibonacci-input' ]
+    __FW_START_OPTION_ENABLE_LOG_CS  = '--enable-log-callstack'
     __FW_START_OPTION_DISABLE_LOG_TS = '--disable-log-timestamp'
     __FW_START_OPTION_DISABLE_LOG_HL = '--disable-log-highlighting'
 
@@ -37,12 +38,15 @@ class UserAppUtil:
         pass
 
     @staticmethod
-    def GetFwStartOptions(loglevel_ : str =None, bDisableLogTimestamp_ : bool =None, bDisableLogHighlighting_ : bool =None) -> list:
+    def GetFwStartOptions( loglevel_                : str  =None
+                         , bDisableLogTimestamp_    : bool =None
+                         , bDisableLogHighlighting_ : bool =None
+                         , bEnableLogCallstack_     : bool =None) -> list:
         """
         Return a list of string literals which can be used as framework's start
         options to be passed to corresponding API function.
         """
-        return UserAppUtil.__GetFwStartOptions(loglevel_=loglevel_, bDisableLogTimestamp_=bDisableLogTimestamp_, bDisableLogHighlighting_=bDisableLogHighlighting_)
+        return UserAppUtil.__GetFwStartOptions(loglevel_=loglevel_, bDisableLogTimestamp_=bDisableLogTimestamp_, bDisableLogHighlighting_=bDisableLogHighlighting_, bEnableLogCallstack_=bEnableLogCallstack_)
 
     @staticmethod
     def SleepMS(timespanMS_ : int):
@@ -194,10 +198,14 @@ class UserAppUtil:
     # Impl
     # --------------------------------------------------------------------------
     @staticmethod
-    def __GetFwStartOptions(loglevel_ : str =None, bDisableLogTimestamp_ : bool =None, bDisableLogHighlighting_ : bool =None) -> list:
+    def __GetFwStartOptions( loglevel_                : str  =None
+                           , bDisableLogTimestamp_    : bool =None
+                           , bDisableLogHighlighting_ : bool =None
+                           , bEnableLogCallstack_     : bool =None) -> list:
         #NOTE:
         # a) currently available start options:
         #      --log-level
+        #      --enable-log-callstack
         #      --disable-log-timestamp
         #      --disable-log-highlighting
         #
@@ -227,7 +235,7 @@ class UserAppUtil:
 
         # option '--disable-log-timestamp' not specified via cmdline?
         if not UserAppUtil.__FW_START_OPTION_DISABLE_LOG_TS in res:
-            if isinstance(bDisableLogTimestamp_, bool):
+            if isinstance(bDisableLogTimestamp_, bool) and bDisableLogTimestamp_:
                 res.append(UserAppUtil.__FW_START_OPTION_DISABLE_LOG_TS)
         else:
             # ignore passed in flag, cmdline options do have precedence
@@ -235,8 +243,16 @@ class UserAppUtil:
 
         # option '--disable-log-highlighting' not specified via cmdline?
         if not UserAppUtil.__FW_START_OPTION_DISABLE_LOG_HL in res:
-            if isinstance(bDisableLogHighlighting_, bool):
+            if isinstance(bDisableLogHighlighting_, bool) and bDisableLogHighlighting_:
                 res.append(UserAppUtil.__FW_START_OPTION_DISABLE_LOG_HL)
+        else:
+            # ignore passed in flag, cmdline options do have precedence
+            pass
+
+        # option '--enable-log-callstack' not specified via cmdline?
+        if not UserAppUtil.__FW_START_OPTION_ENABLE_LOG_CS in res:
+            if isinstance(bEnableLogCallstack_, bool) and bEnableLogCallstack_:
+                res.append(UserAppUtil.__FW_START_OPTION_ENABLE_LOG_CS)
         else:
             # ignore passed in flag, cmdline options do have precedence
             pass
@@ -267,7 +283,6 @@ class UserAppUtil:
 
             # dual option?
             if _aa in UserAppUtil.__CMD_LINE_DUAL_OPTIONS_LIST:
-                _aa  = sys.argv[_ii]
                 _bLL = _aa == UserAppUtil.__FW_START_OPTION_LOGLEVEL
                 if _bLL:
                     res.append(_aa)
@@ -277,17 +292,16 @@ class UserAppUtil:
                     print('[UserAppUtil] Missing value specification after cmdline option \'{}\'.'.format(_aa))
                     return None
 
-                if not _bLL:
-                    continue
+                _vv = sys.argv[_ii]
 
-                _loglevel = sys.argv[_ii]
-                if _loglevel not in lstValidLoglevelValues_:
-                    _tmp = ' | '.join(lstValidLoglevelValues_)
-                    print('[UserAppUtil] Unknown/invalid loglevel \'{}\' specified via cmdline, see below for defined values:\n\t{}'.format(str(_loglevel), _tmp))
-                    return None
-
-                res.append(_loglevel)
+                if _bLL:
+                    if _vv not in lstValidLoglevelValues_:
+                        _tmp = ' | '.join(lstValidLoglevelValues_)
+                        print('[UserAppUtil] Unknown/invalid loglevel \'{}\' specified via cmdline, see below for defined values:\n\t{}'.format(str(_vv), _tmp))
+                        return None
+                    res.append(_vv)
                 continue
+            #END if _aa in...
 
             # option '--disable-log-timestamp'
             if _aa == UserAppUtil.__FW_START_OPTION_DISABLE_LOG_TS:
@@ -296,6 +310,11 @@ class UserAppUtil:
 
             # option '--disable-log-highlighting'
             if _aa == UserAppUtil.__FW_START_OPTION_DISABLE_LOG_HL:
+                res.append(_aa)
+                continue
+
+            # option '--enable-log-callstack'
+            if _aa == UserAppUtil.__FW_START_OPTION_ENABLE_LOG_CS:
                 res.append(_aa)
                 continue
         return res

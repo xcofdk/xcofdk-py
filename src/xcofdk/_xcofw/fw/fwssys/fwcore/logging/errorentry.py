@@ -7,13 +7,13 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _ELogType
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _EErrorImpact
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _LogErrorCode
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logentry   import _LogEntry
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _ErrorEntry(_LogEntry):
 
@@ -47,9 +47,9 @@ class _ErrorEntry(_LogEntry):
             errCode_ = None
         elif cloneby_ is not None:
             if not isinstance(cloneby_, _ErrorEntry):
-                vlogif._LogOEC(True, -1084)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00422)
             elif cloneby_.isInvalid:
-                vlogif._LogOEC(True, -1085)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00423)
             else:
                 errCode_ = cloneby_.errorCode
 
@@ -153,24 +153,24 @@ class _ErrorEntry(_LogEntry):
     def _ForceCleanUp(self):
         self.CleanUp()
 
-    def _SetTaskInstance(self, tskInst_):
-        if self.isInvalid:
-            pass
-        else:
+    def _SetTaskInstance(self, tskInst_, bAdaptTaskInfo_ =False):
+        if not self.isInvalid:
             self.__tskInst = tskInst_
+            if bAdaptTaskInfo_ and tskInst_.isValid:
+                self._Adapt(taskName_=tskInst_.taskName, taskID_=tskInst_.taskID)
 
     def _SetErrorImpact(self, eErrImpact_ : _EErrorImpact, mtxErrImpact_ =None):
         if not isinstance(eErrImpact_, _EErrorImpact):
-            vlogif._LogOEC(True, -1086)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00424)
             return
 
         _curErrImp = self.eErrorImpact
         _curErrImpStr = str(None) if _curErrImp is None else _curErrImp.compactName
         if _curErrImp is not None:
-            vlogif._LogOEC(True, -1087)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00425)
             return
         if (mtxErrImpact_ is not None) and (self.__mtxErrImpact is not None):
-            vlogif._LogOEC(True, -1088)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00426)
             return
 
         self.__eErrImpact   = eErrImpact_
@@ -178,10 +178,10 @@ class _ErrorEntry(_LogEntry):
 
     def _UpdateErrorImpact(self, eErrImpact_ : _EErrorImpact):
         if not isinstance(eErrImpact_, _EErrorImpact):
-            vlogif._LogOEC(True, -1089)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00427)
             return
         if self.__eErrImpact is None:
-            vlogif._LogOEC(True, -1090)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00428)
             return
 
         _myMtx = self._LockInstance()
@@ -190,7 +190,6 @@ class _ErrorEntry(_LogEntry):
             if self.__eErrImpact.isFatalErrorImpactDueToExecutionApiReturn:
                 eErrImpact_ = _EErrorImpact.eNoImpactByFrcLinkageDueToExecApiReturn
 
-        _tmp              = self.__eErrImpact
         self.__eErrImpact = eErrImpact_
 
         if _myMtx is not None:
@@ -227,7 +226,7 @@ class _ErrorEntry(_LogEntry):
         res = isinstance(eErrorLogType_, _ELogType)
         res = res and eErrorLogType_.isError
         if not res:
-            vlogif._LogOEC(True, -1091)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00429)
         else:
             if errCode_ is None:
                 errCode_ = _LogErrorCode.GetAnonymousErrorCode()
@@ -235,9 +234,6 @@ class _ErrorEntry(_LogEntry):
                 res = isinstance(errCode_, int)
                 res = res and (errCode_ != _LogErrorCode.GetInvalidErrorCode())
                 if not res:
-                    _midPart = str(errCode_)
-                    if not isinstance(errCode_, int):
-                        _midPart = '\'{}\''.format(errCode_)
-                    vlogif._LogOEC(True, -1092)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00430)
                     errCode_ = None
         return res, errCode_

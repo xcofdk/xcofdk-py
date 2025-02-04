@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logif import _LogKPI
@@ -20,25 +19,23 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile import _ExecutionProfile
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskbadge   import _TaskBadge
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _TaskUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxydefines   import _ELcShutdownRequest
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject       import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask      import _EBitMask
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _FwIntFlag
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _CommonDefines
-
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate      import _ELcExecutionState
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate      import _LcExecutionStateHistory
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcexecstate      import _LcFailure
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcmgrtif         import _LcManagerTrustedIF
-
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb      import _LcTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb      import _LcDynamicTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb      import _LcCeaseTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb      import _LcDummyDynamicTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb      import _ELcCeaseTLBState
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject       import _AbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask      import _EBitMask
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _FwIntFlag
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _LcMonGCItem:
     __slots__ = [ '__age' , '__item' ]
@@ -64,7 +61,6 @@ class _LcMonGCItem:
 
     def IncAge(self):
         self.__age += 1
-
 
 class _LcMonGC:
     __slots__ = [ '__gcItems' ]
@@ -108,7 +104,6 @@ class _LcMonGC:
             res = _LcMonGCItem(item_)
             self.__gcItems.append(res)
         return res
-
 
 class _TlbSummary:
     __slots__ = [ '__ctr' , '__numTsk' , '__numXuTsk' , '__numRunningTsk' , '__numRunningXuTsk' , '__lsaReport' ]
@@ -193,7 +188,6 @@ class _TlbSummary:
             self.__numRunningXuTsk = rhs_.__numRunningXuTsk
         else:
             self.__ctr += 1
-
 
 class _LcMonitorImpl(_LcManagerTrustedIF):
 
@@ -284,11 +278,11 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
 
         if _LcMonitorImpl.__theLcMon is not None:
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._LogOEC(True, -1515)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00414)
             return
         if not (isinstance(eLcExceHist_, _LcExecutionStateHistory) and eLcExceHist_.isValid):
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._LogOEC(True, -1516)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00415)
             return
 
         _LcMonitorImpl.__theLcMon = self
@@ -380,13 +374,11 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
         with self.__mtxApi:
             return _LcMonitorImpl._ELcMonStateFlag.IsCoordinatedShutdownGate(self.__eBitMask)
 
-
     @property
     def eCurrentShutdownRequest(self) -> _ELcShutdownRequest:
         if self.__isInvalid: return None
         with self.__mtxApi:
             return self.__curSDR
-
 
     @property
     def _isCoordinatedShutdownManagedByMR(self) -> bool:
@@ -413,6 +405,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                     _tstate = _dtlb.eTaskState
                     if not (_tstate.isDone or _tstate.isFailed):
                         res = True
+
         return res
 
     @property
@@ -443,6 +436,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
             _bm = _LcMonitorImpl._ELcMonStateFlag.ebfCoordSDRunning
             if _LcMonitorImpl._ELcMonStateFlag.IsLcMonBitFlagSet(self.__eBitMask, _bm):
                 self.__eBitMask = _LcMonitorImpl._ELcMonStateFlag.RemoveLcMonBitFlag(self.__eBitMask, _bm)
+
                 if not bDueToUnexpectedError_:
                     self.__eExecHist._AddExecutionState(_ELcExecutionState.eShutdownPassed, self)
 
@@ -450,10 +444,10 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
         if self.__isInvalid:
             return
         if not isinstance(bfLcMonState_, _LcMonitorImpl._ELcMonStateFlag):
-            vlogif._LogOEC(True, -1517)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00416)
             return
         if bfLcMonState_.value < _LcMonitorImpl._ELcMonStateFlag.ebfCeasingGate:
-            vlogif._LogOEC(True, -1518)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00417)
             return
         with self.__mtxApi:
             if not _LcMonitorImpl._ELcMonStateFlag.IsLcMonBitFlagSet(self.__eBitMask, bfLcMonState_):
@@ -466,7 +460,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
 
         with self.__mtxApi:
             if self.isLcShutdownEnabled:
-                pass
+                pass 
             else:
                 _bAlive = self.isLcMonitorAlive
                 if bManagedByMR_ is None:
@@ -574,7 +568,6 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
             if len(_lstXuTaskCleanUp) > 0:
                 self.__gc.CleanUpItems(_lstXuTaskCleanUp)
 
-
     def _GetCeaseTLBLists(self, eCeaseState_ : _ELcCeaseTLBState, bReverseStartTimeSorted_ =True):
         if self.__isInvalid:
             return None, None
@@ -610,7 +603,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                     if (_tid in _tidFW) or (_tid in _tidXU) or (_tid in _tidIgnore):
                         continue
 
-                    if (_ctlb is None) or (not _ctlb.isValid) or _ctlb.isDeceased or _ctlb.isAbortingCease:
+                    if (_ctlb is None) or (not _ctlb.isValid) or _ctlb.isDeceased or _ctlb.isEndingCease:
                         if _ctlb is not None:
                             _tidIgnore.append(_tid)
                             if _tuname in _tunWaiting:
@@ -639,7 +632,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                 if _numWait >= _MAX_WAIT_NUM:
                     _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcMonitorImpl_TextID_003).format(len(_tunWaiting))
                     if not vlogif._IsReleaseModeEnabled():
-                        pass
+                        pass 
                     else:
                         vlogif._XLogWarning(_wngMsg)
                     for _tid in _tidWaiting:
@@ -652,7 +645,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                 if ((_numWait * _SINGLE_WAIT_TIMESPAN_MS) % 1000) == 0:
                     _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcMonitorImpl_TextID_004).format(len(_tunWaiting))
                     if not vlogif._IsReleaseModeEnabled():
-                        pass
+                        pass 
                     else:
                         vlogif._XLogWarning(_wngMsg)
 
@@ -717,14 +710,14 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                 if not res.isValid:
                     res.CleanUp()
                     res = None
-                    vlogif._LogOEC(True, -1519)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00418)
                 else:
                     self.__tblTLB[_tid] = res
                     if res.lcStaticTLB.taskBadge.isFwMain:
                         self.__mainTLB = res
         return res
 
-    def _CreateCeaseTLB(self, tskID_ : int, mtxData_: _Mutex, bAborting_: bool) -> _LcCeaseTLB:
+    def _CreateCeaseTLB(self, tskID_ : int, mtxData_: _Mutex, bEnding_: bool) -> _LcCeaseTLB:
         if self.__isInvalid:
             return None
 
@@ -741,11 +734,11 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                 if not _tlb.isValid:
                     res = None
                 else:
-                    res = _LcCeaseTLB(_tlb.lcStaticTLB, mtxData_, bAborting_)
+                    res = _LcCeaseTLB(_tlb.lcStaticTLB, mtxData_, bEnding_)
                     if not res.isValid:
                         res.CleanUp()
                         res = None
-                        vlogif._LogOEC(True, -1520)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00419)
                     else:
                         _tlb._SetCeaseTLB(res)
             return res
@@ -768,7 +761,6 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
                     break
                 continue
         return res
-
 
     def _ToString(self):
         if self.__isInvalid:
@@ -817,9 +809,7 @@ class _LcMonitorImpl(_LcManagerTrustedIF):
         with self.__mtxApi:
             _bm = _LcMonitorImpl._ELcMonStateFlag.ebfAlive
             _bSet = _LcMonitorImpl._ELcMonStateFlag.IsLcMonBitFlagSet(self.__eBitMask, _bm)
-            if _bSet == bAlive_:
-                pass
-            else:
+            if _bSet != bAlive_:
                 if not bAlive_:
                     self.__eBitMask = _LcMonitorImpl._ELcMonStateFlag.RemoveLcMonBitFlag(self.__eBitMask, _bm)
                 else:

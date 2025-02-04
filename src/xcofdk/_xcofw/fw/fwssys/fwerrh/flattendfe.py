@@ -3,10 +3,9 @@
 # ------------------------------------------------------------------------------
 # File   : flattendfe.py
 #
-# Copyright(c) 2023 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
-
 
 import os
 from datetime import datetime as _Datetime
@@ -17,18 +16,16 @@ from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines   import _LogUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.xcoexception import _EXcoXcpType
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil     import _ETaskExecutionPhaseID
 
-
 class _FlattendFatalError:
 
-    __slots__ = [  '__eType'      ,  '__filePath'   ,  '__funcName'  , '__lineNo'
-                , '__uniqueID'    ,  '__longMsg'    ,  '__shortMsg'  , '__tstamp'
-                , '__taskName'    ,  '__taskID'     ,  '__euRNum'    , '__eTEPhase'
-                , '__bFFE'        ,  '__errCode'    ,  '__eErrImp'   ,  '__header'
-                , '__callstack'   ,  '__blabla'     ,  '__sysXcp'    ,  '__sysXcpTB'
-                , '__eSysXcpType'
+    __slots__ = [  '__eType'    ,  '__filePath' ,  '__funcName' , '__lineNo'
+                , '__uniqueID'  ,  '__longMsg'  ,  '__shortMsg' , '__tstamp'
+                , '__taskName'  ,  '__taskID'   ,  '__euRNum'   , '__eTEPhase'
+                , '__bFFE'      ,  '__errCode'  ,  '__eErrImp'  ,  '__header'
+                , '__callstack' ,  '__sysXcp'   ,  '__sysXcpTB' , '__eSysXcpType'
                 ]
 
-    def __init__( self, feClone_, bForeignFE_ =False):
+    def __init__( self, feClone_, bFFE_ =False):
         if (feClone_ is None) or not feClone_.isValid:
             self.__bFFE        = None
             self.__eType       = None
@@ -51,7 +48,7 @@ class _FlattendFatalError:
             self.__callstack   = None
             self.__eSysXcpType = None
         else:
-            self.__bFFE      = bForeignFE_
+            self.__bFFE      = bFFE_
             self.__eType     = feClone_.eLogType
             self.__euRNum    = feClone_.euRNumber
             self.__header    = feClone_.header
@@ -66,7 +63,7 @@ class _FlattendFatalError:
             self.__funcName  = feClone_.functionName
             self.__taskName  = feClone_.taskName
             self.__uniqueID  = feClone_.uniqueID
-            self.__eTEPhase  = feClone_.eTaskExecPhase
+            self.__eTEPhase  = feClone_.eTaskXPhase
             self.__callstack = feClone_.callstack
 
             sysXcp = feClone_._causedBySystemException
@@ -86,10 +83,6 @@ class _FlattendFatalError:
     @property
     def isSystemFatalError(self):
         return self.isValid and (self.eLogType._absoluteValue >= _ELogType.FTL_SYS_OP_ERR.value)
-
-    @property
-    def isForeignFatalError(self):
-        return self.__bFFE
 
     @property
     def uniqueID(self):
@@ -174,7 +167,7 @@ class _FlattendFatalError:
         return self.__euRNum
 
     @property
-    def eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
+    def eTaskXPhase(self) -> _ETaskExecutionPhaseID:
         return _ETaskExecutionPhaseID.eNone if self.__eTEPhase is None else self.__eTEPhase
 
     @property
@@ -195,3 +188,8 @@ class _FlattendFatalError:
 
     def ToString(self, *args_, **kwargs_):
         pass
+
+    @property
+    def _isFFE(self):
+        return self.__bFFE
+

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
@@ -18,9 +17,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObje
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _EuErrorBin(_AbstractSlotsObject):
 
@@ -37,16 +37,13 @@ class _EuErrorBin(_AbstractSlotsObject):
         def isErrBinOpResultSuccess(self):
             return self.value > _EuErrorBin._EErrBinOpResult.eErrBinOpResultImplError.value
 
-
         @property
         def isErrBinOpResultFailed(self):
             return not self.isErrBinOpResultSuccess
 
-
         @property
         def isErrBinOpResultDuplicateInsertionError(self):
             return self == _EuErrorBin._EErrBinOpResult.eErrBinOpResultDuplicateInsertion
-
 
     __slots__ = [ '__bin' , '__ownerTID' , '__binTID' , '__mtxApi' , '__firstFE' , '__primalFE' ]
     __APPLY_ERROR_BIN_REASSURANCE_CHECK = True
@@ -64,16 +61,17 @@ class _EuErrorBin(_AbstractSlotsObject):
         if _EuErrorBin.__APPLY_ERROR_BIN_REASSURANCE_CHECK:
             if not isinstance(ownerTID_, int):
                 _bError = True
-                vlogif._LogOEC(True, -1477)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00504)
             elif not isinstance(binTID_, int):
                 _bError = True
-                vlogif._LogOEC(True, -1478)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00505)
             elif not isinstance(mtxApi_, _Mutex):
                 _bError = True
-                vlogif._LogOEC(True, -1479)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00506)
 
         if _bError:
             pass
+
         elif not _EuErrorBin._IsRegistrableEE(ownerTID_, errorEntry_, binTID_=binTID_):
             _bError = True
 
@@ -127,7 +125,6 @@ class _EuErrorBin(_AbstractSlotsObject):
                 res = self.__bin
         return res
 
-
     def SetCurrentError(self, errorEntry_ : _ErrorEntry, force_ =False):
         if self.__ownerTID is None:
             res = _EuErrorBin._EErrBinOpResult.eErrBinOpResultInvalidObject
@@ -155,9 +152,7 @@ class _EuErrorBin(_AbstractSlotsObject):
                             self.__bin.CleanUp()
                         self.__bin = None
 
-        if res.isErrBinOpResultFailed:
-            pass
-        else:
+        if not res.isErrBinOpResultFailed:
             self.__bin = errorEntry_
             if self.__firstFE is None:
                 if errorEntry_.isFatalError:
@@ -165,16 +160,12 @@ class _EuErrorBin(_AbstractSlotsObject):
         return res
 
     def ClearCurError(self):
-        if self.__ownerTID is None:
-            pass
-        else:
+        if self.__ownerTID is not None:
             with self.__mtxApi:
                 self.__CheckOnPendingResolution()
 
     def ClearFirstFatalError(self):
-        if self.__ownerTID is None:
-            pass
-        else:
+        if self.__ownerTID is not None:
             with self.__mtxApi:
                 if self.__firstFE is not None:
                     self.__firstFE.CleanUp()
@@ -193,20 +184,20 @@ class _EuErrorBin(_AbstractSlotsObject):
             res = False
 
         if not res:
-            vlogif._LogOEC(True, -1480)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00507)
         else:
             if binTID_ is None:
                 binTID_ = ee_.taskID
             if not (isinstance(ownerTID_, int) and isinstance(binTID_, int)):
                 res = False
-                vlogif._LogOEC(True, -1481)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00508)
             elif ee_.taskID != binTID_:
                 res = False
-                vlogif._LogOEC(True, -1482)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00509)
             elif ee_.IsForeignTaskError(ownerTID_):
                 if not ee_.isPendingResolution:
                     res = False
-                    vlogif._LogOEC(True, -1483)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00510)
         return res
 
     def _ToString(self, *args_, **kwargs_):
@@ -240,9 +231,7 @@ class _EuErrorBin(_AbstractSlotsObject):
         return res
 
     def _CleanUp(self):
-        if self.__ownerTID is None:
-            pass
-        else:
+        if self.__ownerTID is not None:
             _myApiMtx = self.__mtxApi
             with _myApiMtx:
                 if self.__bin is not None:
@@ -277,7 +266,6 @@ class _EuErrorBin(_AbstractSlotsObject):
                 self.__bin.CleanUp()
             self.__bin = None
 
-
 class _EuFEBinTable(_AbstractSlotsObject):
 
     __slots__ = [ '__tbl' , '__ownerTID' , '__mtxApi' ]
@@ -290,10 +278,10 @@ class _EuFEBinTable(_AbstractSlotsObject):
 
         if not isinstance(ownerTID_, int):
             self.CleanUp()
-            vlogif._LogOEC(True, -1484)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00511)
         elif not isinstance(mtxApi_, _Mutex):
             self.CleanUp()
-            vlogif._LogOEC(True, -1485)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00512)
         else:
             self.__mtxApi   = mtxApi_
             self.__ownerTID = ownerTID_
@@ -328,7 +316,7 @@ class _EuFEBinTable(_AbstractSlotsObject):
             res = _EuErrorBin._EErrBinOpResult.eErrBinOpResultImplError
         elif fee_.taskID == self.__ownerTID:
             res = _EuErrorBin._EErrBinOpResult.eErrBinOpResultImplError
-            vlogif._LogOEC(True, -1486)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00513)
         else:
             with self.__mtxApi:
                 _feBin = self.__GetFeBin(fee_.taskID)
@@ -345,7 +333,7 @@ class _EuFEBinTable(_AbstractSlotsObject):
                 else:
                     res = _feBin.SetCurrentError(fee_, force_=force_)
         if res.isErrBinOpResultFailed:
-            vlogif._LogOEC(True, -1487)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00514)
         return res
 
     def GetAllPending(self, bFatalErrorsOnly_ =True) -> list:
@@ -389,16 +377,12 @@ class _EuFEBinTable(_AbstractSlotsObject):
 
     def _ToString(self, *args_, **kwargs_):
         res = None
-        if self.__isInvalid:
-            pass
-        else:
+        if not self.__isInvalid:
             res = 'ownerTID={} , feeBinTableSize={}'.format(self.ownerTaskID, self.feeBinTableSize)
         return res
 
     def _CleanUp(self):
-        if self.__isInvalid:
-            pass
-        else:
+        if not self.__isInvalid:
             _myApiMtx = self.__mtxApi
             with _myApiMtx:
                 if self.__tbl is not None:

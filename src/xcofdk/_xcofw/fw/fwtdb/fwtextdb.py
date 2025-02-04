@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 from enum import Enum
 from enum import unique
@@ -16,7 +15,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import SyncPrint
 
 from xcofdk._xcofw.fw.fwtdb.fwtextid  import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtextdef import _GetFwTextDefines
-
 
 @unique
 class _ETextDBCreateStatus(Enum):
@@ -40,7 +38,6 @@ class _ETextDBCreateStatus(Enum):
     @property
     def isTDBDestroyed(self):
         return self == _ETextDBCreateStatus.eTDBDestroyed
-
 
 class _FwTextDB:
     __slots__  = [ '__size' , '__bPkgDist' , '__lstFwTxt' , '__lstMissing' ]
@@ -72,7 +69,6 @@ class _FwTextDB:
         _allKeys = _dictFwTxt.keys()
         _allKeys = [ _kk.value for _kk in _allKeys ]
         _allKeys = sorted(_allKeys)
-
 
         self.__lstFwTxt   = [ _dictFwTxt[_EFwTidClass(_kk)] for _kk in _allKeys ]
         self.__size       = len(self.__lstFwTxt)

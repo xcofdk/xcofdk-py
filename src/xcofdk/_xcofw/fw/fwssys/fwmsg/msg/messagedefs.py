@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from typing import Union as _PyUnion
 
 from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
@@ -22,9 +21,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import Enum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import IntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import unique
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EMessageType(_FwIntEnum):
@@ -48,7 +48,6 @@ class _EMessageType(_FwIntEnum):
     @property
     def isTOutgoing(self):
         return self == _EMessageType.eTOutgoing
-
 
 @unique
 class _EMessageChannel(_FwIntEnum):
@@ -88,7 +87,6 @@ class _EMessageChannel(_FwIntEnum):
     def isChCustom(self):
         return self == _EMessageChannel.eChCustom
 
-
 @unique
 class _EMessageCluster(_FwIntEnum):
     eCDontCare          = -300
@@ -101,7 +99,6 @@ class _EMessageCluster(_FwIntEnum):
     @property
     def isCFrameworkActivity(self):
         return self == _EMessageCluster.eCFrameworkActivity
-
 
 @unique
 class _EMessageLabel(_FwIntEnum):
@@ -120,7 +117,6 @@ class _EMessageLabel(_FwIntEnum):
     @property
     def isLTmrMgrBackLogRemoveTimer(self):
         return self == _EMessageLabel.eLTmrMgrBackLogRemoveTimer
-
 
 @unique
 class _EMessagePeer(_FwIntEnum):
@@ -158,7 +154,6 @@ class _EMessagePeer(_FwIntEnum):
     @property
     def isPTimerManager(self):
         return self == _EMessagePeer.ePTmrMgr
-
 
 class _SubsysMsgUtil:
     __slots__ = []
@@ -200,7 +195,7 @@ class _SubsysMsgUtil:
         if not res:
             if _myMsg is None:
                 _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SubsysMsgUtil_TextID_003).format(_SubsysMsgUtil.StringizeID(anID_))
-            logif._LogError(_myMsg)
+            logif._LogErrorEC(_EFwErrorCode.UE_00137, _myMsg)
         return res
 
     @staticmethod
@@ -238,7 +233,7 @@ class _SubsysMsgUtil:
             if _myMsg is None:
                 _midPart = _CommonDefines._STR_EMPTY if grpIDCalledFor_ is None else _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SubsysMsgUtil_TextID_001).format(_SubsysMsgUtil.StringizeID(grpIDCalledFor_))
                 _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SubsysMsgUtil_TextID_002).format(_midPart, _SubsysMsgUtil.StringizeID(anID_))
-            logif._LogError(_myMsg)
+            logif._LogErrorEC(_EFwErrorCode.UE_00138, _myMsg)
         return res
 
     @staticmethod
@@ -262,7 +257,7 @@ class _SubsysMsgUtil:
         if not res:
             if _myMsg is None:
                 _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SubsysMsgUtil_TextID_004).format(_SubsysMsgUtil.StringizeID(anID_))
-            logif._LogError(_myMsg)
+            logif._LogErrorEC(_EFwErrorCode.UE_00139, _myMsg)
         return res
 
     @staticmethod
@@ -285,7 +280,6 @@ class _SubsysMsgUtil:
             res = str(someID_)
         return res
 
-
 class _MessageCluster(_AbstractSlotsObject):
 
     __slots__ = [ '__clrID' , '__labels' ]
@@ -296,27 +290,27 @@ class _MessageCluster(_AbstractSlotsObject):
         super().__init__()
 
         if not _SubsysMsgUtil.IsValidClusterID(clrID_):
-            vlogif._LogOEC(True, -1631)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00555)
             return
 
         _lbls = lblID_
         if _lbls is None:
-            vlogif._LogOEC(True, -1632)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00556)
             return
         if isinstance(_lbls, list):
             if len(_lbls) < 1:
-                vlogif._LogOEC(True, -1633)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00557)
                 return
         else:
             _lbls = [_lbls]
 
         for _ee in _lbls:
             if not _SubsysMsgUtil.IsValidLabelID(lblID_, bAllowAsList_=True, grpIDCalledFor_=clrID_):
-                vlogif._LogOEC(True, -1634)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00558)
                 return
             elif isinstance(lblID_, _EMessageLabel):
                 if lblID_.isLDontCare:
-                    vlogif._LogOEC(True, -1635)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00559)
                     return
 
         self.__clrID  = clrID_

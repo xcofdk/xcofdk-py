@@ -55,6 +55,7 @@ class XTask(_XTaskBase):
         4) API task state and properties
         5) API message handling
         6) API error handling
+        7) API miscellaneous
 
     With regard to application code using and interfacing to the runtime
     environment of the framework class XTask is ideally suited for a general
@@ -180,10 +181,11 @@ class XTask(_XTaskBase):
         task has finished its execution path upon normal termination,
         especially without causing any fatal error.
         Note, however, thinkng of a task as a job executor, the logical
-        interpretation of this state might be different, especially from
-        application's viewpoint. Such a logical interpretation is considered
-        by the framework application-specific with it is best designed and
-        implemented by derived class(es) sub-classing this class.
+        interpretation of this state in terms of 'job achievement' might be
+        different, especially from application's viewpoint. Such a logical
+        interpretation is considered by the framework application-specific with
+        it is best designed and implemented by derived class(es) sub-classing
+        this class.
 
     State 'failed' means:
         task has aborted its execution by intention, or submitted a fatal error
@@ -253,20 +255,21 @@ class XTask(_XTaskBase):
 
     However, there are two limited operational modes tasks (or processes)
     provided to the application should be aware of:
-        - local-limited RTE mode:
-          affecting individual services.
+        - task-limited RTE mode:
+          affecting individual tasks or services.
           It is currently the case whenever a task instance is within its
           teardown phase (if configured).
 
-        - global-limited RTE mode:
-          affecting all active services.
-          It basically takes place as sson as the coordinated shutdown sequence
-          of the framework taskes place.
+          Whenever this mode is given, an active service won't be able to
+          perform message exchange anymore, except for sending messages.
 
-    In general, whenever a limited RTE mode is given, an active service won't
-    be able to perform message exchange anymore. In addition, for global-limited
-    RTE mode below functionalities are not available either:
-        - create, start, stop or join tasks (or process).
+        - LC-limited RTE mode:
+          affecting all active tasks or services.
+          It basically takes place as sson as the coordinated shutdown sequence
+          of the framework takes place.
+
+          In this mode neither the messaging subsystem nor any of the operations
+          to create, start, stop or join tasks (or process) will be available.
 
 
     Note:
@@ -363,9 +366,9 @@ class XTask(_XTaskBase):
         Parameters:
         -------------
             - args_ :
-              optional positional arguments.
+              positional arguments (if any).
             - kwargs_ :
-              optional keyword arguments.
+              keyword arguments (if any).
 
         Returns:
         ----------
@@ -378,10 +381,6 @@ class XTask(_XTaskBase):
             - ETernaryCallbackResultID.ABORT :
               to indicate an unexpected, severe error. The framework will then
               immediately submit a fatal error accordingly.
-
-        Note:
-        ------
-            Both parameters args_ and kwargs_ are not supported yet.
 
         See:
         -----
@@ -422,9 +421,9 @@ class XTask(_XTaskBase):
         Parameters:
         -------------
             - args_ :
-              optional positional arguments.
+              positional arguments (if any).
             - kwargs_ :
-              optional keyword arguments.
+              keyword arguments (if any).
 
         Returns:
         ----------
@@ -446,10 +445,6 @@ class XTask(_XTaskBase):
               to indicate an unexpected, severe error. The framework will then
               immediately submit a fatal error accordingly.
 
-        Note:
-        ------
-            Both parameters args_ and kwargs_ are not supported yet.
-
         See:
         -----
             - XTask
@@ -458,6 +453,8 @@ class XTask(_XTaskBase):
             - XTask.Start()
             - XTask.SetUpXTask()
             - XTask.TearDownXTask()
+            - XTask.isFirstRunPhaseIteratoion
+            - XTask.currentRunPhaseIteratoionNo
             - section 4) API task state and properties
         """
         xlogif.LogWarning('Default impl of the run phase, nothig to do, continue with teardown phase (if configured)')
@@ -485,8 +482,8 @@ class XTask(_XTaskBase):
         ------
             - Teardown phase is designed to enable tasks to perfrom individual
               cleanup stuff (if any) upon their normal termination.
-            - Bear in mind that a task in teardown phase is within the locally
-              limited RTE mode (see description of this class above).
+            - Bear in mind that a task in teardown phase is within the
+              task-limited RTE mode (see description of this class above).
 
         See:
         -----
@@ -529,9 +526,10 @@ class XTask(_XTaskBase):
 
         Note:
         ------
-            - Unless configured as run phase, processing of external messages
-              takes place before next run phase cycle is executed (which is
-              according to the default policy).
+            - Unless configured as run phase via configuration property
+              'XTaskProfile.isExternalQueueBlocking', processing of external
+              messages takes place before next run phase cycle is executed
+              (which is according to the default policy).
             - Also, a task may trigger the message processing itself at any time
               provided it is still in state running, and it is not processing
               messages already.
@@ -540,8 +538,10 @@ class XTask(_XTaskBase):
         -----
             - XTask.TriggerExternalQueueProcessing()
             - XTask.__init__()
+            - XTask.isFirstRunPhaseIteratoion
+            - XTask.currentRunPhaseIteratoionNo
             - XTaskProfile.isExternalQueueEnabled
-            . XTaskProfile.isExternalQueueBlocking
+            - XTaskProfile.isExternalQueueBlocking
             - XMessage
             - XMessageManager
             - XMessageManager.SendMessage()
@@ -557,9 +557,26 @@ class XTask(_XTaskBase):
     # ------------------------------------------------------------------------------
     # 3) API start/stop
     # ------------------------------------------------------------------------------
-    def Start(self) -> bool:
+    def Start(self, *args_, **kwargs_) -> bool:
         """
         Request to start this task.
+
+        Passed in positional and/or keyword arguments (if any) will be passed
+        to the 3-PhXF callbacks below:
+            - SetUpXTask()
+              if this instance is configured to have a setup-phase,
+            - RunXTask()
+              if this instance is not configured to have a setup-phase.
+              Then, whenever this callback is entered, the property
+              'XTask.isFirstRunPhaseIteratoion' shall be used to either process
+              the arguments passed to accordingly or just ignore them.
+
+        Parameters:
+        -------------
+            - args_ :
+              positional arguments (if any).
+            - kwargs_ :
+              keyword arguments (if any).
 
         Returns:
         ----------
@@ -581,8 +598,9 @@ class XTask(_XTaskBase):
         -----
             - XTask
             - XTask.isStarted
+            - XTask.isFirstRunPhaseIteratoion
         """
-        return _XTaskBase._Start(self)
+        return _XTaskBase._Start(self, *args_, **kwargs_)
 
 
     def Stop(self) -> bool:
@@ -1203,7 +1221,7 @@ class XTask(_XTaskBase):
             - XTaskError
             - xlogif.LogError()
         """
-        self._SetErrorEC(errorMsg_, None)
+        self._SetTaskError(False, errorMsg_, None)
 
 
     def SetErrorEC(self, errorMsg_ : str, errorCode_: int):
@@ -1234,7 +1252,7 @@ class XTask(_XTaskBase):
             - XTaskError
             - xlogif.LogErrorEC()
         """
-        self._SetErrorEC(errorMsg_, errorCode_)
+        self._SetTaskError(False, errorMsg_, errorCode_)
 
 
     def SetFatalError(self, errorMsg_ : str):
@@ -1263,7 +1281,7 @@ class XTask(_XTaskBase):
             - XTaskError
             - xlogif.LogFatal()
         """
-        self._SetFatalErrorEC(errorMsg_, None)
+        self._SetTaskError(True, errorMsg_, None)
 
 
     def SetFatalErrorEC(self, errorMsg_ : str, errorCode_: int = None):
@@ -1294,8 +1312,71 @@ class XTask(_XTaskBase):
             - XTaskError
             - xlogif.LogFatalEC()
         """
-        self._SetFatalErrorEC(errorMsg_, errorCode_)
+        self._SetTaskError(True, errorMsg_, errorCode_)
     # ------------------------------------------------------------------------------
     #END 6) API error handling
+    # ------------------------------------------------------------------------------
+
+
+    # ------------------------------------------------------------------------------
+    # 7) API miscellaneous
+    # ------------------------------------------------------------------------------
+    @property
+    def isFirstRunPhaseIteratoion(self) -> bool:
+        """
+        Getter property for this task's first iteration of the run phase.
+
+        Returns:
+        ----------
+            True if the run phase of this instance has been entered with the
+            interation of the run phase is currently running, False otherwise.
+
+        Note:
+        ------
+            - The run phase of a task is given either through 'RunXTask()' or
+              'ProcessExternalMessage()' in case of blocking external queue.
+            - This property is especially useful whenever start argument(s)
+              are passed to when the task is started.
+
+        See:
+        -----
+            - XTask
+            - XTask.Start()
+            - XTask.RunXTask()
+            - XTask.ProcessExternalMessage()
+            - XTask.currentRunPhaseIteratoionNo
+        """
+        _curNo = self._curRunPhaseIteratoionNo
+        return False if _curNo is None else _curNo == 0
+
+    @property
+    def currentRunPhaseIteratoionNo(self) -> int:
+        """
+        Getter property for this task's current iteration number of the run
+        phase.
+
+        Returns:
+        ----------
+            -1 if the run phase of this instance has not been entered yet,
+            0-based current iteration number otherwise.
+
+        Note:
+        ------
+            - The run phase of a task is given either through 'RunXTask()' or
+              'ProcessExternalMessage()' in case of blocking external queue.
+            - For task instance with single-cycle run phase the returned value
+              is either -1 or 0.
+
+        See:
+        -----
+            - XTask
+            - XTask.Start()
+            - XTask.RunXTask()
+            - XTask.ProcessExternalMessage()
+            - XTask.isFirstRunPhaseIteratoion
+        """
+        return self._curRunPhaseIteratoionNo
+    # ------------------------------------------------------------------------------
+    #END 7) API miscellaneous
     # ------------------------------------------------------------------------------
 #END class XTask

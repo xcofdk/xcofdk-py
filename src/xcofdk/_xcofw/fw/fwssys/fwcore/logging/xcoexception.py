@@ -7,8 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
 from enum import Enum
 from enum import unique
 
@@ -18,7 +16,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EXcoXcpType(Enum):
@@ -132,7 +129,6 @@ class _EXcoXcpType(Enum):
     def isBaseExceptionVSystemExit(self):
         return self==_EXcoXcpType.eBaseExceptionVSystemExit
 
-
 class _XcoExceptionRoot(Exception):
     def __init__(self, eXcpType_ : _EXcoXcpType =None, xcpMsg_ : str =None, tb_ : str =None, cst_ : str =None):
         self._tb       = tb_
@@ -168,7 +164,6 @@ class _XcoExceptionRoot(Exception):
     @property
     def _eExceptionType(self) -> _EXcoXcpType:
         return self._eXcpType
-
 
 class _XcoException(_XcoExceptionRoot):
 
@@ -364,9 +359,7 @@ class _XcoException(_XcoExceptionRoot):
         return self.message
 
     def _CleanUp(self):
-        if self._eXcpType is None:
-            pass
-        else:
+        if self._eXcpType is not None:
             if isinstance(self.__enclXcp, _XcoException):
                 self.__enclXcp.CleanUp()
             self._tb       = None
@@ -384,9 +377,6 @@ class _XcoException(_XcoExceptionRoot):
             _XcoException._RaiseSystemExit(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoException_TextID_007).format(self.eExceptionType.compactName, str(enclXcp_)))
         else:
             self.__enclXcp = enclXcp_
-
-
-
 
 class _XcoBaseException(_XcoException):
     def __init__(self, baseXcp_ :  BaseException, tb_ : str =None, taskID_ : int =None):
@@ -427,9 +417,7 @@ class _XcoBaseException(_XcoException):
 
     def _Clone(self):
         res = None
-        if self.eExceptionType is None:
-            pass
-        else:
+        if self.eExceptionType is not None:
             res = _XcoBaseException(self._enclosedException, tb_=self.traceback, taskID_=self.taskID)
             if res.eExceptionType is None:
                 res.CleanUp()
@@ -483,7 +471,6 @@ class _XcoBaseException(_XcoException):
         else:
             res = _EXcoXcpType.eBaseException
         return res
-
 
 class _XTaskExceptionBase(_XcoExceptionRoot):
     def __init__(self, *, uid_ : int =None, xm_ : str =None, ec_ : int =None, tb_ : str =None, cst_ : str =None, bDieXcp_ =False, clone_ : _XcoExceptionRoot =None):

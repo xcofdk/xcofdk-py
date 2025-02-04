@@ -7,12 +7,10 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum   import auto
 from enum   import IntEnum
 from enum   import unique
 from typing import Union as _PyUnion
-
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import logif
@@ -28,11 +26,12 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.msg              import _EMessageChannel
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg              import _SubsysMsgUtil
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg.messagehdrif import _MessageHeaderIF
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EMsgHeaderCtorErrorID(IntEnum):
@@ -116,7 +115,6 @@ class _EMsgHeaderCtorErrorID(IntEnum):
     def isReceiverMissingForDirectAddressing(self):
         return self == _EMsgHeaderCtorErrorID.eReceiverMissingForDirectAddressing
 
-
 class _FwMessageHeader(_MessageHeaderIF):
 
     @unique
@@ -157,11 +155,9 @@ class _FwMessageHeader(_MessageHeaderIF):
         def AddFwMsgBitFlag(eFwMsgBitMask_: _FwIntFlag, eFwMsgBitFlag_):
             return _EBitMask.AddEnumBitFlag(eFwMsgBitMask_, eFwMsgBitFlag_)
 
-
         @staticmethod
         def IsFwMsgBitFlagSet(eFwMsgBitMask_: _FwIntFlag, eFwMsgBitFlag_):
             return _EBitMask.IsEnumBitFlagSet(eFwMsgBitMask_, eFwMsgBitFlag_)
-
 
     __slots__ = [ '__clrID' , '__lblID' , '__sndID' , '__typID' , '__chlID' , '__rcvID' , '__bm' ]
 
@@ -233,9 +229,9 @@ class _FwMessageHeader(_MessageHeaderIF):
                     _myMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageHeader_TextID_014).format(_midPart, _err.value)
 
                 if _bFatal:
-                    logif._LogFatal(_myMsg)
+                    logif._LogFatalEC(_EFwErrorCode.FE_00050, _myMsg)
                 else:
-                    logif._LogError(_myMsg)
+                    logif._LogErrorEC(_EFwErrorCode.UE_00135, _myMsg)
                 return
 
         self.__bm    = _bm
@@ -297,7 +293,6 @@ class _FwMessageHeader(_MessageHeaderIF):
     def isXTaskBroadcastMsg(self) -> bool:
         return self.isValid and _FwMessageHeader._EFwMsgFlag.IsXTaskBroadcast(self.__bm)
 
-
     @property
     def typeID(self) -> _EMessageType:
         return self.__typID
@@ -333,10 +328,10 @@ class _FwMessageHeader(_MessageHeaderIF):
 
     def _ToString(self, *args_, **kwargs_):
         if len(args_) > 1:
-            vlogif._LogOEC(True, -1636)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00540)
 
         if len(kwargs_) > 0:
-            vlogif._LogOEC(True, -1637)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00541)
 
         _bValuesOnly = False
 
@@ -359,7 +354,6 @@ class _FwMessageHeader(_MessageHeaderIF):
         self.__rcvID = None
         super()._CleanUp()
 
-
     @staticmethod
     def __VerifyHeaderParams( typeID_     : _EMessageType
                             , channelID_  : _EMessageChannel
@@ -379,12 +373,12 @@ class _FwMessageHeader(_MessageHeaderIF):
         if not (isinstance(typeID_, _EMessageType) and typeID_.isTIntraProcess):
             _bParamsOK = False
             _err = _EMsgHeaderCtorErrorID.eBadMsgType
-            vlogif._LogNotSupported(f'[MsgHdr] eType: {typeID_}')
+            vlogif._LogNotSupportedEC(_EFwErrorCode.UE_00002, f'[MsgHdr] eType: {typeID_}')
 
         elif not (isinstance(channelID_, _EMessageChannel) and (channelID_.isChInterTask or channelID_.isChIntraTask or channelID_.isChCustom)):
             _bParamsOK = False
             _err = _EMsgHeaderCtorErrorID.eBadMsgChannel
-            vlogif._LogNotSupported(f'[MsgHdr] eChannel: {channelID_}')
+            vlogif._LogNotSupportedEC(_EFwErrorCode.UE_00003, f'[MsgHdr] eChannel: {channelID_}')
 
         else:
             if _bParamsOK and not _SubsysMsgUtil.IsValidClusterID(clusterID_):                           _bParamsOK = False
@@ -395,10 +389,8 @@ class _FwMessageHeader(_MessageHeaderIF):
         if not _bParamsOK:
             if not _err.isError:
                 _err = _EMsgHeaderCtorErrorID.eInvalidMsgID
-            vlogif._LogOEC(True, -1638)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00542)
             return _err, _sndID, _rcvID, _bm
-
-
 
         _bIntMsg          = channelID_.isChIntraTask
         _bEMessageLabel   = isinstance(labelID_    , _EMessageLabel)
@@ -408,16 +400,16 @@ class _FwMessageHeader(_MessageHeaderIF):
         if _bEMessagePeerSnd and senderID_.isPBroadcast:
             _bBadUseLogDone = True
             _err = _EMsgHeaderCtorErrorID.eBroadcastAsSender
-            vlogif._LogOEC(True, -1639)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00543)
 
         elif receiverID_!=senderID_ and _bIntMsg:
             _bBadUseLogDone = True
             _err = _EMsgHeaderCtorErrorID.eDifferentPeersForInternalMsg
-            vlogif._LogOEC(True, -1640)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00544)
 
         if _err.isError:
             if not _bBadUseLogDone:
-                vlogif._LogOEC(True, -1641)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00545)
             return _err, _sndID, _rcvID, _bm
 
         _err = None
@@ -437,7 +429,7 @@ class _FwMessageHeader(_MessageHeaderIF):
             else:
                 _tbadgeSnd = _tmgr.GetTaskBadge(senderID_, bDoWarn_=False)
                 if (_tbadgeSnd is None) or not _tbadgeSnd.isValid:
-                    vlogif._LogOEC(True, -1642)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00546)
                     return _EMsgHeaderCtorErrorID.eFetchingSenderTaskBadge, _sndID, _rcvID, _bm
 
                 _sndID = _tbadgeSnd.taskID
@@ -448,19 +440,19 @@ class _FwMessageHeader(_MessageHeaderIF):
 
             _tbadgeSnd = _tmgr.GetTaskBadge(_sndID, bDoWarn_=False)
             if (_tbadgeSnd is None) or not _tbadgeSnd.isValid:
-                vlogif._LogOEC(True, -1643)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00547)
                 return _EMsgHeaderCtorErrorID.eFetchingSenderTaskBadge, _sndID, _rcvID, _bm
 
         if _bIntMsg:
             if not _tbadgeSnd.isSupportingInternalQueue:
-                vlogif._LogOEC(True, -1644)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00548)
                 return _EMsgHeaderCtorErrorID.eSenderMissingIntQueueSupport, _sndID, _rcvID, _bm
             else:
                 _rcvID = _sndID
 
         elif not _tbadgeSnd.isSupportingExternalQueue:
             if _FwSubsystemCoding.IsSenderExternalQueueSupportMandatory():
-                vlogif._LogOEC(True, -1645)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00549)
                 return _EMsgHeaderCtorErrorID.eSenderMissingExtQueueSupport, _sndID, _rcvID, _bm
 
         _tbadgeRcv = None
@@ -471,12 +463,12 @@ class _FwMessageHeader(_MessageHeaderIF):
         elif _bEMessagePeerRcv:
             if receiverID_.isPDontCare:
                 if not _FwSubsystemCoding.IsAnonymousAddressingEnabled():
-                    vlogif._LogOEC(True, -1646)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00550)
                     return _EMsgHeaderCtorErrorID.eReceiverMissingForDirectAddressing, _sndID, _rcvID, _bm
 
             elif receiverID_.isPBroadcast:
                 if _bEMessageLabel and labelID_.isLDontCare:
-                    vlogif._LogOEC(True, -1647)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00551)
                     return _EMsgHeaderCtorErrorID.eMissingSpecificLabelForUnspecifiedReceiver, _sndID, _rcvID, _bm
 
                 if receiverID_.isPGlobalBroadcast:
@@ -488,7 +480,7 @@ class _FwMessageHeader(_MessageHeaderIF):
             else:
                 _tbadgeRcv = _tmgr.GetTaskBadge(receiverID_, bDoWarn_=False)
                 if (_tbadgeRcv is None) or not _tbadgeRcv.isValid:
-                    vlogif._LogOEC(True, -1648)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00552)
                     return _EMsgHeaderCtorErrorID.eFetchingReceiverTaskBadge, _sndID, _rcvID, _bm
 
                 _rcvID = _tbadgeRcv.taskID
@@ -499,7 +491,7 @@ class _FwMessageHeader(_MessageHeaderIF):
 
             _tbadgeRcv = _tmgr.GetTaskBadge(_rcvID, bDoWarn_=False)
             if (_tbadgeRcv is None) or not _tbadgeRcv.isValid:
-                vlogif._LogOEC(True, -1649)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00553)
                 return _EMsgHeaderCtorErrorID.eFetchingReceiverTaskBadge, _sndID, _rcvID, _bm
 
         if _tbadgeRcv is None:
@@ -508,9 +500,8 @@ class _FwMessageHeader(_MessageHeaderIF):
             pass
         elif not _tbadgeRcv.isSupportingExternalQueue:
             if _tbadgeCur.hasUnitTestTaskRight:
-                pass
+                pass 
             else:
-                vlogif._LogOEC(True, -1650)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00554)
                 return _EMsgHeaderCtorErrorID.eReceiverMissingExtQueueSupport, _sndID, _rcvID, _bm
-
         return _EMsgHeaderCtorErrorID.eNone, _sndID, _rcvID, _bm

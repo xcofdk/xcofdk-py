@@ -7,17 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-# ------------------------------------------------------------------------------
-# Import libs / modules
-# ------------------------------------------------------------------------------
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable import _AbstractExecutable
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyclient    import _LcProxyClient
 
-
-# ------------------------------------------------------------------------------
-# Interface
-# ------------------------------------------------------------------------------
 class _XTaskConnectorIF(_LcProxyClient):
 
     __slots__ = []
@@ -55,4 +47,3 @@ class _XTaskConnectorIF(_LcProxyClient):
 
     def _CleanUp(self):
         super()._CleanUp()
-#END class _XTaskConnectorIF

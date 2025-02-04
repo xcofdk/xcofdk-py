@@ -7,17 +7,16 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from multiprocessing import Process as _PyProcess
 
 from xcofdk.fwcom.xmpdefs import ChildProcessResultData
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging           import logif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.sigcheck     import _CallableSignature
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex    import _Mutex
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject     import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _CommonDefines
-
+from xcofdk._xcofw.fw.fwssys.fwcore.logging              import logif
+from xcofdk._xcofw.fw.fwssys.fwcore.base.sigcheck        import _CallableSignature
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex       import _Mutex
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject        import _AbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes    import _CommonDefines
+from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.fwapiconnap  import _FwApiConnectorAP
 from xcofdk._xcofw.fw.fwssys.fwmp.apiimpl.xprocessbaseif import _XProcessBaseIF
 from xcofdk._xcofw.fw.fwssys.fwmp.xprocesstarget         import _EProcessTargetExitCodeID
 from xcofdk._xcofw.fw.fwssys.fwmp.xprocesstarget         import _XProcessTarget
@@ -26,10 +25,10 @@ from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.fwrteseed        import _FwRteSeed
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.fwrtetoken       import _FwRteToken
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.fwrtedataex      import _FwRteDataExchange
 from xcofdk._xcofw.fw.fwssys.fwmp.fwrte.mpstartpolicy    import _MPStartPolicy
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes         import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _XProcessConnector(_AbstractSlotsObject):
 
@@ -45,9 +44,17 @@ class _XProcessConnector(_AbstractSlotsObject):
         self.__rtetoken = None
         super().__init__()
 
+        if not _FwApiConnectorAP._APIsLcErrorFree():
+            logif._LogErrorEC(_EFwErrorCode.UE_00153, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_004))
+            return
+
+        if _FwApiConnectorAP._APIsLcShutdownEnabled():
+            logif._LogErrorEC(_EFwErrorCode.UE_00154, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_010))
+            return
+
         if _MPStartPolicy._IsStartMethodChanged():
             self.CleanUp()
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_001))
+            logif._LogErrorEC(_EFwErrorCode.UE_00113, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_001))
             return
 
         if not isinstance(xprocess_, _XProcessBaseIF):
@@ -61,7 +68,7 @@ class _XProcessConnector(_AbstractSlotsObject):
             maxDataSize_ = _FwRteToken.GetDefaultPayloadSize()
         if not (isinstance(maxDataSize_, int) and (_FwRteToken.GetMinPayloadSize() <= maxDataSize_ <= _FwRteToken.GetMaxPayloadSize())):
             self.CleanUp()
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_002).format(str(maxDataSize_), _FwRteToken.GetMinPayloadSize(), _FwRteToken.GetMaxPayloadSize()))
+            logif._LogErrorEC(_EFwErrorCode.UE_00114, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_002).format(str(maxDataSize_), _FwRteToken.GetMinPayloadSize(), _FwRteToken.GetMaxPayloadSize()))
             return
 
         _tokenName = _FwRteToken.GetNextUniqueTokenName()
@@ -72,7 +79,7 @@ class _XProcessConnector(_AbstractSlotsObject):
 
         _rtede = _FwRteDataExchange(_FwRteSeed.CheckCreateInitialInstance(), _tokenName, maxDataSize_, args_=args_, kwargs_=kwargs_)
         if not (_rtede.isValid and _rtede.currentWarningMessage is None):
-            logif._LogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_003).format(_CommonDefines._CHAR_SIGN_DASH if not _rtede.isValid else _rtede.currentWarningMessage))
+            logif._LogFatalEC(_EFwErrorCode.FE_00047, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_003).format(_CommonDefines._CHAR_SIGN_DASH if not _rtede.isValid else _rtede.currentWarningMessage))
 
             _FwRteToken.CloseUnlinkToken(_token)
             self.CleanUp()
@@ -88,7 +95,6 @@ class _XProcessConnector(_AbstractSlotsObject):
         self.__mtxApi   = _Mutex()
         self.__rtedex   = _rtede
         self.__rtetoken = _token
-
 
     @property
     def isValid(self):
@@ -110,8 +116,6 @@ class _XProcessConnector(_AbstractSlotsObject):
     def _processResult(self) -> ChildProcessResultData:
         return None if self.__isInvalid else self.__rtedex.childProcessResult
 
-
-
     def _GetCurProcessState(self) -> _XProcessState:
         if self.__isInvalid:
             return None
@@ -120,6 +124,8 @@ class _XProcessConnector(_AbstractSlotsObject):
             if (self.__rtetoken is not None) and not self.__xpst.isPTerminated:
                 if _FwRteToken.IsTokenReadyToLoad(self.__rtetoken):
                     self._JoinProcess()
+                else:
+                    pass
             return self.__xpst
 
     def _StartProcess(self) -> bool:
@@ -160,18 +166,18 @@ class _XProcessConnector(_AbstractSlotsObject):
             if not (_bLoaded and isinstance(_proRes, ChildProcessResultData)):
                 _pst = _XProcessState._EPState.ePFailed
                 self.__xpst.SetGetStateID(_XProcessState._EPState.ePFailed)
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_006).format(_pname, _ecTxt))
-
+                logif._LogErrorEC(_EFwErrorCode.UE_00115, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_006).format(_pname, _ecTxt))
             else:
                 self.__xproc._SetProcessResult(_proRes)
                 self.__rtedex.childProcessResult = _proRes
 
                 if _ec != 0:
                     _pst = _XProcessState._EPState.ePFailed
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_007).format(_pname, _ecTxt))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00116, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_007).format(_pname, _ecTxt))
+
                 elif _proRes.isProcessFailed:
                     _pst = _XProcessState._EPState.ePFailed
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_008).format(_pname))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00117, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConnector_TextID_008).format(_pname))
 
                 self.__xpst.SetGetStateID(_pst)
 
@@ -205,7 +211,6 @@ class _XProcessConnector(_AbstractSlotsObject):
         if not self.isValid:
             return None
         return _FwTDbEngine.GetText(_EFwTextID.eXProcessConnector_ToString_01).format(self._processName, self.__rtedex)
-
 
     @property
     def __isInvalid(self):

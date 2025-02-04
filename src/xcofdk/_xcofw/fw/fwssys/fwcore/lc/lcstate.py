@@ -7,11 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.types.apobject import _ProtectedAbstractSlotsObject
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines   import _ELcCompID
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines   import _LcFrcView
-
+from xcofdk._xcofw.fw.fwssys.fwerrh.lcfrcview      import _LcFrcView
 
 class _LcState(_ProtectedAbstractSlotsObject):
 
@@ -26,10 +24,6 @@ class _LcState(_ProtectedAbstractSlotsObject):
 
     @property
     def isLcCoreOperable(self) -> bool:
-        pass
-
-    @property
-    def isLcPreCoreOperable(self) -> bool:
         pass
 
     @property
@@ -93,10 +87,6 @@ class _LcState(_ProtectedAbstractSlotsObject):
         pass
 
     @property
-    def hasLcAnyStoppedState(self) -> bool:
-        pass
-
-    @property
     def hasLcAnyFailureState(self) -> bool:
         pass
 
@@ -109,3 +99,4 @@ class _LcState(_ProtectedAbstractSlotsObject):
 
     def GetLcCompFrcView(self, eLcCompID_: _ELcCompID, atask_=None) -> _LcFrcView:
         pass
+

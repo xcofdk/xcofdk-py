@@ -7,8 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwapi.xtask import XTask
+from xcofdk.fwapi.xtask import XTaskProfile
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging       import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util     import _Util
@@ -20,8 +20,9 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunProgressID
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunnableApiFuncTag
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnable     import _AbstractRunnable
 
-from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn import _XTaskConnector
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
+from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn import _XTaskConnector
 
 class _XTaskRunnable(_AbstractRunnable):
 
@@ -39,36 +40,38 @@ class _XTaskRunnable(_AbstractRunnable):
 
         if not isinstance(xtaskConn_, _XTaskConnector):
             self.CleanUp()
-            vlogif._LogOEC(True, -1217)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00161)
         elif xtaskConn_._connectedXTask is None:
             self.CleanUp()
-            vlogif._LogOEC(True, -1218)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00162)
         elif not (xtaskConn_._connectedXTask.isXtask and isinstance(xtaskConn_._connectedXTask, XTask)):
             self.CleanUp()
             execStr = str(xtaskConn_._connectedXTask)
-            vlogif._LogOEC(True, -1219)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00163)
         elif (xtaskConn_.executionProfile is None) or not xtaskConn_.executionProfile.isValid:
             self.CleanUp()
-            vlogif._LogOEC(True, -1220)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00164)
         elif not self.__CheckAPI(xtaskConn_._connectedXTask):
             self.CleanUp()
         else:
             _em = _XTaskRunnable.__GetExcludedRunnableApiMask(xtaskConn_._connectedXTask)
-
-            _AbstractRunnable.__init__( self
-                                      , eRblType_= _ERunnableType.eMainXTaskRbl if xtaskConn_.xtaskProfile.isMainTask else _ERunnableType.eXTaskRbl
-                                      , xtaskConn_=xtaskConn_
-                                      , excludedRblM_=_em
-                                      , execProfile_=xtaskConn_.executionProfile)
-            if self.__isInvalid:
+            if _em is None:
                 self.CleanUp()
+            else:
+                _AbstractRunnable.__init__( self
+                                          , eRblType_= _ERunnableType.eMainXTaskRbl if xtaskConn_.xtaskProfile.isMainTask else _ERunnableType.eXTaskRbl
+                                          , xtaskConn_=xtaskConn_
+                                          , excludedRblM_=_em
+                                          , execProfile_=xtaskConn_.executionProfile)
+                if self.__isInvalid:
+                    self.CleanUp()
 
     @staticmethod
     def _GetMandatoryCustomApiMethodNamesList():
         res = []
-        tmp = _AbstractRunnable._GetMandatoryCustomApiMethodNamesList()
-        if tmp is not None:
-            res += tmp
+        _tmp = _AbstractRunnable._GetMandatoryCustomApiMethodNamesList()
+        if _tmp is not None:
+            res += _tmp
         res += _XTaskRunnable.__mandatoryCustomApiMethodNames
         return res
 
@@ -81,10 +84,10 @@ class _XTaskRunnable(_AbstractRunnable):
             self.__bEnabledTearDownXtbl = None
             super()._CleanUp()
 
-    def _RunExecutable(self):
+    def _RunExecutable(self, *args_, **kwargs_):
         return self.__ExecuteApiFunc(_ERunnableApiFuncTag.eRFTRunExecutable)
 
-    def _SetUpExecutable(self):
+    def _SetUpExecutable(self, *args_, **kwargs_):
         return self.__ExecuteApiFunc(_ERunnableApiFuncTag.eRFTSetUpExecutable)
 
     def _TearDownExecutable(self):
@@ -101,6 +104,10 @@ class _XTaskRunnable(_AbstractRunnable):
 
     @staticmethod
     def __GetExcludedRunnableApiMask(xtsk_ : XTask) -> _ERunnableApiFuncTag:
+
+        if not (isinstance(xtsk_, XTask) and isinstance(xtsk_.xtaskProfile, XTaskProfile) and xtsk_.xtaskProfile.isValid):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00165)
+            return None
 
         res = _ERunnableApiFuncTag.DefaultApiMask()
         res = _ERunnableApiFuncTag.AddApiFuncTag(res, _ERunnableApiFuncTag.eRFTProcessInternalQueue)
@@ -129,48 +136,55 @@ class _XTaskRunnable(_AbstractRunnable):
     def __isInvalid(self):
         return self._eRunnableType is None
 
-    def __ExecuteApiFunc(self, apiFuncID_ : _ERunnableApiFuncTag, param1_ =None, param2_ =None):
-
-        res = None
+    def __ExecuteApiFunc(self, apiFuncID_ : _ERunnableApiFuncTag, *args_):
         if self.__isInvalid:
-            pass
-        else:
-            if apiFuncID_==_ERunnableApiFuncTag.eRFTProcessExternalMsg:
-                if not self.__bEnabledProcExtMsg:
-                    vlogif._LogOEC(True, -1221)
-                elif not self.isRunning:
-                    res = False
-                elif param2_ is not None:
-                    res = param2_(param1_)
-                else:
-                    res = self._xtaskInst.ProcessExternalMessage(param1_)
-            elif apiFuncID_==_ERunnableApiFuncTag.eRFTProcessInternalMsg:
-                if not self.__bEnabledProcIntMsg:
-                    vlogif._LogOEC(True, -1222)
-                elif not self.isRunning:
-                    res = False
-                elif param2_ is not None:
-                    res = param2_(param1_)
-                else:
-                    res = self._xtaskInst.ProcessInternalMessage(param1_)
+            return None
 
-            elif apiFuncID_ == _ERunnableApiFuncTag.eRFTSetUpExecutable:
-                if not self.__bEnabledSetUpXtbl:
-                    vlogif._LogOEC(True, -1223)
-                else:
-                    res = False if not self.isRunning else self._xtaskInst.SetUpXTask()
-            elif apiFuncID_ == _ERunnableApiFuncTag.eRFTTearDownExecutable:
-                if not self.__bEnabledTearDownXtbl:
-                    vlogif._LogOEC(True, -1224)
-                else:
-                    res = False if not self._isTerminating else self._xtaskInst.TearDownXTask()
-            elif apiFuncID_ == _ERunnableApiFuncTag.eRFTRunExecutable:
-                if not self.__bEnabledRunXtbl:
-                    vlogif._LogOEC(True, -1225)
-                else:
-                    res = False if not self.isRunning else self._xtaskInst.RunXTask()
+        res     = None
+        _bRun   = apiFuncID_ == _ERunnableApiFuncTag.eRFTRunExecutable
+        _bSetup = (not _bRun) and (apiFuncID_ == _ERunnableApiFuncTag.eRFTSetUpExecutable)
+
+        if not (_bRun or _bSetup):
+            _len    = len(args_)
+            _param1 = args_[0] if _len>0 else None
+            _param2 = args_[1] if _len>1 else None
+        else:
+            _param1 = None
+            _param2 = None
+
+        if apiFuncID_ == _ERunnableApiFuncTag.eRFTProcessExternalMsg:
+            if not self.__bEnabledProcExtMsg:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00166)
+            elif not self.isRunning:
+                res = False
+            elif _param2 is not None:
+                res = _param2(_param1)
             else:
-                vlogif._LogOEC(True, -1226)
+                res = self._xtaskInst.ProcessExternalMessage(_param1)
+
+        elif _bSetup:
+            if not self.__bEnabledSetUpXtbl:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00167)
+            else:
+                _args   = self._executionProfile.args
+                _kwargs = self._executionProfile.kwargs
+                res     = False if not self.isRunning else self._xtaskInst.SetUpXTask(*_args, **_kwargs)
+        elif apiFuncID_ == _ERunnableApiFuncTag.eRFTTearDownExecutable:
+            if not self.__bEnabledTearDownXtbl:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00168)
+            else:
+                res = False if not self._isTerminating else self._xtaskInst.TearDownXTask()
+        elif _bRun:
+            if not self.__bEnabledRunXtbl:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00169)
+            elif self.isProvidingSetUpRunnable:
+                res = False if not self.isRunning else self._xtaskInst.RunXTask()
+            else:
+                _args   = self._executionProfile.args
+                _kwargs = self._executionProfile.kwargs
+                res     = False if not self.isRunning else self._xtaskInst.RunXTask(*_args, **_kwargs)
+        else:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00170)
         return res
 
     def __CheckAPI(self, xtsk_ : XTask) -> bool:
@@ -178,7 +192,7 @@ class _XTaskRunnable(_AbstractRunnable):
         _numMandatoryApiMehtods = _Util.GetNumAttributes(self, mmn, bThrowx_=True)
         if _numMandatoryApiMehtods != len(mmn):
             res = False
-            vlogif._LogOEC(True, -1227)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00171)
         else:
             res = True
             self.__bEnabledRunXtbl      = (not xtsk_.xtaskProfile.isExternalQueueEnabled) or (not xtsk_.xtaskProfile.isExternalQueueBlocking)

@@ -13,6 +13,7 @@
 from xcofdk.fwcom          import xlogif
 from xcofdk.fwcom          import ETernaryCallbackResultID
 from xcofdk.fwcom          import override
+from xcofdk.fwcom          import fwutil
 from xcofdk.fwcom.xmsgdefs import EPreDefinedMessagingID
 
 from xcofdk.fwapi.xtask        import XTask
@@ -127,9 +128,10 @@ class ServiceTaskGIL2(XTask):
             # send next message in a frequency of 500ms
             _bDoSend = True
 
+        res = True
         if _bDoSend:
-            self.__PostMessage()
-        return ETernaryCallbackResultID.CONTINUE
+            res = self.__PostMessage()
+        return ETernaryCallbackResultID.FromBool(res)
 
     @override
     def ProcessExternalMessage(self, xmsg_ : XMessage) -> ETernaryCallbackResultID:
@@ -192,6 +194,25 @@ class ServiceTaskGIL2(XTask):
         return in_ in self.__fiboCache
 
     def __PostMessage(self, msgLabelID_ : EMsgLabelID =None, msgPayload_ =None) -> bool:
+        # not running anymore?
+        if not self.isRunning:
+            return False
+
+        _mainTaskID = EPreDefinedMessagingID.MainTask
+
+        #NOTE:
+        #  - optional:
+        #      turn on flag below to pre-check the availability of the main task before trying to send next message to.
+        #      This is basically useful to avoid annoying user errors reported by the framework.
+        #  - by application design, the main task stops all its services before leaving its run-phase,
+        #  - so, a pre-check is not really necessary, as the main task is expected to be available and running
+        #    as long as its services are still running.
+        #
+        _bPreCheckForMainTaskAvailability = False
+        if _bPreCheckForMainTaskAvailability:
+            if not fwutil.IsXTaskRunning(_mainTaskID):
+                return False
+
         self.__ctrSnd += 1
 
         if msgLabelID_ is not None:
@@ -202,7 +223,9 @@ class ServiceTaskGIL2(XTask):
                           , EMsgParamKeyID.eNumOutOfOrderReceived : self.__ctrOutOfOrder
                           }
 
-        _mainTaskID = EPreDefinedMessagingID.MainTask
+        # clear current error (if any)
+        self.ClearCurrentError()
+
         _xmsgUID = XMessageManager.SendMessage(rxTask_=_mainTaskID, msgLabelID_=msgLabelID_, msgPayload_=msgPayload_)
 
         res = _xmsgUID > 0
@@ -210,9 +233,11 @@ class ServiceTaskGIL2(XTask):
         # failed to send message?
         if not res:
             # something went wrong, decrement sent counter
-            self.__ctrErrSnd -= 1
+            self.__ctrSnd    -= 1
+            self.__ctrErrSnd += 1
 
-            self.ClearCurrentError()
+            #NOTE: 'self.currentError' is always set upon send failure  !!
+            #
             xlogif.LogWarning(f'[mtGuiAppService][#sendErrors={self.__ctrErrSnd}] Failed to send xco message to main task.')
         else:
             #xlogif.LogDebug('[mtGuiAppService] Sent xco-message {}.'.format(xmsgUID))

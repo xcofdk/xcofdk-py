@@ -7,8 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-
 from enum   import auto
 from enum   import unique
 from enum   import Enum
@@ -20,7 +18,6 @@ from typing import Union as _PyUnion
 from xcofdk.fwcom.fwdefs import ETernaryCallbackResultID
 
 from xcofdk._xcofw.fw.fwssys.fwcore.swpfm.sysinfo import _SystemInfo
-
 
 class _CommonDefines:
     __SIZE__DASH_LINE_LONG        = 80
@@ -67,13 +64,11 @@ class _CommonDefines:
             return False
         return False if bOneWayMatch_ else None
 
-
 class _Limits:
 
     MAX_INT = _PY_MAX_SIZE
 
     MIN_INT = (MAX_INT * -1) - 1
-
 
 class _FwEnum(Enum):
     @staticmethod
@@ -84,7 +79,6 @@ class _FwEnum(Enum):
     def compactName(self) -> str:
         return self.name[1:]
 
-
 class _FwIntEnum(IntEnum):
 
     @staticmethod
@@ -94,7 +88,6 @@ class _FwIntEnum(IntEnum):
     @property
     def compactName(self) -> str:
         return self.name[1:]
-
 
 class _FwIntFlag(IntFlag):
 
@@ -121,7 +114,6 @@ class _FwIntFlag(IntFlag):
                     break
         return res
 
-
 @unique
 class _ETernaryOpResult(_FwIntEnum):
 
@@ -145,7 +137,6 @@ class _ETernaryOpResult(_FwIntEnum):
     def isStop(self):
         return self == _ETernaryOpResult.eStopOrNOK
 
-
     @property
     def isAbort(self):
         return self == _ETernaryOpResult.eAbortOrFailed
@@ -165,7 +156,6 @@ class _ETernaryOpResult(_FwIntEnum):
     @staticmethod
     def Stop():
         return _ETernaryOpResult.eStopOrNOK
-
 
     @staticmethod
     def Abort():
@@ -202,19 +192,19 @@ class _ETernaryOpResult(_FwIntEnum):
             res = _ETernaryOpResult.Abort()
         elif execInst_._isInLcCeaseMode:
             _ctlb = execInst_._lcCeaseTLB
-            _bAbortingCease = (_ctlb is not None) and _ctlb.isAbortingCease
-            res = _ETernaryOpResult.Abort() if _bAbortingCease else _ETernaryOpResult.Stop()
+            _bEnd = (_ctlb is not None) and _ctlb.isEndingCease
+            res   = _ETernaryOpResult.Abort() if _bEnd else _ETernaryOpResult.Stop()
         elif not execInst_.isRunning:
             res = _ETernaryOpResult.Abort() if execInst_.isAborting else _ETernaryOpResult.Stop()
         else:
             res = _ETernaryOpResult.Continue()
         return res
 
-
 @unique
 class _EColorCode(IntEnum):
     NONE    = -1
     END     = auto()
+    GREEN   = auto()
     BLUE    = auto()
     RED     = auto()
     YELLOW  = auto()
@@ -227,6 +217,10 @@ class _EColorCode(IntEnum):
     @property
     def isEnd(self):
         return self == _EColorCode.END
+
+    @property
+    def isGreen(self):
+        return self == _EColorCode.GREEN
 
     @property
     def isBlue(self):
@@ -250,6 +244,8 @@ class _EColorCode(IntEnum):
         if not self.isColor:
             if self.isEnd:
                 res = '\33[0m'
+        elif self.isGreen:
+            res = '\033[32m'
         elif self.isBlue:
             res = '\033[34m'
         elif self.isRed:
@@ -260,18 +256,20 @@ class _EColorCode(IntEnum):
             res = '\033[35m'
         return res
 
-
 class _TextStyle:
     __slots__ = []
+
+    __bHighlightingDisabled = False
 
     def __init__(self):
         pass
 
     @staticmethod
     def ColorText(txt_ : str, color_ : _EColorCode, bAddEnd_ =True):
+        if _TextStyle.__bHighlightingDisabled:
+            return txt_
         if not (isinstance(txt_, str)):
             return txt_
-
 
         if not _SystemInfo._IsPythonVersionCompatible(3, 9):
             return txt_
@@ -289,7 +287,9 @@ class _TextStyle:
             res += f'{_EColorCode.END.code}'
         return res
 
-
+    @staticmethod
+    def _SetHighlightingMode(bDisabled_ =False):
+        _TextStyle.__bHighlightingDisabled = bDisabled_
 class SyncPrint:
 
     __slots__ = []

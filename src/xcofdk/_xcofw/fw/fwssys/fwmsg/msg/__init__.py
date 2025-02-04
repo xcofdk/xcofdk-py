@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 if _FwSubsystemCoding.IsSubsystemMessagingConfigured():

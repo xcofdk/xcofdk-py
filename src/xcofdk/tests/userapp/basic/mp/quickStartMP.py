@@ -48,7 +48,7 @@ class AppMainTask(MainXTask):
             _tp = XTaskProfile.CreateSynchronousTaskProfile(aliasName_='appMainTask')
         else:
             _tp = XTaskProfile.CreateAsynchronousTaskProfile(aliasName_='appMainTask')
-        MainXTask.__init__(self, taskProfile_=_tp)
+        super().__init__(taskProfile_=_tp)
 
     @override
     def RunXTask(self) -> ETernaryCallbackResultID:
@@ -92,7 +92,7 @@ class AppTask(XTask):
             _tp = XTaskProfile.CreateSynchronousTaskProfile(aliasName_='appTask')
         else:
             _tp = XTaskProfile.CreateAsynchronousTaskProfile(aliasName_='appTask')
-        XTask.__init__(self, taskProfile_=_tp)
+        super().__init__(taskProfile_=_tp)
 
     @override
     def RunXTask(self) -> ETernaryCallbackResultID:
@@ -155,14 +155,14 @@ def Main(bSyncTask_ =False, bUseMainTask_ =True, fwStartOptions_ : list =None):
 
 
 def _ScanCmdLine():
-    _lstFW_START_OPTIONS    = [ '--disable-log-timestamp' , '--disable-log-highlighting' ]
+    _lstFW_START_OPTIONS    = [ '--disable-log-timestamp' , '--disable-log-highlighting' , '--enable-log-callstack' ]
     _lstQUICK_START_OPTIONS = [ '--use-sync-task', '--no-main-task' ]
 
     _bSync, _bMain, _lstOptions = False, True, []
     for aa in sys.argv:
         if aa == '--help':
             _usage = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-            _usage = f'Usage:\n\t$> python3 -m {_usage} [--help] [--use-sync-task] [--no-main-task] [--disable-log-timestamp] [--disable-log-highlighting]'
+            _usage = f'Usage:\n\t$> python3 -m {_usage} [--help] [--use-sync-task] [--no-main-task] [--disable-log-timestamp] [--disable-log-highlighting] [--enable-log-callstack]'
             print(_usage)
             return None, None, None
 

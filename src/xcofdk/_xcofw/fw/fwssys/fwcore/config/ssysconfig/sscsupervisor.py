@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging import vlogif
 
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwcfgdefines                import _ESubSysID
@@ -17,6 +16,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _F
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwStartupPolicy
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.sscipc           import _SSConfigIPC
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _SSConfigSupervisor(_FwSSysConfigBase):
 
@@ -32,11 +32,9 @@ class _SSConfigSupervisor(_FwSSysConfigBase):
             pass
         elif _SSConfigSupervisor.__theSSCSupv is not None:
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._XLogFatal('CFG: Violation against singeleton of SSConfig {}.'.format(_ESubSysID.eSupervisor.compactName))
+            vlogif._XLogFatalEC(_EFwErrorCode.FE_00898, 'CFG: Violation against singeleton of SSConfig {}.'.format(_ESubSysID.eSupervisor.compactName))
         else:
-            if not self.__CreateAllSSConfig(suPolicy_, startupCfg_):
-                pass
-            else:
+            if self.__CreateAllSSConfig(suPolicy_, startupCfg_):
                 _SSConfigSupervisor.__theSSCSupv = self
 
     @property
@@ -60,11 +58,11 @@ class _SSConfigSupervisor(_FwSSysConfigBase):
         if self.subsystemID is None:
             pass
         elif not isinstance(eSubSysID_, _ESubSysID):
-            vlogif._XLogFatal('CFG: Bad subsystem ID object: {}'.format(type(eSubSysID_).__name__))
+            vlogif._XLogFatalEC(_EFwErrorCode.FE_00899, 'CFG: Bad subsystem ID object: {}'.format(type(eSubSysID_).__name__))
         elif eSubSysID_.isSupervisor:
             res = self
         elif not eSubSysID_.value in self.__allSSCfg:
-            pass
+            pass 
         else:
             res = self.__allSSCfg[eSubSysID_.value]
         return res
@@ -112,5 +110,5 @@ class _SSConfigSupervisor(_FwSSysConfigBase):
         res = self.numSubsystems == _ESubSysID.eSupervisor.value
         if not res:
             self.CleanUpByOwnerRequest(self._myPPass)
-            vlogif._XLogFatal('[LC] At least one subsystem config still missing.')
+            vlogif._XLogFatalEC(_EFwErrorCode.FE_00900, '[LC] At least one subsystem config still missing.')
         return res

@@ -7,18 +7,17 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import unique
 from enum import IntFlag
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging        import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.types.ebitmask import _EBitMask
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes   import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
-
 
 class _XTaskProfileBase:
     @unique
@@ -49,7 +48,6 @@ class _XTaskProfileBase:
         @staticmethod
         def IsTaskPrfFlagSet(tprfBM_: IntFlag, tprfBF_):
             return _EBitMask.IsEnumBitFlagSet(tprfBM_, tprfBF_)
-
 
     __DEFAULT_CYCLIC_MPTS_MS = 50
     __DEFAULT_CYCLIC_RPTS_MS = 100
@@ -168,7 +166,7 @@ class _XTaskProfileBase:
         else:
             if bBlockingExtQueue_:
                 if self._isSynchronousTask:
-                    logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_012))
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00179, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_012))
                     return
 
                 self.__bm = _XTaskProfileBase._ETaskPrfFlag.AddTaskPrfFlag(self.__bm, _XTaskProfileBase._ETaskPrfFlag.bfBlockingExtQueue)
@@ -204,7 +202,7 @@ class _XTaskProfileBase:
     def _aliasName(self, aliasName_ : str):
         if not self._CheckFreezeState(): return
         if not (isinstance(aliasName_, str) and aliasName_.isidentifier()):
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_011).format(str(aliasName_)))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00180, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_011).format(str(aliasName_)))
             return
         self.__aliasName = str(aliasName_)
 
@@ -220,11 +218,11 @@ class _XTaskProfileBase:
             runPhaseFreqMS_ = int(1000*runPhaseFreqMS_)
 
         if not isinstance(runPhaseFreqMS_, int):
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_006).format(type(runPhaseFreqMS_).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00181, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_006).format(type(runPhaseFreqMS_).__name__))
             self._CleanUp()
             return
         if runPhaseFreqMS_ < 0:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_007).format(runPhaseFreqMS_))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00182, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_007).format(runPhaseFreqMS_))
             self._CleanUp()
             return
         self.__runPhaseFreqMS = runPhaseFreqMS_
@@ -241,11 +239,11 @@ class _XTaskProfileBase:
             runPhaseMaxProcTimeMS_ = int(1000*runPhaseMaxProcTimeMS_)
 
         if not isinstance(runPhaseMaxProcTimeMS_, int):
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_004).format(type(runPhaseMaxProcTimeMS_).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00183, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_004).format(type(runPhaseMaxProcTimeMS_).__name__))
             self._CleanUp()
             return
         if runPhaseMaxProcTimeMS_ < 1:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_005).format(runPhaseMaxProcTimeMS_))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00184, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_005).format(runPhaseMaxProcTimeMS_))
             self._CleanUp()
             return
         self.__runPhaseMaxProcTimeMS = runPhaseMaxProcTimeMS_
@@ -309,7 +307,7 @@ class _XTaskProfileBase:
         if self.__isInvalid:
             return False
         if self._isFrozen:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_009))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00185, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskProfileBase_TextID_009))
             return False
         return True
 
@@ -320,5 +318,4 @@ class _XTaskProfileBase:
     @property
     def __isInvalid(self) -> bool:
         return self.__bm is None
-
 

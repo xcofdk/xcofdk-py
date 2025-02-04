@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging            import logif
@@ -37,12 +36,12 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchFilter   import _DispatchFilter
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchagentif  import _DispatchAgentIF
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchregistry import _DispatchRegistry
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _FwDispatcher(_AbstractRunnableFWC):
 
@@ -54,44 +53,45 @@ class _FwDispatcher(_AbstractRunnableFWC):
             self.__maxRetry = maxRetry_
             super().__init__()
 
-        def IsThresholdReached(self, taskUID_ : int):
-            if taskUID_ is None:
+        def IsThresholdReached(self, agentTID_ : int):
+            if agentTID_ is None:
                 return False
             elif self.__map is None:
                 return False
-            elif taskUID_ not in self.__map:
+            elif agentTID_ not in self.__map:
                 return False
             else:
-                return self.__map[taskUID_] >= self.__maxRetry
+                return self.__map[agentTID_] >= self.__maxRetry
 
-        def GetRetryCount(self, taskUID_ : int):
-            if taskUID_ is None:
+        def GetRetryCount(self, agentTID_ : int):
+            if agentTID_ is None:
                 return None
             elif self.__map is None:
                 return 0
-            elif taskUID_ not in self.__map:
+            elif agentTID_ not in self.__map:
                 return 0
             else:
-                return self.__map[taskUID_]
+                return self.__map[agentTID_]
 
-        def UpdateMap(self, taskUID_ : int, bWarn_ =True):
-            if taskUID_ is None:
+        def UpdateMap(self, agentTID_ : int, bWarn_ =True):
+            if agentTID_ is None:
                 res = False
             else:
                 if self.__map is None:
-                    self.__map = { taskUID_ : 1}
-                elif taskUID_ not in self.__map:
-                    self.__map[taskUID_] = 1
+                    self.__map = { agentTID_ : 1}
+                elif agentTID_ not in self.__map:
+                    self.__map[agentTID_] = 1
                 else:
-                    self.__map[taskUID_] += 1
+                    self.__map[agentTID_] += 1
 
-                _newVal = self.__map[taskUID_]
+                _newVal = self.__map[agentTID_]
                 if bWarn_ and (_newVal == self.__maxRetry):
-                    logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_012).format(self.__maxRetry, taskUID_))
+                    logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_012).format(self.__maxRetry, agentTID_))
                 res = _newVal >= self.__maxRetry
             return res
 
         def UpdateMapByList(self, lstTasks_: list):
+
             if self.__map is None:
                 return None
 
@@ -110,15 +110,15 @@ class _FwDispatcher(_AbstractRunnableFWC):
                     res.append(_kk)
             return res if len(res) > 0 else None
 
-        def RemoveTask(self, taskUID_ : int):
-            if taskUID_ is None:
+        def RemoveTask(self, agentTID_ : int):
+            if agentTID_ is None:
                 pass
             elif self.__map is None:
                 pass
-            elif taskUID_ not in self.__map:
+            elif agentTID_ not in self.__map:
                 pass
             else:
-                self.__map.pop(taskUID_)
+                self.__map.pop(agentTID_)
 
         def _CleanUp(self):
             if self.__map is not None:
@@ -126,7 +126,6 @@ class _FwDispatcher(_AbstractRunnableFWC):
                 del self.__map
                 self.__map = None
             self.__maxRetry = None
-
 
     class _DispBackLogEntry(_AbstractSlotsObject):
         __slots__ = [ '__msg' , '__bXMsg' , '__msgUID' , '__msgDump' , '__pldDump' , '__bCPL' , '__cdesCB' , '__retryCnt', '__lstDispTgt' , '__retryMap' ]
@@ -145,7 +144,6 @@ class _FwDispatcher(_AbstractRunnableFWC):
             self.__retryCnt   = 1
             self.__retryMap   = _FwDispatcher._DeliveryRetryMap(maxRetry_=_FwDispatcher._DispBackLogEntry._MAX_RETRY_COUNT, map_=retryMap_)
             self.__lstDispTgt = lstDispTgt_
-
 
         @property
         def _isMaxRetryCountReached(self):
@@ -194,6 +192,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
             return self.__cdesCB
 
         def _UpdateDispTargetList(self, lstDispTgt_ : list):
+
             _lstTID = [ _ee._dispatchAgent._agentTaskID for _ee in lstDispTgt_ ]
 
             _lstMaxRetryReached = self.__retryMap.UpdateMapByList(_lstTID)
@@ -263,7 +262,6 @@ class _FwDispatcher(_AbstractRunnableFWC):
     __theTaskProfile      = None
     __IRRESP_THRESHOLD    = 9
 
-
     def __init__(self):
         self.__treg            = None
         self.__iqueue          = None
@@ -274,13 +272,12 @@ class _FwDispatcher(_AbstractRunnableFWC):
         self.__irrespAgentsMap = None
 
         if _FwDispatcher.__theInstance is not None:
-            vlogif._LogOEC(True, -1501)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00061)
 
-        _cyclCeaseTimespanMS    = 20
-        _runPhaseFrequencyMS = 20
-
-        cyclicMaxProcTimespanMS = None
-        _xp = _ExecutionProfile(runPhaseFreqMS_=_runPhaseFrequencyMS, runPhaseMaxProcTimeMS_=cyclicMaxProcTimespanMS, cyclicCeaseTimespanMS_=_cyclCeaseTimespanMS)
+        _cyclCeaseTimespanMS   = 20
+        _runPhaseFrequencyMS   = 20
+        _runPhaseMaxProcTimeMS = None
+        _xp = _ExecutionProfile(runPhaseFreqMS_=_runPhaseFrequencyMS, runPhaseMaxProcTimeMS_=_runPhaseMaxProcTimeMS, cyclicCeaseTimespanMS_=_cyclCeaseTimespanMS)
 
         super().__init__(_ERunnableType.eFwDsprRbl, execProfile_=_xp)
         _xp.CleanUp()
@@ -322,7 +319,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
         _tp = _TaskProfile(taskProfileAttrs_=_ta)
 
         if res.__iqueue is None:
-            vlogif._LogOEC(True, -1502)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00062)
             _tp.CleanUp()
             res.CleanUp()
             res = None
@@ -344,11 +341,11 @@ class _FwDispatcher(_AbstractRunnableFWC):
                 try:
                     _pldDes = customDesCallback_(pldDump_)
                 except (Exception, BaseException) as xcp:
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_010).format(msgUID_, xcp))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00056, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_010).format(msgUID_, xcp))
                     return None
 
                 if not (isinstance(_pldDes, XPayloadIF) and _pldDes.isValidPayload):
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_011).format(msgUID_))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00057, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_011).format(msgUID_))
                     return None
 
             else:
@@ -366,7 +363,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
             res = _XMsgMgrImpl._DeserializeXcoMsg(msgDump_)
 
         if res is None:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_009).format(msgUID_))
+            logif._LogErrorEC(_EFwErrorCode.UE_00058, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_009).format(msgUID_))
         elif _pldDes is not None:
             res.AttachPayload(_pldDes)
 
@@ -404,10 +401,10 @@ class _FwDispatcher(_AbstractRunnableFWC):
             return False
 
         if self._isInvalid or self._isInLcCeaseMode or not self.isRunning:
-            vlogif._LogOEC(True, -1503)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00063)
             return False
         if not (isinstance(msg_, _MessageIF) and msg_.isValid and not msg_.isInternalMsg):
-            vlogif._LogOEC(True, -1504)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00064)
             return False
 
         _pldOrig       = msg_.payload
@@ -438,12 +435,12 @@ class _FwDispatcher(_AbstractRunnableFWC):
                     _pldDump = _customSerCallback(_pldOrig)
                 except (Exception, BaseException) as xcp:
                     _bSerDesErr = True
-                    logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_007).format(msg_.header, xcp))
+                    logif._LogErrorEC(_EFwErrorCode.UE_00059, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_007).format(msg_.header, xcp))
 
                 if not isinstance(_pldDump, bytes):
                     if not _bSerDesErr:
                         _bSerDesErr = True
-                        logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_008).format(msg_.header))
+                        logif._LogErrorEC(_EFwErrorCode.UE_00060, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_008).format(msg_.header))
                 else:
                     _pldOrig = msg_.AttachPayload(None)
 
@@ -473,10 +470,8 @@ class _FwDispatcher(_AbstractRunnableFWC):
                 del _dump
                 if _bNonSerDes or _bCustomSerDes:
                     msg_.AttachPayload(_pldOrig)
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_001).format(msg_.header))
+                logif._LogErrorEC(_EFwErrorCode.UE_00061, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_001).format(msg_.header))
                 return False
-
-
 
         with self.__mtxData:
             _numPushed = 0
@@ -494,9 +489,9 @@ class _FwDispatcher(_AbstractRunnableFWC):
 
                 if (_atid is None) or not _dagt._isOperating:
                     if _atid is None:
-                        logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_005).format(msg_.header))
+                        logif._LogErrorEC(_EFwErrorCode.UE_00150, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_005).format(msg_.header))
                     else:
-                        logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_002).format(_atid, msg_.header))
+                        logif._LogErrorEC(_EFwErrorCode.UE_00151, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_002).format(_atid, msg_.header))
                         self.__irrespAgentsMap.RemoveTask(_atid)
                     continue
 
@@ -524,6 +519,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
 
                 if _opRes.isAbort:
                     self.__irrespAgentsMap.UpdateMap(_atid)
+                    logif._LogErrorEC(_EFwErrorCode.UE_00152, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_013).format(_atid, msg_.header))
 
                     if _bMultiTgt:
                         del _dumpTgt
@@ -534,6 +530,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
                 if _opRes.isNOK:
                     if not _dagt._isOperating:
                         self.__irrespAgentsMap.UpdateMap(_atid)
+                        logif._LogErrorEC(_EFwErrorCode.UE_00152, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_013).format(_atid, msg_.header))
 
                         if _bMultiTgt:
                             del _dumpTgt
@@ -642,7 +639,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
 
     def _SetUpRunnable(self):
         if self.__iqueue is None:
-            vlogif._LogOEC(True, -1505)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00065)
             return False
         return True
 
@@ -654,7 +651,6 @@ class _FwDispatcher(_AbstractRunnableFWC):
             return False
         self.__treg._DropInvalidTargets()
         return self.__ProcFwDispInternalQueue()
-
 
     def __ProcFwDispInternalQueue(self) -> bool:
         with self.__mtxData:
@@ -688,6 +684,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
                     continue
 
                 _lstPending = []
+
                 _dt        = None
                 _bMultiTgt = len(_bl._dispatchTargets) > 0
 
@@ -719,17 +716,17 @@ class _FwDispatcher(_AbstractRunnableFWC):
 
                     if _opRes.isAbort:
                         self.__irrespAgentsMap.UpdateMap(_atid)
-                        continue
+                        logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwDispatcher_TextID_013).format(_atid, _msg.header))
 
-                    if _opRes.isNOK:
+                    elif _opRes.isNOK:
                         if not _dagt._isOperating:
                             self.__irrespAgentsMap.UpdateMap(_atid)
 
                         elif not self.__irrespAgentsMap.UpdateMap(_atid):
                             _lstPending.append(_dt)
-                        continue
 
-                    self.__irrespAgentsMap.RemoveTask(_atid)
+                    else:
+                        self.__irrespAgentsMap.RemoveTask(_atid)
 
                 if len(_lstPending) > 0:
                     _lstMaxRetryReached =_bl._UpdateDispTargetList(_lstPending)
@@ -756,6 +753,7 @@ class _FwDispatcher(_AbstractRunnableFWC):
                     _bl.CleanUp()
 
             self.__pendingAgents.clear()
+
             if len(_lstPendingAgents) > 0:
                 self.__pendingAgents.extend(_lstPendingAgents)
 

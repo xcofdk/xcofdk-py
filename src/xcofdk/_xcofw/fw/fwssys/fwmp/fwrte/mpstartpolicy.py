@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import multiprocessing     as _PyMP
 from   typing import Tuple as _PyTuple
 from   typing import Union as _PyUnion
@@ -19,9 +18,10 @@ from xcofdk.fwcom.xmpdefs import EProcessStartMethodID
 from xcofdk._xcofw.fw.fwssys.fwcore.logging       import logif
 from xcofdk._xcofw.fw.fwssys.fwcore.swpfm.sysinfo import _SystemInfo
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _EProcessStartMethodID(IntEnum):
@@ -53,7 +53,6 @@ class _EProcessStartMethodID(IntEnum):
     def isForkServer(self):
         return self == _EProcessStartMethodID.eForkServer
 
-
 class _MPStartPolicy:
 
     __slots__ = []
@@ -64,7 +63,6 @@ class _MPStartPolicy:
       , _EProcessStartMethodID.eFork.compactName
       , _EProcessStartMethodID.eForkServer.compactName
     ]
-
 
     __bSETTER_DOES_NEVER_FORCE             = False
     __bGETTER_RETURNS_NONE_IF_SM_NOT_FIXED = True
@@ -81,11 +79,10 @@ class _MPStartPolicy:
     def __init__(self):
         pass
 
-
     @staticmethod
     def _IsCurrentStartMethod(smID_ : _EProcessStartMethodID) -> bool:
         if not isinstance(smID_, _EProcessStartMethodID):
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_001).format(type(smID_).__name__, EProcessStartMethodID.__name__))
+            logif._LogErrorEC(_EFwErrorCode.UE_00119, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_001).format(type(smID_).__name__, EProcessStartMethodID.__name__))
             return False
 
         _curSM = _MPStartPolicy.__FetchCurrentStartMethodID()
@@ -100,16 +97,16 @@ class _MPStartPolicy:
         if _MPStartPolicy.__bSmChangeDetected:
             return True
 
-        _ffixedSM = _MPStartPolicy.__fixedSmID
+        _fixedSM = _MPStartPolicy.__fixedSmID
 
         res = False
-        if _ffixedSM is not None:
-            res = _curSM != _ffixedSM
+        if _fixedSM is not None:
+            res = _curSM != _fixedSM
             if res:
                 if not _MPStartPolicy.__bSmChangeDetected:
                     _MPStartPolicy.__bSmChangeDetected = True
                     if bErrorLogOnChange_:
-                        logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_015).format(_ffixedSM.compactName, _curSM.compactName))
+                        logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_015).format(_fixedSM.compactName, _curSM.compactName))
         return res
 
     @staticmethod
@@ -143,7 +140,7 @@ class _MPStartPolicy:
 
         if res is None:
             _MPStartPolicy.__bFatalError = True
-            logif._LogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_009).format(smName_, _MPStartPolicy._ToString()))
+            logif._LogFatalEC(_EFwErrorCode.FE_00048, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_009).format(smName_, _MPStartPolicy._ToString()))
         return res
 
     @staticmethod
@@ -155,13 +152,10 @@ class _MPStartPolicy:
         _prvSM  = _MPStartPolicy.__prvSmID
         _initSM = _MPStartPolicy.__INIT_SM_ID
 
-        _ffixedSM = _MPStartPolicy.__fixedSmID
-        if _ffixedSM is not None:
-            _ffixedSM = _ffixedSM.compactName
-        return _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_007).format(_SystemInfo._GetPlatform(), _initSM.compactName, _prvSM.compactName, _curSM.compactName, _ffixedSM)
-
-
-
+        _fixedSM = _MPStartPolicy.__fixedSmID
+        if _fixedSM is not None:
+            _fixedSM = _fixedSM.compactName
+        return _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MPStartPolicy_TextID_007).format(_SystemInfo._GetPlatform(), _initSM.compactName, _prvSM.compactName, _curSM.compactName, _fixedSM)
 
     @staticmethod
     def __IsEncounteredFatalError():

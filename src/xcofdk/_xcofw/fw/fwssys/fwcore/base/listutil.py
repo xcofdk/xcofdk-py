@@ -7,25 +7,19 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util import _Util
-
 
 class _ListUtil:
 
     @staticmethod
     def GetIndex(alist_ : list, item_):
         res = -1
-        if not isinstance(alist_, list):
-            pass
-        else:
+        if isinstance(alist_, list):
             _OWN_SOLUTION = False
 
             if _OWN_SOLUTION:
                 _LGTH = len(alist_)
-                if _LGTH == 0:
-                    pass
-                else:
+                if _LGTH != 0:
                     hits = [_ii for _ii in range(_LGTH) if alist_[_ii] == item_]
                     if len(hits) > 0:
                         res = hits[0]
@@ -51,16 +45,16 @@ class _ListUtil:
         if srcList_ is None:
             return None
 
-        tmp = srcList_
+        _tmp = srcList_
         if not isinstance(srcList_, list):
             _Util.GetAttribute(srcList_, '__iter__')
-            tmp = list(srcList_)
+            _tmp = list(srcList_)
 
         if includeDuplicates_:
-            res = list(tmp)
+            res = list(_tmp)
         else:
             res = list()
-            for _ee in tmp:
+            for _ee in _tmp:
                 if not _ee in res:
                     res.append(_ee)
         return res

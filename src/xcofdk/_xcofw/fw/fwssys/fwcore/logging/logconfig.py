@@ -7,10 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import os
 from enum import Enum
-
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _ELogLevel
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _LogUniqueID
@@ -18,8 +16,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _LoggingDefaultConfig:
 
@@ -69,7 +65,6 @@ class _LoggingDefaultConfig:
             logCfg.CleanUp()
         logCfg = _LoggingConfig.GetInstance()
         return _LoggingDefaultConfig.ToString()
-
 
 class _LoggingConfig:
 
@@ -161,7 +156,6 @@ class _LoggingConfig:
     def _isVSystemExistEnabled(self):
         return _LoggingDefaultConfig._vsysExitMode
 
-
 class _LoggingUserConfig:
     _userDieMode       = True
     _eUserLogLevel     = _ELogLevel.eInfo
@@ -178,7 +172,6 @@ class _LoggingUserConfig:
         if bUserXcpMode_  is not None: _LoggingUserConfig._userExceptionMode = bUserXcpMode_
         if eUserLogLevel_ is not None: _LoggingUserConfig._eUserLogLevel     = eUserLogLevel_
         return _LoggingUserConfig.ToString()
-
 
 class _LoggingEnvConfig:
 
@@ -224,12 +217,9 @@ class _LoggingEnvConfig:
         if not _LoggingEnvConfig.__envVarsEvalEnabled:
             return
 
-
         if _LoggingEnvConfig._envVarNameDieMode in os.environ:
             envVal = os.environ.get(_LoggingEnvConfig._envVarNameDieMode)
-            if envVal is None or len(envVal.strip()) == 0:
-                pass
-            else:
+            if not (envVal is None or len(envVal.strip()) == 0):
                 try:
                     self.__bDieMode = _CommonDefines._StrToBool(envVal.lower(), bOneWayMatch_=True)
                 except ValueError:
@@ -237,9 +227,7 @@ class _LoggingEnvConfig:
 
         if _LoggingEnvConfig._envVarNameXcpMode in os.environ:
             envVal = os.environ.get(_LoggingEnvConfig._envVarNameXcpMode)
-            if envVal is None or len(envVal.strip()) == 0:
-                pass
-            else:
+            if not (envVal is None or len(envVal.strip()) == 0):
                 try:
                     self.__bXcpMode = _CommonDefines._StrToBool(envVal.lower(), bOneWayMatch_=True)
                 except ValueError:
@@ -247,9 +235,7 @@ class _LoggingEnvConfig:
 
         if _LoggingEnvConfig._envVarNameLogLevel in os.environ:
             envVal = os.environ.get(_LoggingEnvConfig._envVarNameLogLevel)
-            if envVal is None or len(envVal.strip()) == 0:
-                pass
-            else:
+            if not (envVal is None or len(envVal.strip()) == 0):
                 for name, member in _ELogLevel.__members__.items():
                     if envVal == member.compactName:
                         self.__eLL = member

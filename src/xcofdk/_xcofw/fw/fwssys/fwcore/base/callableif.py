@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 import sys
 from   inspect import isfunction as _Isfunction
 from   inspect import ismethod   as _Ismethod
@@ -20,10 +19,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import unique
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 @unique
 class _EIFSpecType(_FwIntEnum):
@@ -63,7 +62,6 @@ class _EIFSpecType(_FwIntEnum):
     def isSpecifiedByCallableIF(self):
         return self == _EIFSpecType.eByCallableIF
 
-
 class _CallableIF(_AbstractSlotsObject):
 
     __slots__ = [ '__callFunc' , '__ifsoruce' , '__ifSpecType' , '__callFuncName' ]
@@ -79,7 +77,7 @@ class _CallableIF(_AbstractSlotsObject):
         if cloneBy_ is not None:
             if not (isinstance(cloneBy_, _CallableIF) and cloneBy_.isValid):
                 self.CleanUp()
-                rlogif._LogOEC(True, -1142)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00070)
             else:
                 self.__callFunc     = cloneBy_.__callFunc
                 self.__ifsoruce     = cloneBy_.__ifsoruce
@@ -122,12 +120,12 @@ class _CallableIF(_AbstractSlotsObject):
 
     def __call__(self, *args_, **kwargs_):
         if self.__ifSpecType is None:
-            rlogif._LogOEC(True, -1143)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00071)
             return
 
         res = None
         if self.__callFunc is None:
-            rlogif._LogOEC(True, -1144)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00562)
         else:
             res = self.__callFunc(*args_, **kwargs_)
         return res
@@ -231,12 +229,12 @@ class _CallableIF(_AbstractSlotsObject):
 
         if ifsource_ is None:
             if bThrowx_:
-                rlogif._LogOEC(True, -1145)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00072)
             return _failedRes
 
         if methodName_ is not None:
             if not isinstance(methodName_, str):
-                rlogif._LogOEC(True, -1146)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00073)
                 return _failedRes
 
         if _Isfunction(ifsource_):
@@ -261,7 +259,7 @@ class _CallableIF(_AbstractSlotsObject):
             if isinstance(ifsource_, str):
                 if not ifsource_ in sys.modules:
                     if bThrowx_:
-                        rlogif._LogOEC(True, -1147)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00074)
                     return _failedRes
                 ifsource_ = sys.modules[ifsource_]
 
@@ -271,7 +269,7 @@ class _CallableIF(_AbstractSlotsObject):
 
             if _attrVal is None or not (_Ismethod(_attrVal) or _Isfunction(_attrVal)):
                 if bThrowx_:
-                    rlogif._LogOEC(True, -1148)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00075)
                 return _failedRes
 
             _callFunc     = _attrVal
@@ -284,7 +282,7 @@ class _CallableIF(_AbstractSlotsObject):
                 elif _Isclass(ifsource_):
                     _ifSpecType = _EIFSpecType.eByStaticMethod
                 else:
-                    rlogif._LogOEC(True, -1149)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00076)
                     return _failedRes
 
             elif _Ismethod(_attrVal):
@@ -294,7 +292,7 @@ class _CallableIF(_AbstractSlotsObject):
                     _ifSpecType = _EIFSpecType.eByInstanceMethod
 
             else:
-                rlogif._LogOEC(True, -1150)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00887)
                 return _failedRes
 
         elif isinstance(ifsource_, object) and getattr(ifsource_, _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_Builtin_FuncName_Call), None) is not None:
@@ -308,7 +306,7 @@ class _CallableIF(_AbstractSlotsObject):
 
         else:
             if bThrowx_:
-                rlogif._LogOEC(True, -1151)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00077)
             return _failedRes
 
         return _ifSpecType, _ifsoruce, _callFunc, _callFuncName

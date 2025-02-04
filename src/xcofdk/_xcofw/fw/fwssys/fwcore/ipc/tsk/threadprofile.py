@@ -7,25 +7,24 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwapi.xtask import XTask
 
-from xcofdk._xcofw.fwadapter                         import rlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif  import _CallableIF
-from xcofdk._xcofw.fw.fwssys.fwcore.base.listutil    import _ListUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.base.strutil     import _StrUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.base.util        import _Util
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject    import _AbstractSlotsObject
-from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile   import _AbstractProfile
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil import _TaskUtil
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil import _ETaskRightFlag
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil import _PyThread
-
+from xcofdk._xcofw.fwadapter                                import rlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn import _XTaskConnector
+from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif         import _CallableIF
+from xcofdk._xcofw.fw.fwssys.fwcore.base.listutil           import _ListUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.base.strutil            import _StrUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.base.util               import _Util
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _ETaskRightFlag
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil        import _PyThread
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject           import _AbstractSlotsObject
+from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile          import _AbstractProfile
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _ThreadProfile(_AbstractProfile):
 
@@ -67,9 +66,7 @@ class _ThreadProfile(_AbstractProfile):
         if self._GetProfileHandlersList() is None:
             if not _ThreadProfile.__SetupProfileHandlersList():
                 _bError = True
-        if _bError:
-            pass
-        else:
+        if not _bError:
             if xtaskConn_ is not None:
                 _dictAttrs[_XUC_KEY] = xtaskConn_
             if taskName_ is not None:
@@ -97,16 +94,14 @@ class _ThreadProfile(_AbstractProfile):
                             continue
 
                         _bError = True
-                        rlogif._LogOEC(True, -1413)
+                        rlogif._LogOEC(True, _EFwErrorCode.FE_00328)
                         break
-        if _bError:
-            pass
-        else:
+        if not _bError:
             _trm = None if _TRM_KEY not in _dictAttrs else _dictAttrs[_TRM_KEY]
 
             if (_trm is not None) and not _ETaskRightFlag.IsValidTaskRightMask(_trm):
                 _bError = True
-                rlogif._LogOEC(True, -1414)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00329)
             else:
                 if _trm is not None:
                     _dictAttrs[_TRM_KEY] = _trm
@@ -122,15 +117,14 @@ class _ThreadProfile(_AbstractProfile):
 
                         if (xuConn is not None) or (_enclPyThrd is not None):
                             _bError = True
-                            rlogif._LogOEC(True, -1415)
+                            rlogif._LogOEC(True, _EFwErrorCode.FE_00330)
         if _bError:
             _AbstractProfile.__init__(self, _AbstractProfile._EProfileType.eThread, profileAttrs_=None)
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
         else:
             _AbstractProfile.__init__(self, _AbstractProfile._EProfileType.eThread, profileAttrs_=_dictAttrs)
             if not self.isValid:
-                rlogif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_ThreadProfile_TextID_004))
-
+                rlogif._LogErrorEC(_EFwErrorCode.UE_00098, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_ThreadProfile_TextID_004))
         _dictAttrs.clear()
 
     @property
@@ -194,10 +188,10 @@ class _ThreadProfile(_AbstractProfile):
 
     def Freeze(self, *args_, **kwargs_):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1416)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00331)
             return False
         elif not self.isValid:
-            rlogif._LogOEC(True, -1417)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00332)
             return False
         else:
             _bError     = False
@@ -215,7 +209,7 @@ class _ThreadProfile(_AbstractProfile):
                 _bError = _thrdTgt is None
             if _bError:
                 self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
-                rlogif._LogOEC(True, -1418)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00333)
                 return False
 
         _lstArgs = _ListUtil.UnpackArgs(*args_, minArgsNum_=1, maxArgsNum_=2, bThrowx_=True)
@@ -229,7 +223,6 @@ class _ThreadProfile(_AbstractProfile):
             if   _ii == 0: _tid   = val
             elif _ii == 1: _tname = val
 
-
         if not _ThreadProfile.__bUSE_AUTO_GENERATED_TASK_NAMES_ONLY:
             _bValid  = (_tname is None)     and _ThreadProfile._ATTR_KEY_TASK_NAME     in self.profileAttributes
             _bValid |= (_tname is not None) and not _ThreadProfile._ATTR_KEY_TASK_NAME in self.profileAttributes
@@ -240,7 +233,7 @@ class _ThreadProfile(_AbstractProfile):
                 rlogif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_ThreadProfile_TextID_008).format(specName))
 
         if not _bValid:
-            rlogif._LogOEC(True, -1419)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00334)
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
             return False
 
@@ -255,18 +248,18 @@ class _ThreadProfile(_AbstractProfile):
 
         res = _AbstractProfile.Freeze(self)
         if not res:
-            rlogif._LogOEC(True, -1420)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00715)
         return res
 
     def SetXTaskConn(self, xtaskConn_ : _XTaskConnector, taskName_ : str =None, trMask_ : _ETaskRightFlag =None):
         if self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
             if self.isFrozen:
-                rlogif._LogOEC(True, -1421)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00335)
             if self.isValid:
                 self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
-                rlogif._LogOEC(True, -1422)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00336)
             else:
-                rlogif._LogOEC(True, -1423)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00337)
             return False
 
         _bValid = _ThreadProfile.__ValidateXTaskConn(enclosedPyThread_=None, xtaskConn_=xtaskConn_)
@@ -285,7 +278,7 @@ class _ThreadProfile(_AbstractProfile):
                 if _bValid:
                     _bValid = trMask_.hasXTaskTaskRight
                 if not _bValid:
-                    rlogif._LogOEC(True, -1424)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00338)
         else:
             trMask_ = _ETaskRightFlag.UserTaskRightDefaultMask()
             trMask_ = _ETaskRightFlag.AddXTaskTaskRight(trMask_)
@@ -303,12 +296,12 @@ class _ThreadProfile(_AbstractProfile):
     def SetThreadTarget(self, threadTargetCallableIF_ : _CallableIF, taskName_ : str =None, trMask_ : _ETaskRightFlag =None):
         if self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
             if self.isFrozen:
-                rlogif._LogOEC(True, -1425)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00339)
             if self.isValid:
                 self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
-                rlogif._LogOEC(True, -1426)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00340)
             else:
-                rlogif._LogOEC(True, -1427)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00341)
             return False
 
         _bValid = _Util.IsInstance(threadTargetCallableIF_, _CallableIF, bThrowx_=True) and threadTargetCallableIF_.isValid
@@ -325,7 +318,7 @@ class _ThreadProfile(_AbstractProfile):
             if _bValid:
                 _bValid = _ETaskRightFlag.IsValidUserTaskRightMask(trMask_)
                 if not _bValid:
-                    rlogif._LogOEC(True, -1428)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00342)
         else:
             trMask_ = _ETaskRightFlag.UserTaskRightDefaultMask()
 
@@ -343,12 +336,12 @@ class _ThreadProfile(_AbstractProfile):
                             , trMask_ : _ETaskRightFlag =None, bAutoStartEnclosedPyThread_ : bool =None):
         if self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
             if self.isFrozen:
-                rlogif._LogOEC(True, -1429)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00343)
             if self.isValid:
                 self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
-                rlogif._LogOEC(True, -1430)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00344)
             else:
-                rlogif._LogOEC(True, -1431)
+                rlogif._LogOEC(True, _EFwErrorCode.FE_00345)
             return False
 
         _bValid = _ThreadProfile.__ValidateXTaskConn(enclosedPyThread_=enclosedPyThread_, xtaskConn_=xtaskConn_)
@@ -370,7 +363,7 @@ class _ThreadProfile(_AbstractProfile):
                 if _bValid:
                     _bValid = trMask_.hasXTaskTaskRight
                 if not _bValid:
-                    rlogif._LogOEC(True, -1432)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00346)
         else:
             trMask_ = _ETaskRightFlag.UserTaskRightDefaultMask()
             if xtaskConn_ is not None:
@@ -398,16 +391,16 @@ class _ThreadProfile(_AbstractProfile):
 
     def SetArgs(self, args_ : list):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1433)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00347)
             return False
         elif not self.isValid:
-            rlogif._LogOEC(True, -1434)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00348)
             return False
  
         _bValid = _Util.IsInstance(args_, list)
         if _bValid and (self.args is not None):
             _bValid = False
-            rlogif._LogOEC(True, -1435)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00349)
  
         if not _bValid:
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
@@ -418,16 +411,16 @@ class _ThreadProfile(_AbstractProfile):
 
     def SetKwargs(self, kwargs_ : dict):
         if self.isFrozen:
-            rlogif._LogOEC(True, -1436)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00350)
             return False
         elif not self.isValid:
-            rlogif._LogOEC(True, -1437)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00351)
             return False
  
         _bValid = _Util.IsInstance(kwargs_, dict)
         if _bValid and (self.kwargs is not None):
             _bValid = False
-            rlogif._LogOEC(True, -1438)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00352)
  
         if not _bValid:
             self.profileStatus = _AbstractProfile._EValidationStatus.eInvalid
@@ -490,10 +483,10 @@ class _ThreadProfile(_AbstractProfile):
 
     def _Validate(self, dictAttrs_ : dict):
         if self._GetProfileHandlersList() is None:
-            rlogif._LogOEC(True, -1439)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00353)
             return
         elif self.profileStatus != _AbstractProfile._EValidationStatus.eNone:
-            rlogif._LogOEC(True, -1440)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00716)
             return
         elif (dictAttrs_ is None) or len(dictAttrs_) == 0:
             return
@@ -531,35 +524,29 @@ class _ThreadProfile(_AbstractProfile):
             return True
 
         res = True
-        if enclosedPyThread_ is None:
-            pass
-        else:
+        if enclosedPyThread_ is not None:
             res = _Util.IsInstance(enclosedPyThread_, _PyThread)
 
-        if not res:
-            pass
-        elif xtaskConn_ is None:
-            pass
-        else:
+        if res and (xtaskConn_ is not None):
             res = _Util.IsInstance(xtaskConn_, _XTaskConnector, bThrowx_=True)
             if res:
                 _xt = xtaskConn_._connectedXTask
                 if _xt is None:
                     res = False
-                    rlogif._LogOEC(True, -1441)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00354)
                 elif not _xt.isAttachedToFW:
                     res = False
-                    rlogif._LogOEC(True, -1442)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00355)
                 elif (not _xt.isXtask) or not isinstance(_xt, XTask):
                     res = False
                     execStr = str(_xt)
-                    rlogif._LogOEC(True, -1443)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00356)
                 elif _xt.xtaskProfile.isExternalQueueEnabled or _xt.xtaskProfile.isInternalQueueEnabled:
                     res = False
-                    rlogif._LogOEC(True, -1444)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00357)
                 elif (enclosedPyThread_ is not None) != _xt.xtaskProfile.isSynchronousTask:
                     res = False
-                    rlogif._LogOEC(True, -1445)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00358)
         return res
 
     @staticmethod

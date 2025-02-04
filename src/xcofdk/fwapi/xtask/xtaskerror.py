@@ -193,7 +193,7 @@ class XTaskError:
     strictly follows its related policy given for the lifecycle at hand.
 
     The default policy is briefly described as follows:
-        - put the RTE in its global-limited mode (see RTE modes in XTask),
+        - put the RTE in its LC-limited mode (see section 'RTE modes' in XTask),
         - request all running tasks (and child process) to stop (or terminate)
           in their reverse order of start,
         - stop RTE, so controll is given back to the host thread waiting for
@@ -222,7 +222,7 @@ class XTaskError:
         Parameters:
         -------------
             - xtaskError_ :
-              framework internal error object this instance is made arround.
+              framework internal error object this instance is made around.
 
         Note:
         ------
@@ -311,7 +311,19 @@ class XTaskError:
         Returns:
         ----------
             None if not available, otherwise an integer value as the error code
-            assigned as the respective, underlying error object was submitted.
+            assigned when the respective, underlying error object was submitted.
+
+        Note:
+        ------
+            The error code (if any) of error messages submitted are always
+            positive integer values, unless they were submitted by the
+            framework.
+
+        See:
+        -----
+            - xlogif.LogErrorEC()
+            - xlogif.LogFatalEC()
+            - xlogif.LogExceptionEC()
         """
         return self.__xte._errorCode
 #END class XTaskError
@@ -354,7 +366,7 @@ class XTaskException(_XTaskExceptionBase):
         Parameters:
         -------------
             - xtaskXcp_ :
-              framework internal exception object this instance is made arround.
+              framework internal exception object this instance is made around.
 
         Note:
         ------
@@ -435,7 +447,17 @@ class XTaskException(_XTaskExceptionBase):
         Returns:
         ----------
             None if not available, otherwise an integer value as the error code
-            assigned as the respective fatal error was submitted.
+            assigned when the respective fatal error was submitted.
+
+        Note:
+        ------
+            The error code (if any) of fatal error messages submitted are always
+            positive integer values, unless they were submitted by the framework.
+
+        See:
+        -----
+            - xlogif.LogFatalEC()
+            - xlogif.LogExceptionEC()
         """
         return self._errorCode
 

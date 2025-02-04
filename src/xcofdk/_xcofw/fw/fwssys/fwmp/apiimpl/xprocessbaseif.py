@@ -7,11 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwcom.xmpdefs import ChildProcessResultData
 
 from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject import _AbstractSlotsObject
-
 
 class _XProcessBaseIF(_AbstractSlotsObject):
     __slots__ = []

@@ -7,19 +7,15 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from enum import auto
 from enum import unique
 
-from xcofdk._xcofw.fw.fwssys.fwcore.logging           import vlogif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.strutil      import _StrUtil
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes import _FwIntEnum
 
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwcfgdefines                import _ESubSysID
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwSSysConfigBase
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwStartupPolicy
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.fwssysconfigbase import _FwStartupConfig
-
 
 class _SSConfigIPC(_FwSSysConfigBase):
 
@@ -37,7 +33,7 @@ class _SSConfigIPC(_FwSSysConfigBase):
         eTaskManager__Singleton              = auto()
         eXTaskConn__PRFC                     = auto()
         eFwApi__ConnAccessLock               = auto()
-        eFwApiShare__AccessLock              = auto()
+        eFwApiImplShare__AccessLock          = auto()
 
     __slots__ = [ '__bmv1' , '__imv3' , '__imv1' , '__imv2']
 

@@ -92,12 +92,11 @@ class XProcess(_XProcessBase):
       look-and-feel as given for class XTask enabling applications to a uniform
       interfacing as much as possible and feasible.
 
-      However, class XProcess as presented here is not complete yet. It is rather
-      considered a kickoff version. Especially the supplementary interfaces
-      related to both management and in-depth error handling are part of work
-      still in progress. Same is true for both the restrictions related to
-      limited RTE modes (see XTask) and the abovementioned process communication
-      incorporating running processes started from outside the framework.
+      However, class XProcess as presented here is not complete yet. It is
+      rather considered a kickoff version. Especially the supplementary
+      interfaces related to both management and in-depth error handling are
+      part of work still in progress. Same is true for restrictions related
+      to limited RTE modes (see XTask).
 
 
     Process start method:
@@ -199,6 +198,8 @@ class XProcess(_XProcessBase):
 
     Note:
     ------
+        - Both design and implementation of this class is not completed yet,
+          see section 'Interface of MP' above.
         - Framework's runtime envioronment, especially its task model, is
           described in class description of XTask.
         - Framework's messaging subsystem is described in class description of
@@ -251,10 +252,10 @@ class XProcess(_XProcessBase):
               see:
                   https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Process.name
             - args_ :
-              optional positional arguments to be passed to the callable target
+              positional arguments (if any) to be passed to the callable target
               when started.
             - kwargs_ :
-              optional keyword arguments to be passed to the callable target
+              keyword arguments (if any) to be passed to the callable target
               when started.
             - maxResultByteSize_ :
               maximum length of the byte stream representing the serialization

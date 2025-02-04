@@ -7,13 +7,11 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwcom         import override
 from xcofdk.fwcom.xmpdefs import ChildProcessResultData
 
 from xcofdk._xcofw.fw.fwssys.fwmp.xprocessconn           import _XProcessConnector
 from xcofdk._xcofw.fw.fwssys.fwmp.apiimpl.xprocessbaseif import _XProcessBaseIF
-
 
 class _XProcessBase(_XProcessBaseIF):
     __slots__ = [ '__xpc' , '__pid' , '__pname' , '__pec' , '__pres' ]
@@ -37,7 +35,6 @@ class _XProcessBase(_XProcessBaseIF):
 
     def __str__(self) -> str:
         return self.ToString()
-
 
     @property
     def _isAttachedToFW(self):
@@ -130,7 +127,6 @@ class _XProcessBase(_XProcessBaseIF):
         if self.__isInvalid:
             return ''
         return ''
-
 
     @property
     def __isInvalid(self):

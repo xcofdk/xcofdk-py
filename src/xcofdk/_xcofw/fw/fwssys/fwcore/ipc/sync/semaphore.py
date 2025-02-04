@@ -7,15 +7,15 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fwadapter                             import rlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout        import _Timeout
 from xcofdk._xcofw.fw.fwssys.fwcore.base.util            import _Util
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.syncresbase import _SyncResourceBase
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 class _SemaphoreBase(_SyncResourceBase):
 
@@ -33,7 +33,7 @@ class _SemaphoreBase(_SyncResourceBase):
         if not self._isValid:
             return
         elif isbounded_ != self.isBoundedSemaphore:
-            rlogif._LogOEC(True, -1248)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00633)
             return
 
         self.__initialCount = initialCount_
@@ -71,14 +71,14 @@ class _SemaphoreBase(_SyncResourceBase):
         with self._apiLock:
             if self.isBoundedSemaphore:
                 if not _Util.CheckMaxRange(self._counter, self.__initialCount-1, bThrowx_=False):
-                    rlogif._LogOEC(True, -1249)
+                    rlogif._LogOEC(True, _EFwErrorCode.FE_00200)
                     return False
             self._IncCounter()
             try:
                 self._resLock.release()
             except ValueError as ve:
                 res = None
-                rlogif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SemaphoreBase_TextID_001).format(self, str(ve)))
+                rlogif._LogErrorEC(_EFwErrorCode.UE_00072, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SemaphoreBase_TextID_001).format(self, str(ve)))
         return res
 
     def _ToString(self):
@@ -91,14 +91,10 @@ class _SemaphoreBase(_SyncResourceBase):
         return res
 
     def _CleanUp(self):
-        if not self._isValid:
-            pass
-        else:
+        if self._isValid:
             with self._apiLock:
                 _tryCount = self.__initialCount - self._counter
-                if _tryCount <= 0:
-                    pass
-                else:
+                if _tryCount > 0:
                     while _tryCount > 0:
                         _tryCount -= 1
                         self.Give()
@@ -114,7 +110,7 @@ class _SemaphoreBase(_SyncResourceBase):
         if not self._isValid:
             pass
         elif maxTryNum_ <= 0:
-            rlogif._LogOEC(True, -1250)
+            rlogif._LogOEC(True, _EFwErrorCode.FE_00634)
         else:
             with self._apiLock:
                 while maxTryNum_ > 0:
@@ -131,16 +127,14 @@ class _SemaphoreBase(_SyncResourceBase):
                     self._resLock.release()
                     relTry -= 1
                 except ValueError as ve:
-                    rlogif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_SemaphoreBase_TextID_002).format(relTry, self, str(ve)))
+                    rlogif._LogErrorEC(_EFwErrorCode.UE_00073, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SemaphoreBase_TextID_002).format(relTry, self, str(ve)))
                     break
         return res
-
 
 class _Semaphore(_SemaphoreBase):
 
     def __init__(self, initialCount_ =1):
         super().__init__(initialCount_, False)
-
 
 class _BoundedSemaphore(_SemaphoreBase):
 
@@ -150,7 +144,6 @@ class _BoundedSemaphore(_SemaphoreBase):
     @property
     def maxCount(self):
         return self.initialCount
-
 
 class _BinarySemaphore(_BoundedSemaphore):
 

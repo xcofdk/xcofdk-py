@@ -7,17 +7,17 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging                         import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.ssdlogging              import _SSDeputyLogging
 from xcofdk._xcofw.fw.fwssys.fwcore.config.fwcfgdefines             import _ESubSysID
 from xcofdk._xcofw.fw.fwssys.fwcore.config.ssysconfig.sscsupervisor import _SSConfigSupervisor
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.ssdipc                      import _SSDeputyIPC
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines                    import _ELcScope
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcssysdeputy                 import _LcSSysDeputy
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes               import unique
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes               import _FwIntEnum
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.ssdipc                      import _SSDeputyIPC
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 class _SSDeputySupervisor(_LcSSysDeputy):
 
@@ -57,10 +57,10 @@ class _SSDeputySupervisor(_LcSSysDeputy):
             self.CleanUpByOwnerRequest(ppass_)
         elif _SSDeputySupervisor.__theSSDSupv is not None:
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._LogOEC(True, -1001)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00001)
         elif not isinstance(ssysCfgSupv_, _SSConfigSupervisor):
             self.CleanUpByOwnerRequest(ppass_)
-            vlogif._LogOEC(True, -1002)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00002)
         elif not self.__CreateSSDeputies():
             self.CleanUpByOwnerRequest(ppass_)
         else:
@@ -92,18 +92,18 @@ class _SSDeputySupervisor(_LcSSysDeputy):
             else:
                 deputy = self.__allSSD[_ss.value]
             if deputy.isDeputyFailed:
-                vlogif._LogOEC(True, -1003)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00003)
                 break
 
             ssc = self.__sscfgSupv.GetSubSystemConfig(_ss)
             if ssc is None:
-                vlogif._LogOEC(True, -1004)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00004)
                 break
 
             res = deputy.ProcLcScopeUpdateRequest(tgtScope_, srcScope_, ssc, bForceReinject_=bForceReinject_, bFinalize_=bFinalize_)
             if (not res) or deputy.isDeputyFailed:
                 res = False
-                vlogif._LogOEC(True, -1005)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00005)
             if not res:
                 break
         return res
@@ -152,5 +152,5 @@ class _SSDeputySupervisor(_LcSSysDeputy):
 
         res = self.numSubsystems == _ESubSysID.eSupervisor.value
         if not res:
-            vlogif._LogOEC(True, -1006)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00006)
         return res

@@ -7,14 +7,12 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from typing import Tuple as _Tuple
 
 from xcofdk.fwapi.xtask import XTaskError
 from xcofdk.fwapi.xtask import XTaskProfile
 
 from xcofdk._xcofw.fw.fwssys.fwcore.logging             import logif
-from xcofdk._xcofw.fw.fwssys.fwcore.base.callableif     import _CallableIF
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable import _AbstractExecutable
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil    import _PyThread
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes   import _CommonDefines
@@ -26,26 +24,30 @@ from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn   import _XTaskMirro
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskconn   import _XTaskConnector
 from xcofdk._xcofw.fw.fwssys.fwcore.apiimpl.xtask.xtaskprfext import _XTaskProfileExt
 from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsgimpl         import _XMsgImpl
-
-from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchFilter import _DispatchFilter
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes              import _EFwErrorCode
 
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-
-
 class _XTaskBase(_AbstractExecutable):
 
-    __slots__   = [ '__xtm' ]
+    __slots__ = [ '__xtm' ]
 
-    ___singletonID      = None
+    __singletonID       = None
     __lstBaseClassNames = [ _FwTDbEngine.GetText(_EFwTextID.eELcCompID_XTask), _FwTDbEngine.GetText(_EFwTextID.eELcCompID_MainXTask) ]
 
     def __init__(self, xtProfile_ : XTaskProfile =None):
         self.__xtm = None
         super().__init__()
+
+        if not _FwApiConnectorAP._APIsLcErrorFree():
+            logif._XLogErrorEC(_EFwErrorCode.UE_00163, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_027))
+            return
+        if _FwApiConnectorAP._APIsLcShutdownEnabled():
+            logif._XLogErrorEC(_EFwErrorCode.UE_00164, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_028))
+            return
 
         _xtp   = None
         _xtpIn = None
@@ -55,18 +57,18 @@ class _XTaskBase(_AbstractExecutable):
 
         _xt = _AbstractExecutable._CalcExecutableTypeID(bMainXT_=_xtp.isMainTask, bMainRbl_=None)
         if _xt is None:
-            logif._XLogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_001).format(str(_xtp.isMainTask)))
+            logif._XLogFatalEC(_EFwErrorCode.FE_00920, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_001).format(str(_xtp.isMainTask)))
             return
 
         self.__xtm = _XTaskMirror(self, _xtpIn, _xt, str(_xtp.aliasName))
         _xtc = _XTaskConnector(self.__xtm, _xtp)
         if not _xtc._isXTaskConnected:
             self.__xtm = None
-            logif._XLogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_002).format(type(self).__name__))
+            logif._XLogFatalEC(_EFwErrorCode.FE_00921, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_002).format(type(self).__name__))
             return
 
         if _xtp.isMainTask:
-            _XTaskBase.___singletonID = id(self)
+            _XTaskBase.__singletonID = id(self)
             _FwApiImplShare._SetMainXTaskSingleton(self)
 
     def __str__(self):
@@ -136,17 +138,21 @@ class _XTaskBase(_AbstractExecutable):
         return None if _xtc is None else _xtc._currentError
 
     @property
+    def _curRunPhaseIteratoionNo(self):
+        return -1 if self.__xtaskConnector is None else self.__xtaskConnector._euRNumber
+
+    @property
     def _xtaskProfile(self) -> XTaskProfile:
         if self.__isInvalid:
             return None
         _xtc = self.__xtaskConnector
         return self.__xtm.xtaskProfile if _xtc is None else _xtc.xtaskProfile
 
-    def _Start(self) -> bool:
+    def _Start(self, *args_, **kwargs_) -> bool:
         if not self.__isConnected:
             return False
         _xtc = self.__xtaskConnector
-        return False if _xtc is None else _xtc._StartXTask()
+        return False if _xtc is None else _xtc._StartXTask(*args_, **kwargs_)
 
     def _Stop(self, cleanupDriver_ =True) -> bool:
         if not self.__isConnected:
@@ -180,17 +186,17 @@ class _XTaskBase(_AbstractExecutable):
         if _xtc is None:
             return False
 
-        _curXU = _FwApiConnectorAP._APGetCurXTask()
-        if _curXU is None:
+        _curXT = _FwApiConnectorAP._APGetCurXTask()
+        if _curXT is None:
             return False
 
-        if self._executableUniqueID != _curXU._executableUniqueID:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_014).format( self._executableUniqueID))
+        if self._executableUniqueID != _curXT._executableUniqueID:
+            logif._LogErrorEC(_EFwErrorCode.UE_00004, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_014).format( self._executableUniqueID))
             return False
 
         return _xtc._ClearCurrentError()
 
-    def _SetErrorEC(self, errMsg_: str, errCode_: int =None):
+    def _SetTaskError(self, bFatal_ : bool, errMsg_: str, errCode_: int =None):
         if self.__isInvalid:
             return
         if not self._isAttachedToFW:
@@ -200,35 +206,16 @@ class _XTaskBase(_AbstractExecutable):
         if _xtc is None:
             return
 
-        _curXU = _FwApiConnectorAP._APGetCurXTask()
-        if _curXU is None:
+        _curXT = _FwApiConnectorAP._APGetCurXTask()
+        if _curXT is None:
             return
 
-        if self._executableUniqueID != _curXU._executableUniqueID:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_025).format( self._executableUniqueID))
+        if self._executableUniqueID != _curXT._executableUniqueID:
+            _msgID = _EFwTextID.eLogMsg_XTaskBase_TextID_026 if bFatal_ else _EFwTextID.eLogMsg_XTaskBase_TextID_025
+            logif._LogErrorEC(_EFwErrorCode.UE_00005, _FwTDbEngine.GetText(_msgID).format( self._executableUniqueID))
             return
 
-        _xtc._SetErrorEC(errMsg_, errCode_)
-
-    def _SetFatalErrorEC(self, errMsg_: str, errCode_: int =None):
-        if self.__isInvalid:
-            return
-        if not self._isAttachedToFW:
-            return
-
-        _xtc = self.__xtaskConnector
-        if _xtc is None:
-            return
-
-        _curXU = _FwApiConnectorAP._APGetCurXTask()
-        if _curXU is None:
-            return
-
-        if self._executableUniqueID != _curXU._executableUniqueID:
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_026).format( self._executableUniqueID))
-            return
-
-        _xtc._SetFatalErrorEC(errMsg_, errCode_)
+        _xtc._SetTaskError(bFatal_, errMsg_, errCode_)
 
     def _TriggerQueueProcessing(self, bExtQueue_ : bool) -> int:
         if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
@@ -244,25 +231,25 @@ class _XTaskBase(_AbstractExecutable):
 
         if not bExtQueue_:
             if not self._xtaskProfile.isInternalQueueEnabled:
-                _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_005).format(_midPart, self._executableUniqueID, _midPart))
+                _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
+                logif._LogErrorEC(_EFwErrorCode.UE_00006, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_005).format(_midPart, self._executableUniqueID, _midPart))
                 return -1
         elif not self._xtaskProfile.isExternalQueueEnabled:
-            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_005).format(_midPart, self._executableUniqueID, _midPart))
+            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External)
+            logif._LogErrorEC(_EFwErrorCode.UE_00007, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_005).format(_midPart, self._executableUniqueID, _midPart))
             return -1
         elif self._xtaskProfile.isExternalQueueBlocking:
-            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_023).format(_midPart, self._executableUniqueID, _midPart))
+            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External)
+            logif._LogErrorEC(_EFwErrorCode.UE_00008, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_023).format(_midPart, self._executableUniqueID, _midPart))
             return -1
 
-        _curXU = _FwApiConnectorAP._APGetCurXTask()
-        if _curXU is None:
+        _curXT = _FwApiConnectorAP._APGetCurXTask()
+        if _curXT is None:
             return -1
 
-        if self._executableUniqueID != _curXU._executableUniqueID:
+        if self._executableUniqueID != _curXT._executableUniqueID:
             _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
-            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_024).format(_midPart, self._executableUniqueID, _curXU._executableUniqueID))
+            logif._LogErrorEC(_EFwErrorCode.UE_00009, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_024).format(_midPart, self._executableUniqueID, _curXT._executableUniqueID))
             return -1
 
         return _xtc._TriggerQueueProcessing(bExtQueue_)
@@ -277,16 +264,6 @@ class _XTaskBase(_AbstractExecutable):
         if _xtc is None:
             return False
         return _xtc._SendXMsg(xmsg_)
-
-    @staticmethod
-    def _ProcessDispFilterRequest( xtsk_      
-                                 , dispFilter_ : _DispatchFilter
-                                 , callback_   : _CallableIF =None
-                                 , bAdd_                     =True) -> bool:
-        if (xtsk_ is None) or xtsk_.__isInvalid:
-            return False
-        _xtc = xtsk_.__xtaskConnector
-        return False if _xtc is None else _xtc._ProcessDispFilterRequest(dispFilter_, callback_=callback_, bAdd_=bAdd_)
 
     def _GetMyExecutableTypeID(self):
         return None if self.__isInvalid else self.__xtm._xtTypeID
@@ -306,15 +283,11 @@ class _XTaskBase(_AbstractExecutable):
             _uid      = self._executableUniqueID
             _stateStr = None if self.__isInvalid else self.__xtm._xtStateToString
 
-            if (_uid is None) and (_stateStr is None):
-                pass
-            else:
-                tmp = _CommonDefines._CHAR_SIGN_DASH if _uid is None else str(_uid)
-                if _stateStr is None:
-                    pass
-                else:
-                    tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_018).format(_stateStr)
-                res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(tmp)
+            if (_uid is not None) or (_stateStr is not None):
+                _tmp = _CommonDefines._CHAR_SIGN_DASH if _uid is None else str(_uid)
+                if _stateStr is not None:
+                    _tmp += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_018).format(_stateStr)
+                res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(_tmp)
 
             if len(args_) > 0:
                 _bCompact = True
@@ -328,10 +301,9 @@ class _XTaskBase(_AbstractExecutable):
         _xtc = self.__xtaskConnector
         return None if _xtc is None else _xtc._CPrf(enclosedPyThread_=enclosedPyThread_, profileAttrs_=profileAttrs_)
 
-
     @staticmethod
     def __IsSingletonCreated():
-        return isinstance(_XTaskBase.___singletonID, int)
+        return isinstance(_XTaskBase.__singletonID, int)
 
     @property
     def __isValid(self):
@@ -368,7 +340,7 @@ class _XTaskBase(_AbstractExecutable):
             _xtpIn = XTaskProfile()
             _xtp   = _XTaskProfileExt()
         elif not (isinstance(xtProfile_, XTaskProfile) and xtProfile_.isValid):
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_003).format(type(xtProfile_).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00165, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_003).format(type(xtProfile_).__name__))
             return None, None
 
         res = _xtp
@@ -377,7 +349,7 @@ class _XTaskBase(_AbstractExecutable):
             _xtp2 = res
 
         if not res.isValid:
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_004).format(str(res)))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00166, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_004).format(str(res)))
             res = None
         else:
             self.__CheckSetDefaultAliasName(res)
@@ -412,11 +384,11 @@ class _XTaskBase(_AbstractExecutable):
         return res, _xtpIn
 
     def __CheckMainXT(self, xtProfileExt_: _XTaskProfileExt) -> bool:
-        res  = True
+        res  = self is not None
         if xtProfileExt_.isMainTask:
             if _XTaskBase.__IsSingletonCreated():
                 res = False
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_006))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00167, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_006))
         return res
 
     def __CheckAliasName(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -428,7 +400,7 @@ class _XTaskBase(_AbstractExecutable):
             _xtp.aliasName = type(self).__name__
         elif not isinstance(aliasName, str):
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_007).format(type(aliasName).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00168, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_007).format(type(aliasName).__name__))
         else:
             aliasName = aliasName.strip()
             if len(aliasName) < 1:
@@ -436,7 +408,7 @@ class _XTaskBase(_AbstractExecutable):
                 logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_008).format(aliasName))
             elif not aliasName.isidentifier():
                 res = False
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_009).format(aliasName))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00169, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_009).format(aliasName))
         return res
 
     def __CheckIntQueue(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -452,7 +424,7 @@ class _XTaskBase(_AbstractExecutable):
                     logif._XLogDebug(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_010).format(type(self).__name__, _mAttrName))
         elif _mAttrVal is None:
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00170, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
         return res
 
     def __CheckExtQueue(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -468,10 +440,10 @@ class _XTaskBase(_AbstractExecutable):
                     logif._XLogDebug(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_012).format(type(self).__name__, _mAttrName))
             if _xtp.isExternalQueueBlocking:
                 res = False
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_013).format(type(self).__name__))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00171, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_013).format(type(self).__name__))
         elif _mAttrVal is None:
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00172, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
         return res
 
     def __CheckRun(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -497,12 +469,12 @@ class _XTaskBase(_AbstractExecutable):
                 res       = False
                 _mAttrVal = None
             if not res:
-                logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00173, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
 
         if res:
             if (_mAttrVal is not None) != _xtp.isRunPhaseEnabled:
                 res = False
-                logif._XLogFatal(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_015).format(type(self).__name__, _mAttrName))
+                logif._XLogFatalEC(_EFwErrorCode.FE_00922, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_015).format(type(self).__name__, _mAttrName))
         return res
 
     def __CheckSetup(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -518,7 +490,7 @@ class _XTaskBase(_AbstractExecutable):
                     logif._XLogDebug(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_016).format(type(self).__name__, _mAttrName))
         elif _mAttrVal is None:
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00174, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
         return res
 
     def __CheckTeardown(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -534,7 +506,7 @@ class _XTaskBase(_AbstractExecutable):
                     logif._XLogDebug(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_017).format(type(self).__name__, _mAttrName))
         elif _mAttrVal is None:
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00175, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_011).format(type(self).__name__, _mAttrName))
         return res
 
     def __CheckRunPhaseFrequency(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -543,7 +515,8 @@ class _XTaskBase(_AbstractExecutable):
 
         if _xtp.runPhaseFrequencyMS < 0:
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_018).format(_xtp.runPhaseFrequencyMS, type(self).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00176, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_018).format(_xtp.runPhaseFrequencyMS, type(self).__name__))
+
         return res
 
     def __CheckMaxProcTimespan(self, xtProfileExt_: _XTaskProfileExt) -> bool:
@@ -552,18 +525,14 @@ class _XTaskBase(_AbstractExecutable):
 
         if _xtp.runPhaseMaxProcessingTimeMS <= 0:
             res = False
-            logif._XLogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_021).format(_xtp.runPhaseMaxProcessingTimeMS, type(self).__name__))
+            logif._XLogErrorEC(_EFwErrorCode.UE_00177, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskBase_TextID_021).format(_xtp.runPhaseMaxProcessingTimeMS, type(self).__name__))
         return res
 
     def __CheckSetDefaultAliasName(self, xtProfile_ : XTaskProfile):
-        if xtProfile_.aliasName is not None:
-            pass
-        else:
+        if xtProfile_.aliasName is None:
             aliasName = type(self).__name__
             startChar = aliasName[0]
-            if startChar.islower():
-                pass
-            else:
+            if not startChar.islower():
                 startChar = startChar.lower()
                 aliasName = startChar + aliasName[1:] if len(aliasName) > 1 else startChar
             xtProfile_.aliasName = aliasName

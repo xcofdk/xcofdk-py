@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging.fatalentry import _FatalEntry
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcdefines       import _ELcCompID
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmonimpl    import _LcMonitorImpl
@@ -16,7 +15,6 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aobject      import _AbstractSlotsObje
 
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore import _BinarySemaphore
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask      import  _AbstractTask
-
 
 class _FwMainIF(_AbstractSlotsObject):
 

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk._xcofw.fw.fwssys.fwcore.logging           import vlogif
 from xcofdk._xcofw.fw.fwssys.fwcore.base.gtimeout     import _Timeout
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil  import _TaskUtil
@@ -15,6 +14,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb    import _ELcCeaseGateFlag
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb    import _ELcCeaseTLBState
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmonimpl   import _LcMonitorImpl
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
+from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
+from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
 
 class _LcShutdownCoordinator:
     __slots__ = [ '__lcMon' , '__bByMR' , '__lstFwCTLBs' , '__lstXuCTLBs' ]
@@ -24,7 +27,6 @@ class _LcShutdownCoordinator:
         self.__bByMR      = lcMon_._isCoordinatedShutdownManagedByMR
         self.__lstFwCTLBs = None
         self.__lstXuCTLBs = None
-
 
     def _ExecuteCoordinatedCeasingGate(self):
         _lcm       = self.__lcMon
@@ -48,7 +50,7 @@ class _LcShutdownCoordinator:
 
         _curSDR = _lcm.eCurrentShutdownRequest
         if (_curSDR is not None) and _curSDR.isShutdown:
-            vlogif._LogOEC(True, -1513)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00421)
             _lcm._StopCoordinatedShutdown(bDueToUnexpectedError_=True)
             return
 
@@ -78,7 +80,7 @@ class _LcShutdownCoordinator:
 
         if (_curSDR is None) or not _curSDR.isPreShutdown:
             if not vlogif._IsReleaseModeEnabled():
-                pass
+                pass 
             else:
                 vlogif._XLogWarning('Maximum wait time for internal pre-gate expired, forcing to continue shutdown execution.')
 
@@ -118,7 +120,7 @@ class _LcShutdownCoordinator:
 
         if (_curSDR is None) or not _curSDR.isShutdown:
             if not vlogif._IsReleaseModeEnabled():
-                pass
+                pass 
             else:
                 vlogif._XLogWarning('Maximum wait time for internal gate expired, forcing to continue shutdown execution.')
 
@@ -129,7 +131,6 @@ class _LcShutdownCoordinator:
             self.__CoordinateCeasingGateFW(_ELcCeaseGateFlag.ebfShutdownGate)
 
         _lcm._OpenCoordinatedGate(_LcMonitorImpl._ELcMonStateFlag.ebfShutdownGate)
-
 
     @property
     def __logPrefix(self):
@@ -174,7 +175,6 @@ class _LcShutdownCoordinator:
                 continue
 
             break
-
         _perGateOpenTimeout.CleanUp()
 
     def __CoordinateCeasingGateFW(self, eCeaseFlag_ : _ELcCeaseGateFlag):
@@ -223,5 +223,4 @@ class _LcShutdownCoordinator:
                 continue
 
             break
-
         _perGateOpenTimeout.CleanUp()

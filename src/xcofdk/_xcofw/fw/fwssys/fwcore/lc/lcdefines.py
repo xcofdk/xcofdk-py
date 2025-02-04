@@ -3,18 +3,15 @@
 # ------------------------------------------------------------------------------
 # File   : lcdefines.py
 #
-# Copyright(c) 2023 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2024 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
-from xcofdk._xcofw.fw.fwssys.fwcore.logging.logdefines import _EErrorImpact
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import _FwIntEnum
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes  import unique
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
 
 @unique
 class _ELcScope(_FwIntEnum):
@@ -46,7 +43,6 @@ class _ELcScope(_FwIntEnum):
     @property
     def lcTransitionalOrder(self):
         return self.value
-
 
 @unique
 class _ELcOperationModeID(_FwIntEnum):
@@ -84,7 +80,6 @@ class _ELcOperationModeID(_FwIntEnum):
     @property
     def isLcShutdownSequenceMode(self):
         return self.value  > _ELcOperationModeID.eLcNormal.value
-
 
 @unique
 class _ELcCompID(_FwIntEnum):
@@ -172,137 +167,12 @@ class _ELcCompID(_FwIntEnum):
         else:  
             return _ELcCompID.eMiscComp
 
-
-class _LcFrcView:
-
-    __slots__ = [ '__eCID' , '__feClone' , '__bFFE' , '__bTType' , '__tid' , '__tuid' , '__tskName', '__thrdName' , '__errImp' ]
-
-    def __init__( self, *, eCID_ : _ELcCompID, ferr_, bForeignFE_ : bool, bTType_ : bool
-                , tskName_ : str, thrdName_ : str, tid_ : int, tuid_ : int ):
-        self.__tid      = tid_
-        self.__eCID     = eCID_
-        self.__tuid     = tuid_
-        self.__bFFE     = bForeignFE_
-        self.__bTType   = bTType_
-        self.__errImp   = None
-        self.__feClone  = ferr_
-        self.__tskName  = tskName_
-        self.__thrdName = thrdName_
-
-        _bError = True
-
-        if ferr_ is None:
-            pass
-        elif not ferr_.isClone:
-            pass
-        elif ferr_.eErrorImpact is None:
-            pass
-        elif not ferr_.eErrorImpact.hasImpact:
-            pass
-        elif not ferr_.eErrorImpact.isCausedByFatalError:
-            pass
-        else:
-            _bError = False
-
-        if _bError:
-            self.CleanUp()
-        else:
-            self.__errImp = ferr_.eErrorImpact
-
-    def __str__(self):
-        return self.ToString()
-
-    @property
-    def isValid(self):
-        return self.__eCID is not None
-
-    @property
-    def isForeignFatalError(self):
-        return self.__bFFE
-
-    @property
-    def isReportedByPyThread(self):
-        return self.__bTType is None
-
-    @property
-    def isReportedByAbstractTask(self):
-        return self.__bTType is not None
-
-    @property
-    def isReportedByFwTask(self):
-        return (self.__bTType is not None) and (self.__bTType == True)
-
-    @property
-    def isReportedByFwThread(self):
-        return (self.__bTType is not None) and (self.__bTType == False)
-
-    @property
-    def eLcCompID(self) -> _ELcCompID:
-        return self.__eCID
-
-    @property
-    def eErrorImpact(self) -> _EErrorImpact:
-        return self.__errImp
-
-    @property
-    def fatalErrorClone(self):
-        return self.__feClone
-
-    @property
-    def taskName(self):
-        return self.__tskName
-
-    @property
-    def threadName(self):
-        return self.__thrdName
-
-    @property
-    def taskID(self):
-        return self.__tid
-
-    @property
-    def taskUID(self):
-        return self.__tuid
-
-    def ToString(self, bVerbose_ =True) -> str:
-        if not self.isValid:
-            return None
-
-        if self.isReportedByPyThread:
-            _uname = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_011).format(self.__thrdName, self.__tuid)
-        else:
-            _uname = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_011).format(self.__tskName, self.__tid)
-
-        if self.__feClone is not None:
-            res = _FwTDbEngine.GetText(_EFwTextID.eLcFrcView_ToString_01).format(self.__eCID.compactName, _uname, self.__feClone.uniqueID, self.__feClone.shortMessage)
-            if bVerbose_:
-                res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_012).format(str(self.__feClone))
-        else:
-            res = _FwTDbEngine.GetText(_EFwTextID.eLcFrcView_ToString_02).format(self.__eCID.compactName, _uname)
-        return res
-
-    def CleanUp(self):
-        if self.__feClone is not None:
-            self.__feClone.CleanUp()
-
-        self.__tid      = None
-        self.__eCID     = None
-        self.__tuid     = None
-        self.__bFFE     = None
-        self.__bTType   = None
-        self.__errImp   = None
-        self.__feClone  = None
-        self.__tskName  = None
-        self.__thrdName = None
-
-    def _DetachFatalError(self):
-        res = self.__feClone
-        self.__feClone = None
-        return res
-
-
 class _LcConfig:
     __eTargetScope = None
+
+    @staticmethod
+    def IsTargetScopeIPC():
+        return True
 
     @staticmethod
     def GetTargetScope() -> _ELcScope:

@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from xcofdk.fwapi.xtask import XTask
 from xcofdk.fwapi.xmsg  import XMessage
 from xcofdk.fwapi.xmsg  import XPayload
@@ -30,15 +29,12 @@ from xcofdk._xcofw.fw.fwssys.fwcore.types.aprofile               import _Abstrac
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes            import _CommonDefines
 from xcofdk._xcofw.fw.fwssys.fwcore.types.commontypes            import _ETernaryOpResult
 
-from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxy        import _LcProxy
 from xcofdk._xcofw.fw.fwssys.fwcore.lc.lcproxyclient  import _LcProxyClient
 
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb import _LcDynamicTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb import _LcCeaseTLB
 from xcofdk._xcofw.fw.fwssys.fwcore.lcmon.lcmontlb import _ELcCeaseTLBState
 
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.err.euerrhandler  import _EErrorHandlerCallbackID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.err.euerrhandler  import _EuErrorHandler
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.mutex        import _Mutex
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.sync.semaphore    import _BinarySemaphore
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.atask         import _AbstractTask
@@ -46,6 +42,7 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.execprofile   import _ExecutionProfi
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk               import taskmgr
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskstate     import _TaskState
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _TaskUtil
+from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _ETaskApiContextID
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _ETaskExecutionPhaseID
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.tsk.taskutil      import _EProcessingFeasibilityID
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.aexecutable   import _AbstractExecutable
@@ -54,7 +51,10 @@ from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ARunnableApiGu
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunProgressID
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunnableApiFuncTag
 from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunnableExecutionStepID
-from xcofdk._xcofw.fw.fwssys.fwcore.ipc.rbl.arunnabledefs import _ERunnableExecutionContextID
+
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+from xcofdk._xcofw.fw.fwssys.fwerrh.euerrhandler import _EErrorHandlerCallbackID
+from xcofdk._xcofw.fw.fwssys.fwerrh.euerrhandler import _EuErrorHandler
 
 from xcofdk._xcofw.fw.fwssys.fwmsg.msg.messageif         import _MessageIF
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchFilter   import _DispatchFilter
@@ -65,8 +65,6 @@ from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
@@ -148,7 +146,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 self.__dictSteps.clear()
                 self.__dictSteps = None
 
-
     class _RunnableExecutorTable(_AbstractSlotsObject):
 
         __slots__ = [ '__dictExecutors' ]
@@ -192,7 +189,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             self.__pldDump  = pldDump_
             self.__callback = callback_
 
-
         @property
         def _message(self) -> _MessageIF:
             if _AbstractRunnable._ARBackLogEntry._FwDispInst is None:
@@ -208,6 +204,10 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         @property
         def _msgUID(self):
             return self.__msgUID
+
+        @property
+        def _sortKey(self):
+            return abs(self.__msgUID)
 
         @property
         def _callback(self):
@@ -244,16 +244,14 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             self.__msgDump  = None
             self.__callback = None
 
-
     @classmethod
     def GetMandatoryCustomApiMethodNamesList(cls_):
         return cls_._GetMandatoryCustomApiMethodNamesList()
 
     __slots__ = [ '__iqueue'      , '__xqueue'   , '__mtxData'     , '__ag'
                 , '__semStop'     , '__eRblType' , '__xtaskConn'   , '__rblName'
-                , '__taskProfile' , '__execCtx'  , '__runLogAlert' , '__execPlan'
-                , '__executors'   , '__execPrf'  , '__xtlType'     , '__cbReg'
-                , '__drivingTask'
+                , '__tskPrf'      , '__runLogAlert' , '__execPlan' , '__executors'
+                , '__execPrf'  , '__xtlType'     , '__cbReg'       , '__drivingTask'
                 ]
 
     __FwDispRbl = None
@@ -269,18 +267,17 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         self.__cbReg       = None
         self.__iqueue      = None
         self.__xqueue      = None
+        self.__tskPrf      = None
         self.__mtxData     = None
         self.__rblName     = None
         self.__semStop     = None
         self.__execPrf     = None
         self.__xtlType     = None
-        self.__execCtx     = None
         self.__eRblType    = None
         self.__execPlan    = None
         self.__executors   = None
         self.__xtaskConn   = None
         self.__drivingTask = None
-        self.__taskProfile = None
         self.__runLogAlert = None
 
         if eRblType_ is None:
@@ -290,32 +287,34 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         _EuErrorHandler.__init__(self)
         _DispatchAgentIF.__init__(self)
 
-        bErr = False
+        _bErr = False
         if not isinstance(eRblType_, _ERunnableType):
-            bErr = True
-            vlogif._LogOEC(True, -1156)
+            _bErr = True
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00091)
         elif (runLogAlert_ is not None) and not isinstance(runLogAlert_, _TimeAlert):
-            bErr = True
-            vlogif._LogOEC(True, -1157)
+            _bErr = True
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00092)
         elif (execProfile_ is not None) and not (isinstance(execProfile_, _ExecutionProfile) and execProfile_.isValid):
-            bErr = True
-            vlogif._LogOEC(True, -1158)
+            _bErr = True
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00093)
         else:
-            bMainXU, bMainRbl = None, None
-            if eRblType_.isFwMainRunnable:
-                bMainRbl = True
-            elif not eRblType_.isXTaskRunnable:
-                bMainRbl = False
-            else:
-                bMainRbl = False
-                if eRblType_.isMainXTaskRunnable:
-                    bMainXU = True
+            _bMainXT = None
+            _bMainRbl = None
+            if isinstance(eRblType_, _ERunnableType):
+                if eRblType_.isFwMainRunnable:
+                    _bMainRbl = True
+                elif not eRblType_.isXTaskRunnable:
+                    _bMainRbl = False
                 else:
-                    bMainXU = False
-            xtlType = _AbstractExecutable._CalcExecutableTypeID(bMainXT_=bMainXU, bMainRbl_=bMainRbl)
+                    _bMainRbl = False
+                    if eRblType_.isMainXTaskRunnable:
+                        _bMainXT = True
+                    else:
+                        _bMainXT = False
+            xtlType = _AbstractExecutable._CalcExecutableTypeID(bMainXT_=_bMainXT, bMainRbl_=_bMainRbl)
             if xtlType is None:
-                bErr = True
-                vlogif._LogOEC(True, -1159)
+                _bErr = True
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00094)
             else:
                 self.__xtlType = xtlType
                 if execProfile_ is None:
@@ -326,18 +325,18 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 _xtc = xtaskConn_
                 if eRblType_.isXTaskRunnable or (_xtc is not None):
                     if not (eRblType_.isXTaskRunnable and isinstance(_xtc, _XTaskConnector)):
-                        bErr = True
-                        vlogif._LogOEC(True, -1160)
+                        _bErr = True
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00095)
                     else:
                         _xt = xtaskConn_._connectedXTask
                         if not (isinstance(_xt, XTask) and _xt.isXtask):
-                            bErr = True
-                            vlogif._LogOEC(True, -1161)
+                            _bErr = True
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00096)
                         elif not _xt.isAttachedToFW:
-                            bErr = True
-                            vlogif._LogOEC(True, -1162)
+                            _bErr = True
+                            vlogif._LogOEC(True, _EFwErrorCode.VFE_00097)
 
-        if not bErr:
+        if not _bErr:
             if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
                 if excludedRblM_ is None:
                     excludedRblM_ = _ERunnableApiFuncTag.DefaultApiMask()
@@ -346,40 +345,36 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 excludedRblM_ = _ERunnableApiFuncTag.AddApiFuncTag(excludedRblM_, _ERunnableApiFuncTag.eRFTProcessExternalQueue)
                 excludedRblM_ = _ERunnableApiFuncTag.AddApiFuncTag(excludedRblM_, _ERunnableApiFuncTag.eRFTProcessInternalQueue)
 
-        if bErr:
-            pass
-        elif (excludedRblM_ is not None) and not isinstance(excludedRblM_, _ERunnableApiFuncTag):
-            bErr = True
-            vlogif._LogOEC(True, -1163)
+        if not _bErr:
+            if (excludedRblM_ is not None) and not isinstance(excludedRblM_, _ERunnableApiFuncTag):
+                _bErr = True
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00098)
 
-        if bErr:
-            pass
-        else:
+        if not _bErr:
             self.__ag = _ARunnableApiGuide(self, excludedRblM_)
             if self.__ag.eApiMask is None:
-                bErr = True
+                _bErr = True
             else:
                 if eRblType_.isFwMainRunnable:
-                    bErr =         not self.__ag.isProvidingRunCeaseIteration
-                    bErr = bErr or not self.__ag.isProvidingPrepareCeasing
-                    bErr = bErr or not self.__ag.isProvidingProcFwcErrorHandlerCallback
-                    if bErr:
-                        vlogif._LogOEC(True, -1164)
+                    _bErr =         not self.__ag.isProvidingRunCeaseIteration
+                    _bErr = _bErr or not self.__ag.isProvidingPrepareCeasing
+                    _bErr = _bErr or not self.__ag.isProvidingProcFwcErrorHandlerCallback
+                    if _bErr:
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00099)
 
-                if bErr:
-                    pass
-                elif not self.__CheckMutuallyExclusiveAPI():
-                    bErr = True
-                else:
-                    self.__CreateExecPlan()
-                    if self.__execPlan is None:
-                        bErr = True
+                if not _bErr:
+                    if not self.__CheckMutuallyExclusiveAPI():
+                        _bErr = True
                     else:
-                        self.__CreateExecutorTable(eRblType_.isXTaskRunnable)
-                        if self.__executors is None:
-                            bErr = True
+                        self.__CreateExecPlan()
+                        if self.__execPlan is None:
+                            _bErr = True
+                        else:
+                            self.__CreateExecutorTable(eRblType_.isXTaskRunnable)
+                            if self.__executors is None:
+                                _bErr = True
 
-        if bErr:
+        if _bErr:
             if self.__executors is not None:
                 self.__executors.CleanUp()
                 self.__executors = None
@@ -395,7 +390,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         else:
             self.__mtxData     = _Mutex()
             self.__execPrf     = execProfile_
-            self.__execCtx     = _ERunnableExecutionContextID.eDontCare
             self.__eRblType    = eRblType_
             self.__xtaskConn   = xtaskConn_
             self.__runLogAlert = runLogAlert_
@@ -413,8 +407,8 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         if self.taskBadge is not None:
             res = self.taskBadge.ToString()
-        elif self.taskProfile is not None:
-            res = self.taskProfile.taskName
+        elif self.__taskProfile is not None:
+            res = self.__taskProfile.taskName
         else:
             res = None
 
@@ -466,20 +460,18 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             self.__iqueue      = None
             self.__xqueue      = None
+            self.__tskPrf      = None
             self.__mtxData     = None
             self.__rblName     = None
             self.__semStop     = None
             self.__xtlType     = None
-            self.__execCtx     = None
             self.__eRblType    = None
             self.__xtaskConn   = None
             self.__drivingTask = None
-            self.__taskProfile = None
             self.__runLogAlert = None
 
         if not _bFlagSet:
             _myMtx.CleanUp()
-
 
     @property
     def isProvidingRunExecutable(self):
@@ -569,10 +561,9 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         _bNOT_COMPACT = False
         return None if self.__ag is None else self.__ag.ToString(_bNOT_COMPACT)
 
-
     @property
     def _isAttachedToFW(self) -> bool:
-        return (self.__eRblType is not None) and (self.taskProfile is not None)
+        return (self.__eRblType is not None) and (self.__taskProfile is not None)
 
     @property
     def _isStarted(self) -> bool:
@@ -624,11 +615,11 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
     @property
     def _executableName(self) -> str:
-        return self.runnableName
+        return self._runnableName
 
     @property
     def _executableUniqueID(self) -> int:
-        return self.taskID
+        return self.__taskID
 
     def _Start(self):
         return self.__StartRunnable()
@@ -638,15 +629,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
     def _Join(self, timeout_: _Timeout =None):
         self.__JoinRunnable(timeout_=timeout_)
-
-
-    @property
-    def euRNumber(self) -> int:
-        return self._euRNumber
-
-    @property
-    def isAborting(self):
-        return self._isAborting
 
     def _ProcErrorHandlerCallback( self
                                  , eCallbackID_           : _EErrorHandlerCallbackID
@@ -658,35 +640,33 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             res = self.__ProcErrHdlrCallback(eCallbackID_, curFatalError_=curFatalError_)
         return res
 
+    def _PcClientName(self) -> str:
+        return self._runnableName
 
-    @property
-    def _isLcProxyClientMonitoringLcModeChange(self) -> bool:
-        return self._isMonitoringLcModeChange
+    def _PcIsMonitoringLcModeChange(self) -> bool:
+        _tskSID = None if self.__drivingTask is None else self.__drivingTask.taskStateID
+        return False if _tskSID is None else (_tskSID.isRunning or _tskSID.isStopping)
 
-    @property
-    def _lcProxyClientName(self) -> str:
-        return self.runnableName
-
-    def _SetLcProxy(self, lcPxy_ : _LcProxy):
-        if self._lcProxy is None:
-            _LcProxyClient._SetLcProxy(self, lcPxy_)
-            if self._lcProxy is not None:
+    def _PcSetLcProxy(self, lcPxy_, bForceUnset_ =False):
+        if not self._PcIsLcProxySet():
+            _LcProxyClient._PcSetLcProxy(self, lcPxy_, bForceUnset_=bForceUnset_)
+            if self._PcIsLcProxySet():
                 if self.__xtaskConn is not None:
-                    self.__xtaskConn._SetLcProxy(self._lcProxy)
+                    self.__xtaskConn._PcSetLcProxy(self, bForceUnset_=bForceUnset_)
 
-    def _OnLcCeaseModeDetected(self) -> _ETernaryOpResult:
+    def _PcOnLcCeaseModeDetected(self) -> _ETernaryOpResult:
         if self._isInvalid:
             return _ETernaryOpResult.Abort()
 
         res = _ETernaryOpResult.Abort() if self._isAborting else _ETernaryOpResult.Stop()
 
         if not self._isInLcCeaseMode:
-            self._CreateCeaseTLB(bAborting_=res.isAbort)
+            self._CreateCeaseTLB(bEnding_=res.isAbort)
         else:
             self._UpdateCeaseTLB(res.isAbort)
         return res
 
-    def _OnLcFailureDetected(self) -> _ETernaryOpResult:
+    def _PcOnLcFailureDetected(self) -> _ETernaryOpResult:
         if self._isInvalid:
             return _ETernaryOpResult.Abort()
 
@@ -695,31 +675,32 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         if not res.isAbort:
             _bOwnLcFailureSet = False
 
-            _ePF = _EProcessingFeasibilityID.eInCeaseMode if self._isInLcCeaseMode else self._GetProcessingFeasiblity()
+            _ePF = self._GetProcessingFeasibility()
             if not _ePF.isFeasible:
                 if not (_ePF.isInCeaseMode or _ePF.isOwnLcCompFailureSet):
                     res = _ETernaryOpResult.Abort()
 
                 elif _ePF.isInCeaseMode:
                     pass
+
                 else:
                     _bOwnLcFailureSet = True
 
             if not res.isAbort:
                 if not _bOwnLcFailureSet:
-                    if self._lcProxy.hasLcAnyFailureState:
-                        _bOwnLcFailureSet = self._lcProxy.HasLcCompFRC(self._eRunnableType.toLcCompID, atask_=self.__drivingTask)
+                    if self._PcHasLcAnyFailureState():
+                        _bOwnLcFailureSet = self._PcHasLcCompAnyFailureState(self._eRunnableType.toLcCompID, atask_=self.__drivingTask)
 
                 if _bOwnLcFailureSet:
                     res = _ETernaryOpResult.Abort()
 
         if not self._isInLcCeaseMode:
-            self._CreateCeaseTLB(bAborting_=res.isAbort)
+            self._CreateCeaseTLB(bEnding_=res.isAbort)
         else:
             self._UpdateCeaseTLB(res.isAbort)
         return res
 
-    def _OnLcPreShutdownDetected(self) -> _ETernaryOpResult:
+    def _PcOnLcPreShutdownDetected(self) -> _ETernaryOpResult:
         if self._isInvalid:
             return _ETernaryOpResult.Abort()
 
@@ -728,42 +709,42 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         if not res.isAbort:
             _bOwnLcFailureSet = False
 
-            _ePF = _EProcessingFeasibilityID.eInCeaseMode if self._isInLcCeaseMode else self._GetProcessingFeasiblity()
+            _ePF = self._GetProcessingFeasibility()
             if not _ePF.isFeasible:
                 if not (_ePF.isInCeaseMode or _ePF.isOwnLcCompFailureSet):
                     res = _ETernaryOpResult.Abort()
 
                 elif _ePF.isInCeaseMode:
                     pass
+
                 else:
                     _bOwnLcFailureSet = True
 
             if not res.isAbort:
                 if not _bOwnLcFailureSet:
-                    if self._lcProxy.hasLcAnyFailureState:
-                        _bOwnLcFailureSet = self._lcProxy.HasLcCompFRC(self._eRunnableType.toLcCompID, atask_=self.__drivingTask)
+                    if self._PcHasLcAnyFailureState():
+                        _bOwnLcFailureSet = self._PcHasLcCompAnyFailureState(self._eRunnableType.toLcCompID, atask_=self.__drivingTask)
 
                 if _bOwnLcFailureSet:
                     res = _ETernaryOpResult.Abort()
 
         if not self._isInLcCeaseMode:
-            self._CreateCeaseTLB(bAborting_=res.isAbort)
+            self._CreateCeaseTLB(bEnding_=res.isAbort)
         else:
             self._UpdateCeaseTLB(res.isAbort)
         return res
 
-    def _OnLcShutdownDetected(self) -> _ETernaryOpResult:
+    def _PcOnLcShutdownDetected(self) -> _ETernaryOpResult:
         if self._isInvalid:
             return _ETernaryOpResult.Abort()
 
         res = _ETernaryOpResult.Abort() if self._isAborting else _ETernaryOpResult.Stop()
 
         if not self._isInLcCeaseMode:
-            self._CreateCeaseTLB(bAborting_=True)
+            self._CreateCeaseTLB(bEnding_=True)
         else:
             self._UpdateCeaseTLB(self.isAborting)
         return res
-
 
     @property
     def _isOperating(self) -> bool:
@@ -779,162 +760,35 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
     @property
     def _agentTaskID(self) -> int:
-        return self.taskID
+        return self.__taskID
 
     @property
     def _agentName(self) -> str:
-        return self.runnableName
-
-    def _SendMessage(self, msg_ : _MessageIF) -> bool:
-        if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
-            return False
-        if (msg_ is None) or not msg_.isValid:
-            return False
-        if self._isInvalid or self._isInLcCeaseMode or not self.isRunning:
-            return False
-
-        _hdr = msg_.header
-
-        if not (_hdr.typeID.isTIntraProcess and (_hdr.channelID.isChInterTask or _hdr.channelID.isChIntraTask)):
-            vlogif._LogOEC(True, -1165)
-            return False
-
-        if _hdr.isInternalMsg:
-            if not _FwSubsystemCoding.IsInternalQueueSupportEnabled():
-                return False
-            if not self.isProvidingInternalQueue:
-                vlogif._LogOEC(True, -1166)
-                return False
-            if self.__iqueue.isFull:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_001).format(self._executableUniqueID, self.__iqueue.qsize))
-                return False
-            return self.__iqueue.PushNowait(msg_)
-
-        if not self.isProvidingExternalQueue:
-            vlogif._LogOEC(True, -1167)
-            return False
-
-        return _AbstractRunnable.__FwDispRbl._DispatchMessage(msg_)
+        return self._runnableName
 
     def _PushMessage(self, msg_: _MessageIF, msgDump_: bytes, pldDump_=None, bCustomPL_=None, customDesCallback_=None, callback_: _CallableIF =None) -> _ETernaryOpResult:
 
-        if self._isInvalid or self._isInLcCeaseMode or not self.isRunning:
+        if self._isInvalid or self._isInLcCeaseMode or not (self.isRunning or (self.isStopping and self._GetTaskApiContext().isTeardown)):
             return _ETernaryOpResult.Abort()
 
         _bl = _AbstractRunnable._ARBackLogEntry(msg_.isXcoMsg, msg_.uniqueID, msgDump_, pldDump_=pldDump_, bCustomPL_=bCustomPL_, customDesCallback_=customDesCallback_, callback_=callback_)
         if not self.__xqueue.PushNowait(_bl):
             _bl.CleanUp()
             if self.isRunning:
-                if self.__xqueue.qsize != self.__xqueue.capacity:
-                    logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_005).format(self._executableUniqueID, msg_.uniqueID))
-                else:
+                if self.__xqueue.qsize == self.__xqueue.capacity:
                     logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_002).format(self._executableUniqueID, self.__xqueue.qsize, msg_.uniqueID))
             res = _ETernaryOpResult.NOK()
         else:
             res = _ETernaryOpResult.OK()
         return res
 
-    def _RegisterDispatchFilter(self, dispFilter_  : _DispatchFilter, callback_ : _CallableIF =None) -> bool:
-        return self.__ForwardDispatchFilterRequest(dispFilter_, callback_=callback_, bAdd_=True)
-
-    def _DeregisterDispatchFilter(self, dispFilter_  : _DispatchFilter, callback_ : _CallableIF =None) -> bool:
-        return self.__ForwardDispatchFilterRequest(dispFilter_, callback_=callback_, bAdd_=False)
-
-
-    def _TriggerQueueProcessing(self, bExtQueue_ : bool) -> int:
-
-        if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
-            return -1
-        if self._isInvalid or self._isInLcCeaseMode:
-            return -1
-        if not bExtQueue_:
-            if not self.isProvidingInternalQueue:
-                return -1
-        if not self.isProvidingExternalQueue:
-            return -1
-        if not self.isRunning:
-            return 0
-
-        if self.__execCtx.isDontCare:
-            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
-            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_003).format(self._executableUniqueID, _midPart))
-            return 0
-        if self.__execCtx.isProcessingQueue:
-            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
-            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_004).format(self._executableUniqueID, _midPart))
-            return 0
-
-        if not bExtQueue_:
-            _iqSize = self.__iqueue.qsize
-            self.__ExecuteAutoManagedIntQueue()
-            return max(0, _iqSize - self.__iqueue.qsize)
-
-        _execCtx = self.__execCtx
-        self.__execCtx = _ERunnableExecutionContextID.eProcExtQueue if bExtQueue_ else _ERunnableExecutionContextID.eProcIntQueue
-
-        _blNum = self.__xqueue.qsize
-        if _blNum < 1:
-            self.__execCtx = _execCtx
-            return 0
-
-        _ii, _lstBL = _blNum, []
-        while _ii > 0:
-            _bl = self.__xqueue.PopNowait()
-            if _bl is None:
-                break
-            _lstBL.append(_bl)
-            _ii -= 1
-
-        _blNum = len(_lstBL)
-        if _blNum < 1:
-            self.__execCtx = _execCtx
-            return 0
-
-        _lstBL = sorted(_lstBL, key=lambda _bl: _bl._msgUID)
-
-        res   = 0
-        _xres = _ETernaryOpResult.Continue()
-        _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTProcessExternalMsg)
-
-        for _bl in _lstBL:
-            _xres = _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
-
-            if not _xres.isContinue:
-                break
-
-            _msg = _bl._message
-            if _msg is None:
-                continue
-
-            _msg2 = _msg
-            if _msg.isXcoMsg:
-                _msg2 = XMessage(_msg)
-
-            _xtor.SetExecutorParams(param1_=_msg2, param2_=_bl._callback)
-            _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False)
-
-            res += 1
-
-            if _msg.isXcoMsg:
-                _msg2._Detach()
-
-        for _bl in _lstBL:
-            _bl.CleanUp()
-
-        self.__execCtx = _execCtx
-
-        return res
-
+    @property
+    def isAborting(self):
+        return self._isAborting
 
     @property
-    def _isErrorFree(self):
-
-        res = True
-        if self.taskError is not None:
-            res = self.taskError.isErrorFree
-        return res
-
-
+    def euRNumber(self) -> int:
+        return self._euRNumber
 
     @property
     def taskBadge(self):
@@ -944,70 +798,25 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         return res
 
     @property
-    def taskID(self):
-        res = self.taskBadge
-        if res is not None:
-            res = res.taskID
-        return res
-
-    @property
-    def taskName(self):
-        res = self.taskBadge
-        if res is not None:
-            res = res.taskName
-        return res
-
-    @property
-    def taskNativeID(self):
-        res = self.taskBadge
-        if res is not None:
-            res = res.threadNID
-        return res
-
-    @property
     def taskError(self):
         res = self.__drivingTask
         if res is not None:
             res = res.taskError
         return res
 
-    @property
-    def taskProfile(self):
-        if self.__taskProfile is not None:
-            res = self.__taskProfile
-        else:
-            res = self.__drivingTask
-            if res is not None:
-                res = res.taskProfile
-        return res
-
-    @property
-    def runnableName(self):
-        if self.__eRblType is None:
-            return type(self).__name__
-        if self.__rblName is None:
-            self.__UpdateRunnableName()
-        return self.__rblName
-
-    @property
-    def executionProfile(self) -> _ExecutionProfile:
-        return self.__execPrf
-
-
     def OnTimeoutExpired(self, timer_, *args_, **kwargs_) -> _ETernaryOpResult:
 
         if not self.isRunning:
             return _ETernaryOpResult.Stop()
         if not self.__ag.isProvidingOnTimeoutExpired:
-            _midPart = _ERunnableApiFuncTag.eRFTOnTimeoutExpired.functionName
-            vlogif._LogOEC(True, -1169)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00100)
             return _ETernaryOpResult.Abort()
 
         _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTOnTimeoutExpired)
         _xtor.SetExecutorParams(param1_=timer_, args_=args_, kwargs_=kwargs_)
         _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False, eAbortState_=_TaskState._EState.eTimerProcessingAborted)
-        return _xres
 
+        return _xres
 
     @property
     def _isInvalid(self):
@@ -1016,7 +825,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
     @property
     def _isStartable(self):
         if self.__drivingTask is None:
-            res = not self.__taskProfile is None
+            res = not self.__tskPrf is None
         else:
             res  = True
             res &= self.__drivingTask.isInitialized
@@ -1032,11 +841,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
     @property
     def _isInLcCeaseMode(self):
         return not self._eLcCeaseState.isNone
-
-    @property
-    def _isMonitoringLcModeChange(self) -> bool:
-        _tskSID = None if self.__drivingTask is None else self.__drivingTask.taskStateID
-        return False if _tskSID is None else (_tskSID.isRunning or _tskSID.isStopping)
 
     @property
     def _isSelfManagingInternalQueue(self):
@@ -1059,6 +863,25 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         return self.__drivingTask
 
     @property
+    def _drivingTaskName(self):
+        res = self.taskBadge
+        if res is not None:
+            res = res.taskName
+        return res
+
+    @property
+    def _runnableName(self):
+        if self.__eRblType is None:
+            return type(self).__name__
+        if self.__rblName is None:
+            self.__UpdateRunnableName()
+        return self.__rblName
+
+    @property
+    def _executionProfile(self) -> _ExecutionProfile:
+        return self.__execPrf
+
+    @property
     def _xtaskConnector(self) -> _XTaskConnector:
         return self.__xtaskConn
 
@@ -1077,12 +900,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
     @property
     def _euRNumber(self) -> int:
         return 0 if self.__drivingTask is None else self.__drivingTask.euRNumber
-
-    @property
-    def _eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
-        if self.__drivingTask is None:
-            return _ETaskExecutionPhaseID.eNone
-        return self.__drivingTask.eTaskExecPhase
 
     @property
     def _eLcCeaseState(self) -> _ELcCeaseTLBState:
@@ -1112,8 +929,22 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
     def _GetMandatoryCustomApiMethodNamesList():
         return None
 
-    def _IncEuRNumber(self) -> int:
-        return 0 if self.__drivingTask is None else self.__drivingTask._IncEuRNumber()
+    def _IncEuRNumber(self):
+        if self.__drivingTask is None: return
+        self.__drivingTask._IncEuRNumber()
+
+        if self.__xtaskConn is None: return
+        self.__xtaskConn._IncEuRNumber()
+
+    def _GetTaskXPhase(self) -> _ETaskExecutionPhaseID:
+        if self.__drivingTask is None:
+            return _ETaskExecutionPhaseID.eNone
+        return self.__drivingTask.eTaskXPhase
+
+    def _GetTaskApiContext(self) -> _ETaskApiContextID:
+        if self.__drivingTask is None:
+            return _ETaskApiContextID.eDontCare
+        return self.__drivingTask.eTaskApiContext
 
     def _GetDataMutex(self):
         return self.__mtxData
@@ -1121,10 +952,15 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
     def _GetMyExecutableTypeID(self):
         return self.__xtlType
 
-    def _SetDrivingTaskExecPhase(self, eExecPhaseID_ : _ETaskExecutionPhaseID):
+    def _SetDrivingTaskXPhase(self, eXPhaseID_ : _ETaskExecutionPhaseID):
         if self.__drivingTask is None:
             return
-        self.__drivingTask._SetTaskExecPhase(eExecPhaseID_)
+        self.__drivingTask._SetTaskXPhase(eXPhaseID_)
+
+    def _SetDrivingTaskAContext(self, eACtxID_ : _ETaskApiContextID):
+        if self.__drivingTask is None:
+            return
+        self.__drivingTask._SetTaskApiContext(eACtxID_)
 
     def _SetDrivingTask(self, myTask_ : _AbstractTask):
         if myTask_ is None:
@@ -1132,16 +968,16 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             return
 
         if self.__drivingTask is not None:
-            vlogif._LogOEC(True, -1170)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00101)
             return
-        if self.__taskProfile is None:
-            vlogif._LogOEC(True, -1171)
+        if self.__tskPrf is None:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00102)
             return
-        if id(myTask_.taskProfile) != id(self.__taskProfile):
-            vlogif._LogOEC(True, -1172)
+        if id(myTask_.taskProfile) != id(self.__tskPrf):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00103)
             return
         if (myTask_.taskError is None) or myTask_.taskError.isFatalError or myTask_.taskError.isNoImpactFatalErrorDueToFrcLinkage:
-            vlogif._LogOEC(True, -1173)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00104)
             return
 
         self.__drivingTask = myTask_
@@ -1149,27 +985,27 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         _EuErrorHandler._SetUpEuEH(self, self.__mtxData)
         if self._isForeignErrorListener is None:
             self.__drivingTask = None
-            vlogif._LogOEC(True, -1174)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00105)
 
         else:
             self.__UpdateRunnableName()
-            self.__execPrf._UpdateUniqueName(self.runnableName)
+            self.__execPrf._UpdateUniqueName(self._runnableName)
 
     def _SetTaskProfile(self, tskProfile_ : _AbstractProfile):
         if tskProfile_ is None:
-            self.__iqueue      = None
-            self.__xqueue      = None
-            self.__taskProfile = None
+            self.__iqueue = None
+            self.__xqueue = None
+            self.__tskPrf = None
             return
 
         if not tskProfile_.isValid:
-            vlogif._LogOEC(True, -1175)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00106)
             return
-        if self.__taskProfile is not None:
-            vlogif._LogOEC(True, -1176)
+        if self.__tskPrf is not None:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00107)
             return
         if self.__drivingTask is not None:
-            vlogif._LogOEC(True, -1177)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00108)
             return
 
         _intQueue = None
@@ -1182,7 +1018,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             if _bIntQueue != self.isProvidingInternalQueue or _bExtQueue != self.isProvidingExternalQueue:
                 _bNOT_COMPACT = False
-                vlogif._LogOEC(True, -1178)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00109)
                 return
 
             if not self.__eRblType.isFwDispatcherRunnable:
@@ -1191,21 +1027,14 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         self.__iqueue      = _intQueue
         self.__xqueue      = _extQueue
-        self.__taskProfile = tskProfile_
+        self.__tskPrf = tskProfile_
 
         self.__UpdateRunnableName()
-        self.__execPrf._UpdateUniqueName(self.runnableName)
+        self.__execPrf._UpdateUniqueName(self._runnableName)
 
     def _SetStopSyncSem(self, semStop_ : _BinarySemaphore):
         if self._isInvalid:
             return
-
-        _bEnclPyThread = self.__drivingTask.isEnclosingPyThread
-
-        _midPart1 = 'Sync' if semStop_ is None else 'Async'
-        _midPart2 = 'enclosing ' if _bEnclPyThread else ''
-        _midPart3 = ' giving control back to enclosed PyThread' if _bEnclPyThread else ''
-
         with self.__drivingTask._tstMutex:
             self.__semStop = semStop_
 
@@ -1217,39 +1046,38 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         elif not _Util.IsInstance(eNewState_, _TaskState._EState, bThrowx_=True):
             pass
         elif eNewState_.value <= _TaskState._EState.ePendingStopRequest.value:
-            vlogif._LogOEC(True, -1179)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00110)
         else:
             if eNewState_.isTerminating:
                 if not self.isTerminating:
                     if not self._eRunnableType.isFwDispatcherRunnable:
-                        self._DeregisterDefaultDispatchFilter()
+                        self.__DeregDefaultDispatchFilter()
 
             _bAborting = eNewState_.isAborting
 
             res = self.__drivingTask._CheckSetTaskState(eNewState_)
         return res
 
-    def _CreateCeaseTLB(self, bAborting_ =False) -> _LcCeaseTLB:
+    def _CreateCeaseTLB(self, bEnding_ =False) -> _LcCeaseTLB:
         if self.__drivingTask is None:
             res = None
         else:
-            res =_AbstractTask.CreateLcCeaseTLB(self.__drivingTask, self.__mtxData, bAborting_)
+            res =_AbstractTask.CreateLcCeaseTLB(self.__drivingTask, self.__mtxData, bEnding_)
         return res
 
-    def _UpdateCeaseTLB(self, bAborting_ : bool):
+    def _UpdateCeaseTLB(self, bEnding_ : bool):
         _ctlb = self._lcCeaseTLB
-        if _ctlb is None:
-            pass
-        else:
-            _ctlb.UpdateCeaseState(bAborting_)
+        if _ctlb is not None:
+            _ctlb.UpdateCeaseState(bEnding_)
 
     def _OnTENotification(self, errEntry_: _ErrorEntry) -> bool:
+
         if self._isInvalid:
             return False
         if self._isInLcCeaseMode:
             return False
 
-        _ePF = self._GetProcessingFeasiblity(errEntry_=errEntry_)
+        _ePF = self._GetProcessingFeasibility(errEntry_=errEntry_)
         if not _ePF.isFeasible:
             return False
 
@@ -1262,23 +1090,28 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             self.__ag.procFwcTENotification(errEntry_=errEntry_)
         return res
 
-    def _GetProcessingFeasiblity(self, errEntry_: _ErrorEntry =None) -> _EProcessingFeasibilityID:
+    def _GetProcessingFeasibility(self, errEntry_: _ErrorEntry =None) -> _EProcessingFeasibilityID:
 
         res = _EProcessingFeasibilityID.eFeasible
 
         if self._isInvalid:
             res = _EProcessingFeasibilityID.eUnfeasible
-        elif not self._lcProxy.isLcProxyAvailable:
+        elif self._PcIsLcProxyModeShutdown():
             res = _EProcessingFeasibilityID.eLcProxyUnavailable
-        elif not self._lcProxy.isLcCoreOperable:
+        elif not self._PcIsLcCoreOperable():
             res = _EProcessingFeasibilityID.eLcCoreInoperable
         elif self._isAborting:
             res = _EProcessingFeasibilityID.eAborting
+        elif self._isInLcCeaseMode:
+            if not self._eRunnableType.isFwMainRunnable:
+                res = _EProcessingFeasibilityID.eInCeaseMode
+            elif not self._eLcCeaseState.isCeasing:
+                res = _EProcessingFeasibilityID.eInCeaseMode
 
         _frcv = None
         if res.isFeasible:
-            if self._lcProxy.hasLcAnyFailureState:
-                _frcv = self._lcProxy.GetLcCompFrcView(self._eRunnableType.toLcCompID, atask_=self.__drivingTask)
+            if self._PcHasLcAnyFailureState():
+                _frcv = self._PcGetLcCompFrcView(self._eRunnableType.toLcCompID, atask_=self.__drivingTask)
                 if _frcv is not None:
                     res = _EProcessingFeasibilityID.eOwnLcCompFailureSet
 
@@ -1288,7 +1121,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         if not res.isFeasible:
             if errEntry_ is not None:
-                _bOwnErr   = errEntry_.IsMyTaskError(self.taskID)
+                _bOwnErr   = errEntry_.IsMyTaskError(self.__taskID)
 
                 _teKind   = _FwTDbEngine.GetText(_EFwTextID.eMisc_TE) if _bOwnErr else _FwTDbEngine.GetText(_EFwTextID.eMisc_FTE)
                 _tailPart = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_003).format(_teKind, errEntry_.uniqueID, errEntry_.eErrorImpact.compactName, errEntry_.shortMessage)
@@ -1298,74 +1131,161 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             else:
                 _tailPart = _CommonDefines._CHAR_SIGN_DOT
 
-            _midPart = res.compactName
-            if res.isOwnLcCompFailureSet:
-                _midPart += _CommonDefines._CHAR_SIGN_COLON + _frcv.ToString(bVerbose_=False)
-
         if _frcv is not None:
             _frcv.CleanUp()
         return res
 
-    def _RegisterDefaultDispatchFilter(self) -> bool:
+    def _SendMessage(self, msg_ : _MessageIF) -> bool:
         if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
             return False
-        if self._eRunnableType.isFwDispatcherRunnable:
+        if (msg_ is None) or not msg_.isValid:
             return False
+        if self._isInvalid or self._isInLcCeaseMode or self.isAborting or not self.isStarted:
+            return False
+
+        _hdr = msg_.header
+
+        if not (_hdr.typeID.isTIntraProcess and (_hdr.channelID.isChInterTask or _hdr.channelID.isChIntraTask)):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00111)
+            return False
+
+        if _hdr.isInternalMsg:
+            if not self.isRunning:
+                return False
+            if not _FwSubsystemCoding.IsInternalQueueSupportEnabled():
+                return False
+            if not self.isProvidingInternalQueue:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00112)
+                return False
+            if self.__iqueue.isFull:
+                logif._LogErrorEC(_EFwErrorCode.UE_00067, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_001).format(self._executableUniqueID, self.__iqueue.qsize))
+                return False
+            return self.__iqueue.PushNowait(msg_)
+
+        _actx = self._GetTaskApiContext()
+        if not (self.isRunning or (self.isStopping and _actx.isTeardown)):
+            return False
+
         if not self.isProvidingExternalQueue:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00113)
             return False
 
-        _fwDisp = _AbstractRunnable.__FwDispRbl
-        if (_fwDisp is None) or not _fwDisp.isRunning:
-            return False
+        return _AbstractRunnable.__FwDispRbl._DispatchMessage(msg_)
 
-        _dispFilter = _DispatchFilter._CreateDefaultDispatchFilter(receiverID_=self._executableUniqueID)
-        if _dispFilter is None:
-            return False
+    def _TriggerQueueProc(self, bExtQueue_ : bool) -> int:
 
-        res = self._RegisterDispatchFilter(_dispFilter)
-        if not res:
-            logif._LogFatal('{} Failed to register default dispatch filter.'.format(self.__logPrefix))
-        return res
-
-    def _DeregisterDefaultDispatchFilter(self) -> bool:
         if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
-            return False
-        if self._eRunnableType.isFwDispatcherRunnable:
-            return False
+            return -1
+        if self._isInvalid or self._isInLcCeaseMode:
+            return -1
+        if not bExtQueue_:
+            if not self.isProvidingInternalQueue:
+                return -1
         if not self.isProvidingExternalQueue:
-            return False
+            return -1
 
-        _fwDisp = _AbstractRunnable.__FwDispRbl
-        if (_fwDisp is None) or not _fwDisp.isRunning:
-            return False
+        _actx = self._GetTaskApiContext()
 
-        _dispFilter = _DispatchFilter._CreateDefaultDispatchFilter(receiverID_=self._executableUniqueID)
-        if _dispFilter is None:
-            return False
+        if not self.isRunning:
+            _bIgnore = self.isStopping and _actx.isTeardown
+            if _bIgnore:
+                _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
+                logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_006).format(self._executableUniqueID, _midPart))
+            return 0 if _bIgnore else -1
 
-        res = self._DeregisterDispatchFilter(_dispFilter)
-        if not res:
-            #vlogif._LogOEC(False, -3002)
-            pass
+        if _actx.isDontCare:
+            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
+            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_003).format(self._executableUniqueID, _midPart))
+            return 0
+        if _actx.isProcessingQueue:
+            _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_External) if bExtQueue_ else _FwTDbEngine.GetText(_EFwTextID.eMisc_QueueType_Internal)
+            logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_AbstractRunnable_TextID_004).format(self._executableUniqueID, _midPart))
+            return 0
+
+        if not bExtQueue_:
+            _iqSize = self.__iqueue.qsize
+            self.__ExecuteAutoManagedIntQueue()
+            return max(0, _iqSize - self.__iqueue.qsize)
+
+        self._SetDrivingTaskAContext(_ETaskApiContextID.eProcExtQueue if bExtQueue_ else _ETaskApiContextID.eProcIntQueue)
+
+        _blNum = self.__xqueue.qsize
+        if _blNum < 1:
+            self._SetDrivingTaskAContext(_actx)
+            return 0
+
+        _ii, _lstBL = _blNum, []
+        while _ii > 0:
+            _bl = self.__xqueue.PopNowait()
+            if _bl is None:
+                break
+            _lstBL.append(_bl)
+            _ii -= 1
+
+        _blNum = len(_lstBL)
+        if _blNum < 1:
+            self._SetDrivingTaskAContext(_actx)
+            return 0
+
+        _lstBL = sorted(_lstBL, key=lambda _bl: _bl._sortKey)
+
+        res   = 0
+        _xres = _ETernaryOpResult.Continue()
+        _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTProcessExternalMsg)
+
+        _eXPh = self._GetTaskXPhase()
+
+        for _bl in _lstBL:
+            _xres = _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
+
+            if not _xres.isContinue:
+                break
+
+            _msg = _bl._message
+            if _msg is None:
+                continue
+
+            _msg2 = _msg
+            if _msg.isXcoMsg:
+                _msg2 = XMessage(_msg)
+
+            _xtor.SetExecutorParams(param1_=_msg2, param2_=_bl._callback)
+            _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False)
+
+            res += 1
+
+            if _msg.isXcoMsg:
+                _msg2._Detach()
+
+        for _bl in _lstBL:
+            _bl.CleanUp()
+
+        self._SetDrivingTaskAContext(_actx)
+
+        self._SetDrivingTaskXPhase(_eXPh)
+
         return res
 
     def _Run(self, semStart_, *args_, **kwargs_):
         _caughtXcp = False
 
         try:
-            self._SetDrivingTaskExecPhase(_ETaskExecutionPhaseID.eFwHandling)
+            self._SetDrivingTaskXPhase(_ETaskExecutionPhaseID.eFwHandling)
 
             self.__ExecutePreRun(semStart_)
             if self.isRunning:
                 self.__NotifyRunProgress(_ERunProgressID.eReadyToRun)
                 if self.isRunning:
+                    self._SetDrivingTaskAContext(_ETaskApiContextID.eSetup)
                     self.__ExecuteSetup(*args_, **kwargs_)
+                    self._SetDrivingTaskAContext(_ETaskApiContextID.eDontCare)
                     if self.isRunning:
                         self.__NotifyRunProgress(_ERunProgressID.eExecuteSetupDone)
+
                         if self.isRunning:
-                            self.__execCtx = _ERunnableExecutionContextID.eRun
+                            self._SetDrivingTaskAContext(_ETaskApiContextID.eRun)
                             self.__ExecuteRun()
-                            self.__execCtx = _ERunnableExecutionContextID.eDontCare
+                            self._SetDrivingTaskAContext(_ETaskApiContextID.eDontCare)
 
                             if not self._isAborting:
                                 if self.isRunning:
@@ -1374,7 +1294,9 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                                 if not self._isInLcCeaseMode:
                                     if not self._lcDynamicTLB.isLcShutdownEnabled:
                                         if self.__execPlan.isIncludingTeardownExecutable:
+                                            self._SetDrivingTaskAContext(_ETaskApiContextID.eTeardown)
                                             self.__ExecuteTeardown()
+                                            self._SetDrivingTaskAContext(_ETaskApiContextID.eDontCare)
                                             self.__NotifyRunProgress(_ERunProgressID.eExecuteTeardownDone)
 
                 if not self._isAborting:
@@ -1391,7 +1313,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         finally:
             if self._isInvalid:
-                vlogif._LogOEC(True, -1180)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00114)
                 return
 
             if not self._isTerminating:
@@ -1411,6 +1333,11 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             if _semStop is not None:
                 _semStop.Give()
 
+            if self._isTerminated:
+                if self._eRunnableType.isXTaskRunnable:
+                    if self.__execPlan.isIncludingTeardownExecutable:
+                        self._PcGetTaskMgr()._DetachTask(self.__drivingTask)
+
             self.__PreProcessCeaseMode()
 
             self.__ProcessCeaseMode()
@@ -1424,7 +1351,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         _eMyLcCompID = self._eRunnableType.toLcCompID
 
-        if self._lcProxy.HasLcCompFRC(_eMyLcCompID, self.__drivingTask):
+        if self._PcHasLcCompAnyFailureState(_eMyLcCompID, self.__drivingTask):
             return False
 
         res    = False
@@ -1436,7 +1363,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             _curEE = _curEE._currentErrorEntry
 
         if _curEE is None:
-            pass
+            pass 
         elif _curEE.isFatalError:
             _frc = _curEE
             _myMtx = None if _frc is None else _frc._LockInstance()
@@ -1456,17 +1383,19 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                     _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_XTask) if self.isXTaskRunnable else _FwTDbEngine.GetText(_EFwTextID.eMisc_Runnable)
                     _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_001).format(self.__logPrefixCtr, _midPart)
 
-                _frc = logif._CreateLogFatal(_errMsg, bDueToExecApiAboort_=_bFlagSet)
-                _myMtx = None if _frc is None else _frc._LockInstance()
+                _bFwRbl  = self._eRunnableType.isFwRunnable
+                _errCode = _EFwErrorCode.FE_00022 if _bFwRbl else _EFwErrorCode.FE_00923
+                _frc     = logif._CreateLogFatalEC(_bFwRbl, _errCode, _errMsg, bDueToExecApiAboort_=_bFlagSet)
+                _myMtx   = None if _frc is None else _frc._LockInstance()
 
         if _frc is not None:
             _frcClone = _frc.Clone()
             if _frcClone is None:
-                vlogif._LogOEC(True, -1181)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00115)
             else:
                 res = True
 
-                self._lcProxy._NotifyLcFailure(_eMyLcCompID, _frcClone, atask_=self.__drivingTask)
+                self._PcNotifyLcFailure(_eMyLcCompID, _frcClone, atask_=self.__drivingTask)
 
                 _frc._UpdateErrorImpact(_EErrorImpact.eNoImpactByFrcLinkage)
 
@@ -1474,37 +1403,50 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 _myMtx.Give()
         return res
 
+    @property
+    def __isErrorFree(self):
+        res = True
+        if self.taskError is not None:
+            res = self.taskError.isErrorFree
+        return res
+
+    @property
+    def __taskID(self):
+        res = self.taskBadge
+        if res is not None:
+            res = res.taskID
+        return res
+
+    @property
+    def __taskProfile(self):
+        if self.__tskPrf is not None:
+            res = self.__tskPrf
+        else:
+            res = self.__drivingTask
+            if res is not None:
+                res = res.taskProfile
+        return res
 
     @property
     def __logPrefix(self):
         res  = _FwTDbEngine.GetText(_EFwTextID.eMisc_LogPrefix_Runnable)
-        res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(self.runnableName)
+        res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(self._runnableName)
         return res
 
     @property
     def __logPrefixCtr(self):
         res  = _FwTDbEngine.GetText(_EFwTextID.eMisc_LogPrefix_Runnable)
-        res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(self.runnableName)
+        res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_010).format(self._runnableName)
         res += _FwTDbEngine.GetText(_EFwTextID.eMisc_LogPrefix_ExecCounter).format(self._euRNumber)
         return res
 
-    @property
-    def __isEnclosedPyThreadRunningOrAlive(self):
-
-        res = self._isRunning
-        if (not res) and self.taskBadge is not None:
-            if self.taskBadge.isEnclosingPyThread:
-                if not self.isFailed:
-                    if not self._isAborting:
-                        res = self._isAlive
-        return res
-
     def __UpdateRunnableName(self) -> str:
-        res  = self.taskName
+        res  = self._drivingTaskName
 
         if res is None:
-            if self.taskProfile is not None:
-                res = self.taskProfile.taskName
+            _tskPrf = self.__taskProfile
+            if _tskPrf is not None:
+                res = _tskPrf.taskName
         if res is None:
             res = type(self).__name__
         else:
@@ -1526,25 +1468,67 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         self.__rblName = res
         return self.__rblName
 
+    def __RegDefaultDispatchFilter(self) -> bool:
+
+        if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
+            return False
+        if self._eRunnableType.isFwDispatcherRunnable:
+            return False
+        if not self.isProvidingExternalQueue:
+            return False
+
+        _fwDisp = _AbstractRunnable.__FwDispRbl
+        if (_fwDisp is None) or not _fwDisp.isRunning:
+            return False
+
+        _dispFilter = _DispatchFilter._CreateDefaultDispatchFilter(receiverID_=self._executableUniqueID)
+        if _dispFilter is None:
+            return False
+
+        res = self.__ForwardDispatchFilterRequest(_dispFilter, callback_=None, bAdd_=True)
+        if not res:
+            logif._LogFatalEC(_EFwErrorCode.FE_00037, '{} Failed to register default dispatch filter.'.format(self.__logPrefix))
+        return res
+
+    def __DeregDefaultDispatchFilter(self) -> bool:
+
+        if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
+            return False
+        if self._eRunnableType.isFwDispatcherRunnable:
+            return False
+        if not self.isProvidingExternalQueue:
+            return False
+
+        _fwDisp = _AbstractRunnable.__FwDispRbl
+        if (_fwDisp is None) or not _fwDisp.isRunning:
+            return False
+
+        _dispFilter = _DispatchFilter._CreateDefaultDispatchFilter(receiverID_=self._executableUniqueID)
+        if _dispFilter is None:
+            return False
+
+        res = self.__ForwardDispatchFilterRequest(_dispFilter, callback_=None, bAdd_=False)
+        return res
+
     def __ForwardDispatchFilterRequest(self, dispFilter_  : _DispatchFilter, callback_ : _CallableIF =None, bAdd_ =True) -> bool:
         if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
             return False
         if self._isInvalid or self._isInLcCeaseMode:
             return False
         if self.__eRblType.isFwDispatcherRunnable:
-            vlogif._LogOEC(True, -1182)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00116)
             return False
         if not (isinstance(dispFilter_, _DispatchFilter) and dispFilter_.isValid):
-            vlogif._LogOEC(True, -1183)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00117)
             return False
 
         if dispFilter_.isCustomMessageFilter:
-            vlogif._LogOEC(True, -1184)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00118)
             return False
 
         if dispFilter_.isInternalMessageFilter:
             if not self.isProvidingInternalQueue:
-                vlogif._LogOEC(True, -1185)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00119)
                 return False
             if callback_ is not None:
                 if not _CallableSignature.IsSignatureMatchingProcessInternalMessageCallback(callback_):
@@ -1552,7 +1536,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         else:
             if not self.isProvidingExternalQueue:
-                vlogif._LogOEC(True, -1186)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00120)
                 return False
             if callback_ is not None:
                 if not _CallableSignature.IsSignatureMatchingProcessExternalMessageCallback(callback_):
@@ -1574,31 +1558,31 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
     def __StartRunnable(self):
         if not self._isStartable:
-            vlogif._LogOEC(False, -3003)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00007)
             return None
-        elif (self.__drivingTask is None) and (self.__taskProfile is None):
-            vlogif._LogOEC(True, -1187)
+        elif (self.__drivingTask is None) and (self.__tskPrf is None):
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00121)
             return None
 
         if self.__drivingTask is not None:
             res = taskmgr._TaskMgr().StartTask(self.__drivingTask.taskID)
         else:
-            res = taskmgr._TaskMgr().CreateTask(taskPrf_=self.__taskProfile, bStart_=True)
+            res = taskmgr._TaskMgr().CreateTask(taskPrf_=self.__tskPrf, bStart_=True)
         return res is not None
 
     def __StopRunnable(self, cleanupDriver_ =True):
         if self.__drivingTask is None:
-            pass
+            pass 
         else:
-            taskmgr._TaskMgr().StopTask(self.taskID, removeTask_=cleanupDriver_)
+            taskmgr._TaskMgr().StopTask(self.__taskID, removeTask_=cleanupDriver_)
 
     def __JoinRunnable(self, timeout_ : _Timeout =None):
         if self.__drivingTask is None:
             pass
         elif self.__drivingTask.isEnclosingStartupThread:
-            vlogif._LogOEC(False, -3004)
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00008)
         else:
-            taskmgr._TaskMgr().JoinTask(self.taskID, timeout_=timeout_)
+            taskmgr._TaskMgr().JoinTask(self.__taskID, timeout_=timeout_)
 
     def __NotifyRunProgress(self, eRunProgressID_ : _ERunProgressID) -> _ETernaryOpResult:
         if self._isInLcCeaseMode:
@@ -1612,6 +1596,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             _bSkipErrorProc = eRunProgressID_.value > _ERunProgressID.eExecuteRunDone
             _xres           = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=None, eAbortState_=_TaskState._EState.eRunProgressAborted, bSkipErrorProc_=_bSkipErrorProc)
+
         return _xres
 
     def __ExecutePreRun(self, semStart_ : _BinarySemaphore) -> _ETernaryOpResult:
@@ -1622,26 +1607,26 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         if _drvTask is None:
             _bCheckOK = False
-            vlogif._LogOEC(True, -1188)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00122)
 
         elif id(_drvTask.linkedExecutable) != id(self):
             _bCheckOK = False
-            vlogif._LogOEC(True, -1189)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00123)
 
         elif (self.taskError is None) or self.taskError.isFatalError or self.taskError.isNoImpactFatalErrorDueToFrcLinkage:
             _bCheckOK = False
-            vlogif._LogOEC(True, -1190)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00124)
 
         elif _bEnclPyThread and (semStart_ is not None):
             _bCheckOK = False
-            vlogif._LogOEC(True, -1191)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00125)
 
         elif not (_bEnclPyThread or isinstance(semStart_, _BinarySemaphore)):
             _bCheckOK = False
-            vlogif._LogOEC(True, -1192)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00126)
 
         if not _bCheckOK:
-            pass
+            pass 
         else:
             if not _FwSubsystemCoding.IsSubsystemMessagingConfigured():
                 pass
@@ -1652,38 +1637,36 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             elif not self.isProvidingExternalQueue:
                 pass
             else:
-                pass
-                _bCheckOK = self._RegisterDefaultDispatchFilter()
+                if not self._eRunnableType.isFwDispatcherRunnable:
+                    _bCheckOK = self.__RegDefaultDispatchFilter()
 
         if not _bCheckOK:
-            pass
+            pass 
         else:
-            if not self._isErrorFree:
+            if not self.__isErrorFree:
                 self.taskError.ClearError()
 
         _xres = self.__EvaluateExecResult(execRes_=_bCheckOK, bCheckBefore_=True, eAbortState_=_TaskState._EState.ePreRunAborted)
 
         if semStart_ is not None:
             semStart_.Give()
+
         return _xres
 
     def __ExecuteSetup(self, *args_, **kwargs_):
         _xres = _ETernaryOpResult.Continue()
 
-        if not self.__execPlan.isIncludingSetUpExecutable:
-            pass
-        else:
+        if self.__execPlan.isIncludingSetUpExecutable:
             _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTSetUpExecutable)
             _xtor.SetExecutorParams(args_=args_, kwargs_=kwargs_)
             _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False, eAbortState_=_TaskState._EState.eSetupAborted)
+
         return _xres
 
     def __ExecuteTeardown(self):
         _xres = _ETernaryOpResult.Continue()
 
-        if not self.__execPlan.isIncludingTeardownExecutable:
-            pass
-        else:
+        if self.__execPlan.isIncludingTeardownExecutable:
             _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTTearDownExecutable)
             _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False, eAbortState_=_TaskState._EState.eTeardownAborted)
         return _xres
@@ -1774,20 +1757,22 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 _TaskUtil.SleepMS(_runCycleMS)
 
             continue
+
         return _xres
 
     def __ExecuteCustomManagedExtQueue(self):
         _xres = _ETernaryOpResult.Abort()
 
-        _execCtx = self.__execCtx
-        self.__execCtx = _ERunnableExecutionContextID.eProcExtQueue
+        _actx = self._GetTaskApiContext()
+        self._SetDrivingTaskAContext(_ETaskApiContextID.eProcExtQueue)
 
         _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTProcessExternalQueue)
-        self._SetDrivingTaskExecPhase(_ETaskExecutionPhaseID.eRblProcExtQueue)
+        self._SetDrivingTaskXPhase(_ETaskExecutionPhaseID.eRblProcExtQueue)
         _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False)
-        self._SetDrivingTaskExecPhase(_ETaskExecutionPhaseID.eFwHandling)
+        self._SetDrivingTaskXPhase(_ETaskExecutionPhaseID.eFwHandling)
 
-        self.__execCtx = _execCtx
+        self._SetDrivingTaskAContext(_actx)
+
         return _xres
 
     def __ExecuteAutoManagedExtQueue(self, bCombinedManaged_ : bool =False) -> _ETernaryOpResult:
@@ -1799,12 +1784,12 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                     break
             return _xres
 
-        _execCtx = self.__execCtx
-        self.__execCtx = _ERunnableExecutionContextID.eProcExtQueue
+        _actx = self._GetTaskApiContext()
+        self._SetDrivingTaskAContext(_ETaskApiContextID.eProcExtQueue)
 
         _blNum = self.__xqueue.qsize
         if _blNum < 1:
-            self.__execCtx = _execCtx
+            self._SetDrivingTaskAContext(_actx)
             return _ETernaryOpResult.Continue()
 
         _ii, _lstBL = _blNum, []
@@ -1817,10 +1802,10 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         _blNum = len(_lstBL)
         if _blNum < 1:
-            self.__execCtx = _execCtx
+            self._SetDrivingTaskAContext(_actx)
             return _ETernaryOpResult.Continue()
 
-        _lstBL = sorted(_lstBL, key=lambda _bl: _bl._msgUID)
+        _lstBL = sorted(_lstBL, key=lambda _bl: _bl._sortKey)
 
         _bIncludingAutoManagedInternalQueue_By_AutoManagedExternalQueue   = self.__execPlan.isIncludingAutoManagedInternalQueue_By_AutoManagedExternalQueue
         _bIncludingCustomManagedInternalQueue_By_AutoManagedExternalQueue = self.__execPlan.isIncludingCustomManagedInternalQueue_By_AutoManagedExternalQueue
@@ -1861,12 +1846,13 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         for _bl in _lstBL:
             _bl.CleanUp()
 
-        self.__execCtx = _execCtx
+        self._SetDrivingTaskAContext(_actx)
         return _xres
 
     def __ExecuteAutoManagedExtQueueBlocking(self) -> _ETernaryOpResult:
-        _execCtx = self.__execCtx
-        self.__execCtx = _ERunnableExecutionContextID.eProcExtQueue
+
+        _actx = self._GetTaskApiContext()
+        self._SetDrivingTaskAContext(_ETaskApiContextID.eProcExtQueue)
 
         _runCycleMS = self.__execPrf.runPhaseFreqMS
 
@@ -1874,7 +1860,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         while True:
             _xres = _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
             if not _xres.isContinue:
-                self.__execCtx = _execCtx
+                self._SetDrivingTaskAContext(_actx)
                 return _xres
 
             if _bl is not None:
@@ -1891,7 +1877,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             _lstBL.append(_bl)
             _ii -= 1
 
-        _lstBL = sorted(_lstBL, key=lambda _bl: _bl._msgUID)
+        _lstBL = sorted(_lstBL, key=lambda _bl: _bl._sortKey)
 
         _bIncludingAutoManagedInternalQueue_By_AutoManagedExternalQueue   = self.__execPlan.isIncludingAutoManagedInternalQueue_By_AutoManagedExternalQueue
         _bIncludingCustomManagedInternalQueue_By_AutoManagedExternalQueue = self.__execPlan.isIncludingCustomManagedInternalQueue_By_AutoManagedExternalQueue
@@ -1932,24 +1918,24 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         for _bl in _lstBL:
             _bl.CleanUp()
 
-        self.__execCtx = _execCtx
+        self._SetDrivingTaskAContext(_actx)
 
         return _xres
 
     def __ExecuteCustomManagedIntQueue(self) -> _ETernaryOpResult:
-        _execCtx = self.__execCtx
-        self.__execCtx = _ERunnableExecutionContextID.eProcIntQueue
+        _actx = self._GetTaskApiContext()
+        self._SetDrivingTaskAContext(_ETaskApiContextID.eProcIntQueue)
 
         _xtor = self.__executors._GetApiExecutor(_ERunnableApiFuncTag.eRFTProcessInternalQueue)
         _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False)
 
-        self.__execCtx = _execCtx
+        self._SetDrivingTaskAContext(_actx)
 
         return _xres
 
     def __ExecuteAutoManagedIntQueue(self) -> _ETernaryOpResult:
-        _execCtx = self.__execCtx
-        self.__execCtx = _ERunnableExecutionContextID.eProcIntQueue
+        _actx = self._GetTaskApiContext()
+        self._SetDrivingTaskAContext(_ETaskApiContextID.eProcIntQueue)
 
         _lstBL = []
         _blNum = self.__iqueue.qsize
@@ -1963,7 +1949,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         _blNum = len(_lstBL)
         if _blNum < 1:
-            self.__execCtx = _execCtx
+            self._SetDrivingTaskAContext(_actx)
             return _ETernaryOpResult.Continue()
 
         _xres = _ETernaryOpResult.MapExecutionState2TernaryOpResult(self)
@@ -1985,7 +1971,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 _msg2._Detach()
             _msg.CleanUp()
 
-        self.__execCtx = _execCtx
+        self._SetDrivingTaskAContext(_actx)
         return _xres
 
     def __EvaluateExecResult( self
@@ -2003,17 +1989,17 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         res = _ETernaryOpResult.Continue()
 
-        if _bDoCheckBefore and self._isMonitoringLcModeChange:
-            eNewLcOpModeID = self._CheckLcOperationModeChange()
-            if (eNewLcOpModeID is not None) and not eNewLcOpModeID.isLcNormal:
-                if eNewLcOpModeID.isLcCeaseMode:
-                    res = self._OnLcCeaseModeDetected()
-                elif eNewLcOpModeID.isLcFailureHandling:
-                    res = self._OnLcFailureDetected()
-                elif eNewLcOpModeID.isLcPreShutdown:
-                    res = self._OnLcPreShutdownDetected()
-                elif eNewLcOpModeID.isLcShutdown:
-                    res = self._OnLcShutdownDetected()
+        if _bDoCheckBefore and self._PcIsMonitoringLcModeChange():
+            _eNewOpModeID = self._PcCheckLcOperationModeChange()
+            if (_eNewOpModeID is not None) and not _eNewOpModeID.isLcNormal:
+                if _eNewOpModeID.isLcCeaseMode:
+                    res = self._PcOnLcCeaseModeDetected()
+                elif _eNewOpModeID.isLcFailureHandling:
+                    res = self._PcOnLcFailureDetected()
+                elif _eNewOpModeID.isLcPreShutdown:
+                    res = self._PcOnLcPreShutdownDetected()
+                elif _eNewOpModeID.isLcShutdown:
+                    res = self._PcOnLcShutdownDetected()
 
         if not res.isContinue:
             pass
@@ -2023,17 +2009,17 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             else:
                 res = executor_.Execute()
 
-            if res.isContinue and _bDoCheckAfter and self._isMonitoringLcModeChange:
-                eNewLcOpModeID = self._CheckLcOperationModeChange()
-                if (eNewLcOpModeID is not None) and not eNewLcOpModeID.isLcNormal:
-                    if eNewLcOpModeID.isLcCeaseMode:
-                        res = self._OnLcCeaseModeDetected()
-                    elif eNewLcOpModeID.isLcFailureHandling:
-                        res = self._OnLcFailureDetected()
-                    elif eNewLcOpModeID.isLcPreShutdown:
-                        res = self._OnLcPreShutdownDetected()
-                    elif eNewLcOpModeID.isLcShutdown:
-                        res = self._OnLcShutdownDetected()
+            if res.isContinue and _bDoCheckAfter and self._PcIsMonitoringLcModeChange():
+                _eNewOpModeID = self._PcCheckLcOperationModeChange()
+                if (_eNewOpModeID is not None) and not _eNewOpModeID.isLcNormal:
+                    if _eNewOpModeID.isLcCeaseMode:
+                        res = self._PcOnLcCeaseModeDetected()
+                    elif _eNewOpModeID.isLcFailureHandling:
+                        res = self._PcOnLcFailureDetected()
+                    elif _eNewOpModeID.isLcPreShutdown:
+                        res = self._PcOnLcPreShutdownDetected()
+                    elif _eNewOpModeID.isLcShutdown:
+                        res = self._PcOnLcShutdownDetected()
 
         if not res.isContinue:
             pass
@@ -2077,7 +2063,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             elif _xbx is not None:
                 self._ProcUnhandledXcp(_xbx)
 
-            self._SetDrivingTaskExecPhase(_ETaskExecutionPhaseID.eFwHandling)
+            self._SetDrivingTaskXPhase(_ETaskExecutionPhaseID.eFwHandling)
 
             if not (self._isAborting or self._isInLcCeaseMode):
                 if not bCaughtByApiExecutor_:
@@ -2089,7 +2075,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             if not self.isRunning:
                 res = _ETernaryOpResult.Abort() if self._isAborting else _ETernaryOpResult.Stop()
-
             else:
                 res = _ETernaryOpResult.Continue()
             return res
@@ -2108,19 +2093,19 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         if _bProvidingProcessInternalMsg and _bProvidingProcessInternalQueue:
             res = False
-            vlogif._LogOEC(True, -1196)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00127)
 
         elif _bProvidingProcessExternalMsg and _bProvidingProcessExternalQueue:
             res = False
-            vlogif._LogOEC(True, -1197)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00128)
 
         elif _bProvidingRunExecutable and _bProvidingProcessExternalQueue:
             res = False
-            vlogif._LogOEC(True, -1198)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00129)
 
         elif not (_bProvidingRunExecutable or _bProvidingProcessExternalQueue or _bProvidingProcessExternalMsg):
             res = False
-            vlogif._LogOEC(True, -1199)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00130)
         return res
 
     def __CreateExecPlan(self):
@@ -2196,7 +2181,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         if eCallbackID_.isFwMainSpecificCallbackID:
             return _ETernaryOpResult.Abort() if self._isAborting else _ETernaryOpResult.Continue()
 
-        _ePF = self._GetProcessingFeasiblity(errEntry_=curFatalError_)
+        _ePF = self._GetProcessingFeasibility(errEntry_=curFatalError_)
         if not _ePF.isFeasible:
             if _ePF.isUnfeasible:
                 res = _ETernaryOpResult.Abort() if self._isAborting else _ETernaryOpResult.Continue()
@@ -2204,12 +2189,12 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 res = _ETernaryOpResult.Abort()
             return res
 
-        if not self.executionProfile.isLcFailureReportPermissionEnabled:
-            vlogif._LogOEC(False, -3005)
+        if not self._executionProfile.isLcFailureReportPermissionEnabled:
+            vlogif._LogOEC(False, _EFwErrorCode.VUE_00009)
         else:
             _myFE          = curFatalError_
             _eMyLcCompID = self._eRunnableType.toLcCompID
-            self._lcProxy._NotifyLcFailure(_eMyLcCompID, _myFE, atask_=self.__drivingTask)
+            self._PcNotifyLcFailure(_eMyLcCompID, _myFE, atask_=self.__drivingTask)
 
         res = _ETernaryOpResult.Abort()
         return res
@@ -2223,23 +2208,23 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             _lcMon = None if _dtlb is None else _dtlb._lcMonitor
 
             if _lcMon is None:
-                pass
+                pass 
             else:
                 _bAborting = self.isAborting
                 if not _lcMon.isLcShutdownEnabled:
                     _lcMon._EnableCoordinatedShutdown(bManagedByMR_=not _bAborting)
 
                 if not self._isInLcCeaseMode:
-                    self._CreateCeaseTLB(bAborting_=_bAborting)
+                    self._CreateCeaseTLB(bEnding_=_bAborting)
 
-        _bCreateCeaseTLB = self._lcDynamicTLB.isLcShutdownEnabled
+        _bCreateCTLB = self._lcDynamicTLB.isLcShutdownEnabled
 
         if self._CheckNotifyLcFailure():
-            _bCreateCeaseTLB = True
+            _bCreateCTLB = True
 
         if not self._isInLcCeaseMode:
-            if _bCreateCeaseTLB:
-                self._CreateCeaseTLB(bAborting_=self.isAborting)
+            if _bCreateCTLB:
+                self._CreateCeaseTLB(bEnding_=self.isAborting)
 
     def __ProcessCeaseMode(self):
         if self._isInvalid:
@@ -2247,9 +2232,10 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         if self._eRunnableType.isFwMainRunnable:
             pass
+
         elif not self._isInLcCeaseMode:
             if self._lcDynamicTLB.isLcShutdownEnabled:
-                self._CreateCeaseTLB(bAborting_=self.isAborting)
+                self._CreateCeaseTLB(bEnding_=self.isAborting)
             else:
                 return
 
@@ -2265,13 +2251,13 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             _eCurCS = self._eLcCeaseState
 
-        if _eCurCS.isAbortingCease:
+        if _eCurCS.isEndingCease:
             self.__ProcessLeavingCease()
 
             _eCurCS = self._eLcCeaseState
 
         if not _eCurCS.isDeceased:
-            vlogif._LogOEC(True, -1200)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00131)
 
     def __PrepareDefaultCeasing(self):
         if not self._isInLcCeaseMode:
@@ -2279,7 +2265,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         _eCurCS = self._eLcCeaseState
         if not _eCurCS.isPrepareCeasing:
-            vlogif._LogOEC(True, -1201)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00132)
             self._lcCeaseTLB.UpdateCeaseState(True)
             return
 
@@ -2289,7 +2275,6 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
         if _bCustomPrepare:
             self.__ag.prepareCeasing()
         else:
-
             while True:
                 _ctlb = self._lcCeaseTLB
                 if _ctlb is None:
@@ -2309,7 +2294,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
                 if _ctlb._isCeasingGateOpened:
                     break
 
-            self._lcCeaseTLB.HopToNextCeaseState(bAborting_=self._isAborting)
+            self._lcCeaseTLB.HopToNextCeaseState(bEnding_=self._isAborting)
 
     def __EnterDefaultCeasing(self):
         if not self._isInLcCeaseMode:
@@ -2317,14 +2302,13 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
         _eCurCS = self._eLcCeaseState
         if not _eCurCS.isEnterCeasing:
-            vlogif._LogOEC(True, -1202)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00133)
             self._lcCeaseTLB.UpdateCeaseState(True)
             return
 
-        self._lcCeaseTLB.HopToNextCeaseState(bAborting_=self._isAborting)
+        self._lcCeaseTLB.HopToNextCeaseState(bEnding_=self._isAborting)
 
         _bRCIter = self.__ag.isProvidingRunCeaseIteration
-
 
         _bPreShutdownPassed = False
         while True:
@@ -2333,7 +2317,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             self._lcCeaseTLB.IncrementCeaseAliveCounter()
 
-            _TaskUtil.SleepMS(self.executionProfile.cyclicCeaseTimespanMS)
+            _TaskUtil.SleepMS(self._executionProfile.cyclicCeaseTimespanMS)
 
             if self._isInvalid:
                 break
@@ -2351,22 +2335,22 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
                     self.__ExecuteTeardown()
 
-                    self._lcCeaseTLB.HopToNextCeaseState(bAborting_=self._isAborting)
+                    self._lcCeaseTLB.HopToNextCeaseState(bEnding_=self._isAborting)
                     continue
 
             if self._lcCeaseTLB._isShutdownGateOpened:
                 break
 
         if self._lcCeaseTLB is not None:
-            self._lcCeaseTLB.HopToNextCeaseState(bAborting_=self._isAborting)
+            self._lcCeaseTLB.HopToNextCeaseState(bEnding_=self._isAborting)
 
     def __ProcessLeavingCease(self):
         if not self._isInLcCeaseMode:
             return
 
         _eCurCS = self._eLcCeaseState
-        if not self._lcCeaseTLB.isAbortingCease:
-            vlogif._LogOEC(True, -1203)
+        if not self._lcCeaseTLB.isEndingCease:
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00134)
 
             if self._lcCeaseTLB.isDeceased:
                 return
@@ -2379,7 +2363,7 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
 
             self._lcCeaseTLB.IncrementCeaseAliveCounter()
 
-            _TaskUtil.SleepMS(self.executionProfile.cyclicCeaseTimespanMS)
+            _TaskUtil.SleepMS(self._executionProfile.cyclicCeaseTimespanMS)
 
             if self._isInvalid:
                 break
@@ -2391,55 +2375,54 @@ class _AbstractRunnable(_DispatchAgentIF, _EuErrorHandler, _AbstractExecutable):
             continue
 
         if self._lcCeaseTLB is not None:
-            self._lcCeaseTLB.HopToNextCeaseState(bAborting_=True)
-
+            self._lcCeaseTLB.HopToNextCeaseState(bEnding_=True)
 
 class _RunnableApiExecutor(_AbstractSlotsObject):
 
-    __slots__ = [ '__er'   , '__apiG' , '__apiF' , '__eFID' , '__rbl' , '__xu'
-                , '__teph' , '__xcpH' , '__par1' , '__par2' , '__args' , '__kwargs' ]
+    __slots__ = [ '__er'   , '__apiG' , '__apiF' , '__eFID' , '__rbl' , '__xt'
+                , '__txph' , '__xcpH' , '__par1' , '__par2' , '__args' , '__kwargs' ]
 
     def __init__(self, bXTaskRbl_ : bool, apiGuide_  : _ARunnableApiGuide, eFuncID_ : _ERunnableApiFuncTag, xcpHdlr_):
         super().__init__()
         self.__er     = None
-        self.__xu     = None
+        self.__xt     = None
         self.__rbl    = None
         self.__apiF   = None
         self.__apiG   = apiGuide_
         self.__eFID   = eFuncID_
         self.__xcpH   = xcpHdlr_
-        self.__teph   = None
+        self.__txph   = None
         self.__par1   = None
         self.__par2   = None
         self.__args   = None
         self.__kwargs = None
 
         if not isinstance(eFuncID_, _ERunnableApiFuncTag):
-            vlogif._LogOEC(True, -1204)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00135)
             self.CleanUp()
         elif xcpHdlr_ is None:
-            vlogif._LogOEC(True, -1205)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00136)
             self.CleanUp()
         elif not isinstance(apiGuide_, _ARunnableApiGuide):
-            vlogif._LogOEC(True, -1206)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00137)
             self.CleanUp()
         elif not isinstance(apiGuide_._runnable, _AbstractRunnable):
-            vlogif._LogOEC(True, -1207)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00138)
             self.CleanUp()
         elif eFuncID_.value < _ERunnableApiFuncTag.eRFTRunExecutable.value or eFuncID_.value > _ERunnableApiFuncTag.eRFTOnRunProgressNotification.value:
-            vlogif._LogOEC(True, -1208)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00139)
             self.CleanUp()
         elif self.__SetApiFunc() is None:
             self.CleanUp()
         else:
-            _tskExecPhaseID = eFuncID_.MapToTaskExecutionPhaseID(bXTask_=bXTaskRbl_)
-            if _tskExecPhaseID.isNone:
-                vlogif._LogOEC(True, -1209)
+            _txph = eFuncID_.MapToTaskExecutionPhaseID(bXTask_=bXTaskRbl_)
+            if _txph.isNone:
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00140)
                 self.CleanUp()
             else:
-                self.__xu   = apiGuide_._runnable._xtaskInst
+                self.__xt   = apiGuide_._runnable._xtaskInst
                 self.__rbl  = apiGuide_._runnable
-                self.__teph = _tskExecPhaseID
+                self.__txph = _txph
 
     @property
     def apiGuide(self) -> _ARunnableApiGuide:
@@ -2454,9 +2437,7 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
         return self.__eFID
 
     def SetExecutorParams(self, param1_ =None, param2_ =None, args_ =None, kwargs_ =None):
-        if self.__eFID is None:
-            pass
-        else:
+        if self.__eFID is not None:
             self.__par1   = param1_
             self.__par2   = param2_
             self.__args   = args_
@@ -2472,14 +2453,13 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
         if self.__apiF is None:
             return self.__er
 
-
         _ret = None
         try:
-            self.__runnable._SetDrivingTaskExecPhase(self.__eTaskExecPhase)
+            self.__runnable._SetDrivingTaskXPhase(self.__txph)
 
             if self.__eFID == _ERunnableApiFuncTag.eRFTSetUpExecutable:
                 if (self.__args is None) or (self.__kwargs is None):
-                    vlogif._LogOEC(True, -1210)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00141)
                 elif not self.__isXTaskRunnable:
                     _ret = self.__apiF(*self.__args, **self.__kwargs)
                 else:
@@ -2487,7 +2467,7 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
 
             elif self.__eFID == _ERunnableApiFuncTag.eRFTOnTimeoutExpired:
                 if (self.__par1 is None) or (self.__args is None) or (self.__kwargs is None):
-                    vlogif._LogOEC(True, -1211)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00142)
                 else:
                     _ret = self.__apiF(self.__par1, *self.__args, **self.__kwargs)
 
@@ -2496,9 +2476,9 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
 
                 if _bProcIntMsg or self.__eFID == _ERunnableApiFuncTag.eRFTProcessExternalMsg:
                     if self.__par1 is None:
-                        vlogif._LogOEC(True, -1212)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00143)
                     elif (self.__par2 is not None) and not (isinstance(self.__par2, _CallableIF) and self.__par2.isValid):
-                        vlogif._LogOEC(True, -1213)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00144)
                     elif not self.__isXTaskRunnable:
                         _ret = self.__apiF(self.__par1, self.__par2)
                     else:
@@ -2509,7 +2489,7 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
 
                 elif self.__eFID == _ERunnableApiFuncTag.eRFTOnRunProgressNotification:
                     if self.__par1 is None:
-                        vlogif._LogOEC(True, -1214)
+                        vlogif._LogOEC(True, _EFwErrorCode.VFE_00145)
                     else:
                         _ret = self.__apiF(self.__par1)
 
@@ -2524,7 +2504,7 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
                 else:
                     _ret = self.__apiF()
 
-            self.__runnable._SetDrivingTaskExecPhase(_ETaskExecutionPhaseID.eFwHandling)
+            self.__runnable._SetDrivingTaskXPhase(_ETaskExecutionPhaseID.eFwHandling)
 
             _ret = self.__apiG._SetGetExecutionApiFunctionReturn(_ret)
 
@@ -2553,17 +2533,17 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
     def _ToString(self, *args_, **kwargs_):
         if self.__eFID is None:
             return None
-        return _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_002).format(type(self).__name__, self.__runnable.runnableName, self.__eFID.functionName)
+        return _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_002).format(type(self).__name__, self.__runnable._runnableName, self.__eFID.functionName)
 
     def _CleanUp(self):
         self.__er     = None
-        self.__xu     = None
+        self.__xt     = None
         self.__rbl    = None
         self.__apiF   = None
         self.__apiG   = None
         self.__eFID   = None
         self.__xcpH   = None
-        self.__teph   = None
+        self.__txph   = None
         self.__par1   = None
         self.__par2   = None
         self.__args   = None
@@ -2571,12 +2551,12 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
 
     @property
     def __isXTaskRunnable(self):
-        return self.__xu is not None
+        return self.__xt is not None
 
     @property
     def __logPrefix(self):
         res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_003)
-        return res.format(self.__runnable.runnableName, self.__eFID.functionName)
+        return res.format(self.__runnable._runnableName, self.__eFID.functionName)
 
     @property
     def __runnable(self):
@@ -2584,11 +2564,7 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
 
     @property
     def __xtask(self):
-        return self.__xu
-
-    @property
-    def __eTaskExecPhase(self) -> _ETaskExecutionPhaseID:
-        return self.__teph
+        return self.__xt
 
     def __SetApiFunc(self):
         if (self.__apiG is None) or (self.__eFID is None):
@@ -2626,11 +2602,11 @@ class _RunnableApiExecutor(_AbstractSlotsObject):
 
         else:
             _bUnexpectedErr = True
-            vlogif._LogOEC(True, -1215)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00146)
 
         if res is None:
             if not _bUnexpectedErr:
-                vlogif._LogOEC(True, -1216)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00147)
         else:
             self.__apiF = res
         return res

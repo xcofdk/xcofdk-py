@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-
 from collections import OrderedDict as _PyOrderedDict
 from enum        import IntEnum
 from typing      import Union       as _PyUnion
@@ -28,12 +27,12 @@ from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchFilter  import _DispatchFilter
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchtarget  import _DispatchTarget
 from xcofdk._xcofw.fw.fwssys.fwmsg.disp.dispatchagentif import _DispatchAgentIF
 
+from xcofdk._xcofw.fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
+
 from xcofdk._xcofwa.fwadmindefs import _FwSubsystemCoding
 
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _EFwTextID
 from xcofdk._xcofw.fw.fwtdb.fwtdbengine import _FwTDbEngine
-
-
 
 class _MessageClusterMap:
     __slots__ = []
@@ -53,7 +52,7 @@ class _MessageClusterMap:
             res = clrID_ in _MessageClusterMap.__dictMsgClusters
         if not res:
             if not bIgnoreUndefined_:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_001).format(_SubsysMsgUtil.StringizeID(clrID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00123, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_001).format(_SubsysMsgUtil.StringizeID(clrID_)))
         return res
 
     @staticmethod
@@ -68,7 +67,7 @@ class _MessageClusterMap:
         if isinstance(lblID_, list):
             if not bAllowAsListOfLabels_:
                 res = False
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_004).format(_SubsysMsgUtil.StringizeID(lblID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00124, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_004).format(_SubsysMsgUtil.StringizeID(lblID_)))
             else:
                 for _ee in lblID_:
                     if not _ee in _clr.labels:
@@ -79,7 +78,7 @@ class _MessageClusterMap:
 
         if not res:
             if bReportError_:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_005).format(_SubsysMsgUtil.StringizeID(lblID_), _SubsysMsgUtil.StringizeID(clrID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00125, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_005).format(_SubsysMsgUtil.StringizeID(lblID_), _SubsysMsgUtil.StringizeID(clrID_)))
         return res
 
     @staticmethod
@@ -101,7 +100,7 @@ class _MessageClusterMap:
         _lst = lblID_
         if isinstance(lblID_, list):
             if not bAllowAsListOfLabels_:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_004).format(_SubsysMsgUtil.StringizeID(lblID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00126, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_004).format(_SubsysMsgUtil.StringizeID(lblID_)))
                 return None
         else:
             _lst = [lblID_]
@@ -129,24 +128,24 @@ class _MessageClusterMap:
             return None
         if isinstance(clrID_, _EMessageCluster) and clrID_.isCDontCare:
             if not bIgnoreDontCare_:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_003))
+                logif._LogErrorEC(_EFwErrorCode.UE_00127, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_003))
             return None
 
         if not _SubsysMsgUtil.IsValidLabelID(lblID_, bAllowAsList_=bAllowAsListOfLabels_, grpIDCalledFor_=clrID_):
             return None
         if isinstance(lblID_, list):
             if not bAllowAsListOfLabels_:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_004).format(_SubsysMsgUtil.StringizeID(lblID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00128, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TextID_004).format(_SubsysMsgUtil.StringizeID(lblID_)))
                 return None
             else:
                 for _ee in lblID_:
                     if isinstance(_ee, _EMessageLabel) and _ee.isLDontCare:
                         if not bIgnoreDontCare_:
-                            logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_004).format(_SubsysMsgUtil.StringizeID(clrID_)))
+                            logif._LogErrorEC(_EFwErrorCode.UE_00129, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_004).format(_SubsysMsgUtil.StringizeID(clrID_)))
                         return None
         elif isinstance(lblID_, _EMessageLabel) and lblID_.isLDontCare:
             if not bIgnoreDontCare_:
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_004).format(_SubsysMsgUtil.StringizeID(clrID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00130, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_004).format(_SubsysMsgUtil.StringizeID(clrID_)))
             return None
 
         _bIgnore = False
@@ -156,7 +155,7 @@ class _MessageClusterMap:
                 _bIgnore = True
             elif not res.UpdateCluster(lblID_):
                 res = None
-                logif._LogError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_002).format(_SubsysMsgUtil.StringizeID(clrID_), str(lblID_)))
+                logif._LogErrorEC(_EFwErrorCode.UE_00131, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_MessageClusterMap_TextID_002).format(_SubsysMsgUtil.StringizeID(clrID_), str(lblID_)))
         else:
             res = _MessageCluster(clrID_, lblID_)
             if not res.isValid:
@@ -179,7 +178,6 @@ class _MessageClusterMap:
         _MessageClusterMap.__dictMsgClusters.clear()
         _MessageClusterMap.__dictMsgClusters = None
 
-
 class _DispatchRegCard(_AbstractSlotsObject):
 
     __slots__ = [ '__dispFilter' , '__dispTgt' ]
@@ -194,18 +192,18 @@ class _DispatchRegCard(_AbstractSlotsObject):
 
         if not (isinstance(dispFilter_, _DispatchFilter) and dispFilter_.isValid):
             self.CleanUp()
-            vlogif._LogOEC(True, -1660)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00524)
             return
         if not (isinstance(agent_, _DispatchAgentIF) and agent_._isOperating):
             self.CleanUp()
-            vlogif._LogOEC(True, -1661)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00525)
             return
 
         _bAutoDestroy = False
         if callback_ is not None:
             if not _CallableIF.IsValidCallableSpec(callback_):
                 self.CleanUp()
-                vlogif._LogOEC(True, -1662)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00526)
                 return
             if not isinstance(callback_, _CallableIF):
                 callback_ = _CallableIF.CreateInstance(callback_)
@@ -258,14 +256,11 @@ class _DispatchRegCard(_AbstractSlotsObject):
         res  = True
         _myf = self.__dispFilter
 
-
         if msgHdr_.isFwMsgHeader:
             if not (_myf.typeID == msgHdr_.typeID or _myf.isDontCareType):
                 return False
-
             if not (_myf.channelID == msgHdr_.channelID or _myf.isDontCareChanel):
                 return False
-
 
         if not (_myf.senderID == msgHdr_.senderID or _myf.isDontCareSender):
             return False
@@ -287,7 +282,6 @@ class _DispatchRegCard(_AbstractSlotsObject):
         if (not _bDontCareMsgGrp) and not _bDontCareFilterLbl:
             if not _MessageClusterMap.IsClusterMember(msgHdr_.clusterID, _myf.labelID):
                 return False
-
 
         if msgHdr_.isBroadcastMsg:
             return self.__IsMatchingBroadcastMsg(msgHdr_)
@@ -327,7 +321,7 @@ class _DispatchRegCard(_AbstractSlotsObject):
         _bGlobalBroadcastMsg = _bFwMsg and msgHdr_.isGlobalBroadcastMsg
 
         if _myf.isBroadcastFilter:
-            vlogif._LogOEC(True, -1663)
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00527)
             return False
 
         _agent = self.__dispTgt._dispatchAgent
@@ -342,7 +336,6 @@ class _DispatchRegCard(_AbstractSlotsObject):
         if res and (_agent._agentTaskID == msgHdr_.senderID):
             res = _DispatchRegCard.__bSELF_BROADCASTING_ENABLED
         return res
-
 
 class _DispatchRegistry(_AbstractSlotsObject):
 
@@ -373,7 +366,6 @@ class _DispatchRegistry(_AbstractSlotsObject):
                           , dispFilter_ : _DispatchFilter
                           , dispAgent_  : _DispatchAgentIF
                           , callback_   : _CallableIF =None) -> bool:
-
         if self.__isInvalid:
             return False
 
@@ -404,7 +396,6 @@ class _DispatchRegistry(_AbstractSlotsObject):
         with self.__mtxApi:
             if self.__regTbl is None:
                 return None
-
 
             _atgt  = None
             _cbtgt = None
@@ -465,9 +456,7 @@ class _DispatchRegistry(_AbstractSlotsObject):
             return
 
         with self.__mtxApi:
-            if self.__regTbl is None:
-                pass
-            else:
+            if self.__regTbl is not None:
                 for _vv in self.__regTbl.values():
                     _vv.CleanUp()
                 self.__regTbl.clear()
