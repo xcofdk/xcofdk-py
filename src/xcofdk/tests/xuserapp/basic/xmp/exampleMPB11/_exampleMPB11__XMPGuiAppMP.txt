@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleMPB11':
+  - title        : XMPGuiApp - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmp/exampleMPB11/
+  - description  : This Tk application uses a synchronous main task and multiple service processes running in parallel.
+                   It demostrates multiprocessing using XCOFDK.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

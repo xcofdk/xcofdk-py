@@ -1,5 +1,0 @@
-Multithreaded user application '_exampleB10':
-  - title        : MTSampleApp
-  - location     : ~/xcofdk/tests/userapp/basic/mt/exampleB10
-  - description  : This console application provides a basic sample for programs using XCOFDK.
-  - remark(s)    : -

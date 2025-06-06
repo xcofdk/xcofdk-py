@@ -1,0 +1,8 @@
+Multithreaded user application '_exampleSCB11':
+  - title        : XMTGuiAppWelcome - SC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleSCB11/
+  - description  : This Tk application uses an instance of class 'MainXTask' to (a)synchronously start the GUI.
+  - remark(s)    : This example uses subclassing (SC) approach to create application tasks.
+                   However, it is presented for demonstration purposes only.
+                   Epecially, it does not represent any add-value example in terms of task abstraction and/or
+                   features compared to its RC counterpart.

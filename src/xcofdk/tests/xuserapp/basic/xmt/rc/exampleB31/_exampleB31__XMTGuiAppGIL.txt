@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleB31':
+  - title        : XMTGuiAppGIL - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleB31/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates the impact of GIL on application's responsiveness.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

@@ -1,6 +1,0 @@
-Multithreaded user application 'exampleB24':
-  - title        : MTGuiAppNoSerDes
-  - location     : ~/test/userapp/basic/mt/exampleB24/
-  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
-                   It demostrates messaging with (de-)serialization of the payload of individual messages disabled.
-  - remark(s)    : -

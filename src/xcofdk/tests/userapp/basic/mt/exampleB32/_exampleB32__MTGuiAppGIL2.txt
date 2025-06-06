@@ -1,6 +1,0 @@
-Multithreaded user application 'exampleB32':
-  - title        : MTGuiAppGIL2
-  - location     : ~/test/userapp/basic/mt/exampleB32/
-  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
-                   It demostrates achievable improvement via optimization of CPU-bound tasks even despite GIL.
-  - remark(s)    : -

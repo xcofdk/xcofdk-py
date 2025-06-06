@@ -1,0 +1,5 @@
+Multithreaded user application '_exampleB11':
+  - title        : XMTGuiAppWelcome - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/rc/exampleB11/maintask
+  - description  : This Tk application uses an instance of class 'MainXTask' to (a)synchronously start the GUI.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

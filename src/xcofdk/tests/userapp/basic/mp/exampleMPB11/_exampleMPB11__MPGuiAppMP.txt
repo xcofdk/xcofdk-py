@@ -1,6 +1,0 @@
-Multithreaded user application 'exampleMPB11':
-  - title        : MPGuiApp
-  - location     : ~/test/userapp/basic/mp/exampleMPB11/
-  - description  : This Tk application uses a synchronous main task and multiple service processes running in parallel.
-                   It demostrates multiprocessing using XCOFDK.
-  - remark(s)    : -

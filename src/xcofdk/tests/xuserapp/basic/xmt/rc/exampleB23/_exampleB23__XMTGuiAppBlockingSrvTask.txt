@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleB23':
+  - title        : XMTGuiAppBlockingSrvTask - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleB23/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates use of blocking external queues.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

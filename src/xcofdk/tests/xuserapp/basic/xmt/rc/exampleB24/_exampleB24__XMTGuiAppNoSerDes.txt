@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleB24':
+  - title        : XMTGuiAppNoSerDes - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleB24/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates messaging with (de-)serialization of the payload of individual messages disabled.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

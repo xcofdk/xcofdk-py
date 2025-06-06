@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 # File   : xmsg.py
 #
-# Copyright(c) 2024 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
@@ -11,40 +11,45 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
+from xcofdk.fwcom                 import override
+from xcofdk.fwapi                 import IMessage
+from xcofdk.fwapi                 import IPayload
+from xcofdk.fwapi                 import IMessageHeader
 from xcofdk.fwapi.xmsg.xmsgheader import XMessageHeader
-from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
 
-from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsgimpl import _XMsgImpl
+from _fw.fwssys.assys     import fwsubsysshare as _ssshare
+from _fw.fwssys.fwmsg.msg import _IFwMessage
 
 
 # ------------------------------------------------------------------------------
 # Interface
 # ------------------------------------------------------------------------------
-class XMessage:
+class XMessage(IMessage):
     """
-    Instances of this class represent message objects constructed according to
-    the design patterns Adapter or Facade.
+    Instances of this class represent message objects constructed by the
+    framework when a message has to be derlivered to its receiver(s).
 
-    Such an instance is passed to the respective callback methods (for
-    processing of external/interal messages) of a task instance which was
-    specified as destination of a send request before.
+    Such an instance the result of a send request and is passed to the
+    respective 3-PhXF callback methods (for processing messages) of the
+    destination task instance(s).
 
     Note:
     ------
         - Subsystem messaging is described in more detail in class description
-          of XMessageManager.
+          of XMessenger.
 
     See:
     -----
-        - XMessageHeader
-        - XMessageManager
+        >>> XMessageHeader
+        >>> IMessage
+        >>> IPayload
     """
 
 
     __slots__ = [ '__xhh' , '__xmsg' ]
 
 
-    def __init__(self, xm_ : _XMsgImpl):
+    def __init__(self, xm_ : _IFwMessage):
         """
         Constructor (initializer) of an instance of this class.
 
@@ -56,91 +61,80 @@ class XMessage:
         Note:
         ------
             - Subsystem messaging is described in class description of
-              XMessageManager.
+              XMessenger.
 
         See:
         -----
-            - XMessageManager.SendMessage()
-            - XMessageManager.BroadcastMessage()
+            - XMessenger.SendMessage()
+            - XMessenger.BroadcastMessage()
             - XTask.ProcessExternalMessage()
         """
         self.__xhh  = None
         self.__xmsg = None
-        if isinstance(xm_, _XMsgImpl) and xm_.isValid:
+        super().__init__()
+        if _ssshare._IsSubsysMsgDisabled():
+            return
+        if isinstance(xm_, _IFwMessage) and xm_.isValid:
             self.__xhh  = XMessageHeader(xm_.header)
             self.__xmsg = xm_
 
 
+    @override
     def __str__(self):
         """
-        String representation of this instance.
-
-        Returns:
-        ----------
-            A string object as representation of this instance.
+        See:
+        -----
+            >>> IMessage.__str__()
         """
         if self.__isInvalidMsg:
             return None
         return self.__xmsg.ToString()
 
 
-    @property
+    @IMessage.msgUniqueID.getter
     def msgUniqueID(self) -> int:
         """
-        Returns:
-        ----------
-            a positive integer number as unique ID of this message
-            instance.
+        See:
+        -----
+            >>> IMessage.msgUniqueID
         """
         return None if self.__isInvalidMsg else self.__xmsg.uniqueID
 
 
-    @property
-    def msgHeader(self) -> XMessageHeader:
+    @IMessage.msgHeader.getter
+    def msgHeader(self) -> IMessageHeader:
         """
-        Returns:
-        ----------
-            header of this message instance.
-
         See:
         -----
-            - XMessageHeader
+            >>> IMessage.msgHeader
         """
         return None if self.__isInvalidMsg else self.__xhh
 
 
-    @property
-    def msgPayload(self) -> XPayloadIF:
+    @IMessage.msgPayload.getter
+    def msgPayload(self) -> IPayload:
         """
-        Returns:
-        ----------
-            payload (if any) of this message instance.
-
         See:
         -----
-            - XPayloadIF
-            - XPayload
+            >>> IMessage.msgPayload
         """
         return None if self.__isInvalidMsg else self.__xmsg.payload
 
 
     def _Detach(self):
         """
-        Detach this instance form its adaptee, so it becomes an invalid message
-        object.
+        Detach this instance from framework's internal object it refers to,
+        so it becomes an invalid message object.
 
-        Message objects passed to the respective callback methods (for
-        processing of external/interal messages) of a task are always valid,
-        that is never detached.
+        Message (header) objects are always valid when delivered to their
+        receiver(s).
 
         Note:
         ------
-            - This protected method is designed to be used by the subsystem of
-              messaging only, it basically serves for interal, cleanup purposes.
-
-        See:
-        -----
-            - XTask.ProcessExternalMessage()
+            - This protected method is designed to be used by the framework
+              only, once a message has been processed by a receiver task.
+              It basically serves for resource-efficient purposes, as a message
+              object might have to be delivered to more than one receiver.
         """
         if self.__xhh is not None:
             self.__xhh._Detach()

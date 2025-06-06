@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleB22':
+  - title        : XMTGuiAppBroadcast - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/rc/exampleB22/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates use of broadcast as part of anonymous message addressing.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

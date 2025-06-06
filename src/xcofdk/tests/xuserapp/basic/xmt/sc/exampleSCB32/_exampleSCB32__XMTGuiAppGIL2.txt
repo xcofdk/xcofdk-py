@@ -1,0 +1,9 @@
+Multithreaded user application 'exampleSCB32':
+  - title        : XMTGuiAppGIL2 - SC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleSCB32/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates achievable improvement via optimization of CPU-bound tasks even despite GIL.
+  - remark(s)    : This example uses subclassing (SC) approach to create application tasks.
+                   However, it is presented for demonstration purposes only.
+                   Epecially, it does not represent any add-value example in terms of task abstraction and/or
+                   features compared to its RC counterpart.

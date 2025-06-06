@@ -1,6 +1,0 @@
-Multithreaded user application 'exampleB22':
-  - title        : MTGuiAppBroadcast
-  - location     : ~/test/userapp/basic/mt/exampleB22/
-  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
-                   It demostrates use of broadcast as part of anonymous message addressing.
-  - remark(s)    : -

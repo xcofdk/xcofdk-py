@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 # File   : xmsgheader.py
 #
-# Copyright(c) 2024 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
@@ -11,184 +11,174 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
+from enum   import IntEnum
 from typing import Union
 
-from xcofdk.fwcom.xmsgdefs import IntEnum
+from xcofdk.fwcom import override
+from xcofdk.fwcom import EXmsgPredefinedID
+from xcofdk.fwapi import ITask
+from xcofdk.fwapi import IMessage
+from xcofdk.fwapi import IMessageHeader
 
-from xcofdk._xcofw.fw.fwssys.fwmsg.apiimpl.xcomsghdrimpl import _XMsgHeaderImpl
+from _fw.fwssys.fwmsg.msg import _IFwMessageHeader
 
 
 # ------------------------------------------------------------------------------
 # Interface
 # ------------------------------------------------------------------------------
-class XMessageHeader:
+class XMessageHeader(IMessageHeader):
     """
-    Instances of this class represent message header objects constructed
-    according to the design patterns Adapter or Facade.
+    Instances of this class represent message header objects.
 
-    Such an instance is part of the fix portion of a message object. It carries
-    all information the destination of a delivered message may need for its
-    proper processing.
-
-    Note:
-    ------
-        - Subsystem messaging is described in more detail in class description
-          of XMessageManager.
+    Such an instance is part of the fix portion of a message object which
+    carries all information the destination of a delivered message may need
+    for its proper processing.
 
     See:
     -----
-        - XMessage.msgHeader
-        - XMessageManager
+        - class XMessenger
+        >>> IMessage.msgHeader
     """
 
-    __slots__ = [ '__hdr' ]
+    __slots__ = [ '_h' ]
 
 
-    def __init__(self, hh_ : _XMsgHeaderImpl):
+    # ------------------------------------------------------------------------------
+    # c-tor / built-in
+    # ------------------------------------------------------------------------------
+    def __init__(self, hh_ : _IFwMessageHeader):
         """
         Constructor (initializer) of an instance of this class.
 
         Parameters:
         -------------
             - hh_ :
-              the adaptee of this instance.
-
-        Note:
-        ------
-            - Subsystem messaging is described in class description of
-              XMessageManager.
+              Framework's internal header object this instance refers to.
 
         See:
         -----
-            - XMessage.msgHeader
+            >>> IMessage.msgHeader
         """
-        self.__hdr = None
-        if isinstance(hh_, _XMsgHeaderImpl) and hh_.isValid:
-            self.__hdr = hh_
+        self._h = None
+        super().__init__()
+        if isinstance(hh_, _IFwMessageHeader) and hh_.isValid:
+            self._h = hh_
 
 
+    @override
     def __str__(self):
         """
-        String representation of this instance.
-
-        Returns:
-        ----------
-            A string object as representation of this instance.
+        See:
+        -----
+            >>> IMessageHeader.__str__()
         """
         if not self.__isValidHeader:
             return None
-        return self.__hdr.ToString()
+        return self._h.ToString()
+    # ------------------------------------------------------------------------------
+    #END c-tor / built-in
+    # ------------------------------------------------------------------------------
 
 
-    @property
+    # ------------------------------------------------------------------------------
+    # API
+    # ------------------------------------------------------------------------------
+    @IMessageHeader.isInternalMessage.getter
     def isInternalMessage(self) -> bool:
         """
-        Returns:
-        ----------
-            True if this instance is an internal message, False otherwise.
-
         See:
         -----
-            - XMessage.msgHeader
+            >>> IMessageHeader.isInternalMessage
+            >>> IMessage.msgHeader
         """
-        return self.__isValidHeader and self.__hdr.isInternalMsg
+        return self.__isValidHeader and self._h.isInternalMsg
 
 
-    @property
+    @IMessageHeader.isBroadcastMessage.getter
     def isBroadcastMessage(self) -> bool:
         """
-        Returns:
-        ----------
-            True if this instance is a bradcast message, False otherwise.
-
         See:
         -----
-            - XMessage.msgHeader
+            >>> IMessageHeader.isBroadcastMessage
+            >>> IMessage.msgHeader
         """
-        return self.__isValidHeader and self.__hdr.isXTaskBroadcastMsg or self.__hdr.isGlobalBroadcastMsg
+        return self.__isValidHeader and self._h.isXTaskBroadcastMsg or self._h.isGlobalBroadcastMsg
 
 
-    @property
+    @IMessageHeader.msgLabel.getter
     def msgLabel(self) -> Union[IntEnum, int]:
         """
-        Returns:
-        ----------
-            a pre-/uer-defined enum or integer value as message label ID.
-
         See:
         -----
-            - XMessage.msgHeader
+            >>> IMessageHeader.msgLabel
+            >>> IMessage.msgHeader
         """
-        return None if not self.__isValidHeader else self.__hdr.labelID
+        return None if not self.__isValidHeader else self._h.labelID
 
 
-    @property
+    @IMessageHeader.msgCluster.getter
     def msgCluster(self) -> Union[IntEnum, int]:
         """
-        Returns:
-        ----------
-            a pre-/uer-defined enum or integer value as message cluster ID.
-
         See:
         -----
-            - XMessage.msgHeader
+            >>> IMessageHeader.msgCluster
+            >>> IMessage.msgHeader
         """
-        return None if not self.__isValidHeader else self.__hdr.clusterID
+        return None if not self.__isValidHeader else self._h.clusterID
 
 
-    @property
+    @IMessageHeader.msgSender.getter
     def msgSender(self) -> int:
         """
-        Returns:
-        ----------
-            the unique task ID of the sender.
-
         See:
         -----
-            - XMessage.msgHeader
-            - XTask.xtaskUniqueID
+            >>> IMessageHeader.msgSender
+            >>> IMessage.msgHeader
+            >>> ITask.taskUID
         """
-        return None if not self.__isValidHeader else self.__hdr.senderID
+        return None if not self.__isValidHeader else self._h.senderID
 
 
-    @property
+    @IMessageHeader.msgReceiver.getter
     def msgReceiver(self) -> int:
         """
-        Returns:
-        ----------
-            the unique task ID of the receiver.
-
         See:
         -----
-            - XMessage.msgHeader
-            - XTask.xtaskUniqueID
+            >>> IMessageHeader.msgReceiver
+            >>> IMessage.msgHeader
+            >>> ITask.taskUID
         """
-        return None if not self.__isValidHeader else self.__hdr.receiverID
+        return None if not self.__isValidHeader else self._h.receiverID
 
 
     def _Detach(self):
         """
-        Detach this instance form its adaptee, so it becomes an invalid message
-        object.
+        Detach this instance from framework's internal object it refers to,
+        so it becomes an invalid message object.
 
-        Message objects, and so message header objects, passed to the respective
-        callback methods (for processing of external/interal messages) of a task
-        are always valid, that is never detached.
+        Message (header) objects are always valid when delivered to their
+        receiver(s).
 
         Note:
         ------
-            - This protected method is designed to be used by the subsystem of
-              messaging only, it basically serves for interal, cleanup purposes.
-
-        See:
-        -----
-            - XMessage._Detach()
-            - XTask.ProcessExternalMessage()
+            - This protected method is designed to be used by the framework
+              only, once a message has been processed by a receiver task.
+              It basically serves for resource-efficient purposes, as a message
+              object might have to be delivered to more than one receiver.
         """
-        self.__hdr = None
+        self._h = None
+    # ------------------------------------------------------------------------------
+    #END API
+    # ------------------------------------------------------------------------------
 
 
+    # ------------------------------------------------------------------------------
+    # Impl
+    # ------------------------------------------------------------------------------
     @property
     def __isValidHeader(self) -> bool:
-        return (self.__hdr is not None) and self.__hdr.isValid
+        return (self._h is not None) and self._h.isValid
+    # ------------------------------------------------------------------------------
+    #END Impl
+    # ------------------------------------------------------------------------------
 #END class XMessageHeader

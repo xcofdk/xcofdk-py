@@ -1,0 +1,6 @@
+Multithreaded user application 'exampleB25':
+  - title        : XMTGuiAppCoustomPayload - RC
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleB25/
+  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
+                   It demostrates use of custom payload classes.
+  - remark(s)    : This example uses rapid construction (RC) approach to create application tasks.

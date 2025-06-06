@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 # File   : xpayload.py
 #
-# Copyright(c) 2024 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
@@ -11,18 +11,21 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
-from xcofdk.fwcom                 import override
-from xcofdk.fwapi.xmsg.xpayloadif import XPayloadIF
+from typing import Union
 
-from xcofdk._xcofw.fw.fwssys.fwmsg.msg import _FwPayload
+from xcofdk.fwcom import override
+from xcofdk.fwapi import IPayload
+
+from _fw.fwssys.assys     import fwsubsysshare as _ssshare
+from _fw.fwssys.fwmsg.msg import _FwPayload
 
 
 # ------------------------------------------------------------------------------
 # Interface
 # ------------------------------------------------------------------------------
-class XPayload(XPayloadIF):
+class XPayload(IPayload):
     """
-    This class is the default implementation of the interface class XPayloadIF.
+    This class is the default implementation of the interface class IPayload.
 
     The subsystem of messaging uses this class whenever default payload objects
     are needed. It implements below groups of interface functions of its parent
@@ -32,15 +35,13 @@ class XPayload(XPayloadIF):
 
     That is, it represents the usual funtionality expected from a typical
     container type. In addition, it provides a few supplementary API functions
-    commonly expected from a collection-like payload object. Instances of this
-    class are constructed according to the design patterns Adapter or Facade,
-    too.
+    commonly expected from a collection-like payload object.
 
     See:
     -----
-        - XPayloadIF
-        - XMessage
-        - XMessageManager
+        - class XMessage
+        - class XMessenger
+        >>> IPayload
     """
 
 
@@ -70,10 +71,13 @@ class XPayload(XPayloadIF):
         See:
         -----
             - XMessage.msgPayload
-            - XPayloadIF
-            - XPayload.isMarshalingRequired
+            >>> IPayload
+            >>> IPayload.isMarshalingRequired
         """
         super().__init__()
+        self.__p = None
+        if _ssshare._IsSubsysMsgDisabled():
+            return
 
         self.__p = _FwPayload(cont_=containerInitializer_, bSkipSerDes_=bBypassSerDes_)
         if not self.__p.isValidPayload:
@@ -82,7 +86,7 @@ class XPayload(XPayloadIF):
 
 
     # --------------------------------------------------------------------------
-    # Interface inherited from XPayloadIF
+    # Interface inherited from IPayload
     # --------------------------------------------------------------------------
     @staticmethod
     def CustomSerializePayload(payload_) -> bytes:
@@ -91,7 +95,7 @@ class XPayload(XPayloadIF):
 
         See:
         -----
-            - XPayloadIF.SerializePayload()
+            - IPayload.SerializePayload()
         """
         return None
 
@@ -103,52 +107,54 @@ class XPayload(XPayloadIF):
 
         See:
         -----
-            - XPayloadIF.DeserializePayload()
+            - IPayload.DeserializePayload()
         """
         return None
 
 
-    @XPayloadIF.isValidPayload.getter
+    @IPayload.isValidPayload.getter
     def isValidPayload(self) -> bool:
         """
         See:
         -----
-            - XPayloadIF.isValidPayload
+            >>> IPayload.isValidPayload
         """
         return self.__p is not None
 
 
-    @XPayloadIF.isMarshalingRequired.getter
+    @IPayload.isMarshalingRequired.getter
     def isMarshalingRequired(self):
         """
         See:
         -----
-            - XPayload.__init__()
-            - XPayloadIF.isMarshalingRequired
+            >>> XPayload.__init__()
+            >>> IPayload.isMarshalingRequired
         """
         return (self.__p is not None) and self.__p.isMarshalingRequired
 
 
-    @XPayloadIF.isCustomMarshalingRequired.getter
+    @IPayload.isCustomMarshalingRequired.getter
     def isCustomMarshalingRequired(self):
         """
-        Custom marshaling is not supported by this class.
+        Note:
+        ------
+            Custom marshaling is not supported by this class.
 
         See:
         -----
-            - XPayloadIF.isCustomMarshalingRequired
+            >>> IPayload.isCustomMarshalingRequired
         """
         return False
 
 
-    @XPayloadIF.numParameters.getter
+    @IPayload.numParameters.getter
     def numParameters(self) -> int:
         """
         See:
         -----
-            - XPayloadIF.numParameters
-            - XPayload.SetParameter()
-            - XPayload.UpdatePayloadContainer()
+            >>> IPayload.numParameters
+            >>> XPayload.SetParameter()
+            >>> XPayload.UpdatePayloadContainer()
         """
         return 0 if not self.isValidPayload else self.__p.numParameters
 
@@ -158,9 +164,9 @@ class XPayload(XPayloadIF):
         """
         See:
         -----
-            - XPayloadIF.IsIncludingParameter()
-            - XPayload.SetParameter()
-            - XPayload.UpdatePayloadContainer()
+            >>> IPayload.IsIncludingParameter()
+            >>> XPayload.SetParameter()
+            >>> XPayload.UpdatePayloadContainer()
         """
         return False if not self.isValidPayload else self.__p.IsIncludingParameter(paramKey_)
 
@@ -170,19 +176,19 @@ class XPayload(XPayloadIF):
         """
         See:
         -----
-            - XPayloadIF.GetParameter()
-            - XPayload.SetParameter()
-            - XPayload.UpdatePayloadContainer()
+            >>> IPayload.GetParameter()
+            >>> XPayload.SetParameter()
+            >>> XPayload.UpdatePayloadContainer()
         """
         return None if not self.isValidPayload else self.__p.GetParameter(paramKey_)
 
 
     @override
-    def DetachContainer(self) -> dict:
+    def DetachContainer(self) -> Union[dict, None]:
         """
         See:
         -----
-            - XPayloadIF.DetachContainer()
+            >>> IPayload.DetachContainer()
         """
         if self.__p is None:
             return None
@@ -192,7 +198,7 @@ class XPayload(XPayloadIF):
         self.__p = None
         return res
     # --------------------------------------------------------------------------
-    #END Interface inherited from XPayloadIF
+    #END Interface inherited from IPayload
     # --------------------------------------------------------------------------
 
 
@@ -214,9 +220,9 @@ class XPayload(XPayloadIF):
 
         See:
         -----
-            - XPayload.isValidPayload
-            - XPayload.__init__()
-            - XPayload.UpdatePayloadContainer()
+            >>> IPayload.isValidPayload
+            >>> XPayload.__init__()
+            >>> XPayload.UpdatePayloadContainer()
         """
         return None if not self.isValidPayload else self.__p.container
 
@@ -241,10 +247,10 @@ class XPayload(XPayloadIF):
 
         See:
         -----
-            - XPayload.isValidPayload
-            - XPayload.GetParameter()
-            - XPayload.IsIncludingParameter()
-            - XPayload.UpdatePayloadContainer()
+            >>> IPayload.isValidPayload
+            >>> IPayload.GetParameter()
+            >>> IPayload.IsIncludingParameter()
+            >>> XPayload.UpdatePayloadContainer()
         """
         if not self.isValidPayload:
             return False
@@ -273,10 +279,10 @@ class XPayload(XPayloadIF):
 
         See:
         -----
-            - XPayload.isValidPayload
-            - XPayload.SetParameter()
-            - XPayload.GetParameter()
-            - XPayload.IsIncludingParameter()
+            >>> IPayload.isValidPayload
+            >>> IPayload.IsIncludingParameter()
+            >>> XPayload.GetParameter()
+            >>> XPayload.SetParameter()
         """
         if not self.isValidPayload:
             return False

@@ -1,0 +1,9 @@
+Multithreaded user application '_exampleSCB10':
+  - title        : XMTUnitTest
+  - location     : ~/xcofdk/tests/xuserapp/basic/xmt/sc/exampleSCB10
+  - description  : This console application provides a basic sample for programs using XCOFDK.
+                   Also, it is properly designed to be tested by Python's Unit testing framework 'unittest'.
+  - remark(s)    : This example uses subclassing (SC) approach to create application tasks.
+                   However, it is presented for demonstration purposes only.
+                   Epecially, it does not represent any add-value example in terms of task abstraction and/or
+                   features compared to its RC counterpart.

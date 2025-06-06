@@ -1,6 +1,0 @@
-Multithreaded user application 'exampleB25':
-  - title        : MTGuiAppCoustomPayload
-  - location     : ~/test/userapp/basic/mt/exampleB25/
-  - description  : This Tk application uses a synchronous main task and multiple asynchronous service tasks.
-                   It demostrates use of custom payload classes.
-  - remark(s)    : -

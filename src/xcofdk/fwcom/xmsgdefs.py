@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 # File   : xmsgdefs.py
 #
-# Copyright(c) 2024 Farzad Safa (farzad.safa@xcofdk.de)
+# Copyright(c) 2023-2025 Farzad Safa (farzad.safa@xcofdk.de)
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
@@ -11,13 +11,15 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
+from enum import unique
 from enum import IntEnum
 
 
 # ------------------------------------------------------------------------------
 # Interface
 # ------------------------------------------------------------------------------
-class EPreDefinedMessagingID(IntEnum):
+@unique
+class EXmsgPredefinedID(IntEnum):
     """
     Enum class providing pre-defined IDs specified for use in the context of
     task comminication via messaging.
@@ -29,8 +31,9 @@ class EPreDefinedMessagingID(IntEnum):
           receiver/sender endpoint is intended.
 
         - MainTask:
-          unique ID referring to the singleton of class MainXTask whenever
-          anonymous (or alias) addressing is applicable.
+          unique ID referring to application's main task, i.e. the singleton
+          instance of either classes RCTask or XMainTask, whenever anonymous
+          (or alias) addressing is applicable.
 
         - Broadcast:
           unique ID referring to the wildcard specification of any possible
@@ -40,24 +43,29 @@ class EPreDefinedMessagingID(IntEnum):
         - MinUserDefinedID:
           unique ID supposed to be used by applications as starting point to
           define their own, custom IDs. In other words, (the integer value of)
-          any application specific ID must not be less than this ID.
+          any application-specific ID must not be less than this ID.
 
     Note:
     ------
-        - Applications should always introduce their own enum classes (if any)
-          as this enum class is not designed to be changed or extended by
-          additional enum members.
-        - Task communication is described in class description of
-          XMessageManager.
+        - Applications are recommended to always introduce their own enum
+          classes (if any) as this enum class must not be changed or extended
+          by additional enum members.
 
     See:
     -----
-        - MainXTask
-        - XMessageManager
+        - class XMessenger
+
+
+    Deprecated API:
+    ----------------
+    Starting with XCOFDK-py v3.0 below enum class is deprecated and not
+    available anymore:
+        >>> # enum class 'EPreDefinedMessagingID' due to renaming
+        >>> EPreDefinedMessagingID = EXmsgPredefinedID
     """
 
     DontCare         = 0
     MainTask         = 1
     Broadcast        = 2
     MinUserDefinedID = 5001
-#END class EPreDefinedMessagingID
+#END class EXmsgPredefinedID
