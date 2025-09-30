@@ -13,6 +13,7 @@ from typing    import List
 from typing    import Tuple
 from typing    import Union
 
+from xcofdk.fwcom     import LcFailure
 from xcofdk.fwapi     import IRCTask
 from xcofdk.fwapi     import IRCCommTask
 from xcofdk.fwcom     import EXmsgPredefinedID
@@ -47,12 +48,11 @@ from _fw.fwssys.fwcore.lc.lcproxydefines      import _ELcSDRequest
 from _fw.fwssys.fwcore.lc.lcproxy             import _LcProxy
 from _fw.fwssys.fwcore.lc.ifs.iflcstate       import _ILcState
 from _fw.fwssys.fwcore.lc.lcmn.lcmonimpl      import _LcMonitorImpl
+from _fw.fwssys.fwcore.logrd.logrdagent       import _LogRDAgent
 from _fw.fwssys.fwcore.types.aobject          import _AbsSlotsObject
 from _fw.fwssys.fwcore.types.commontypes      import override
-from _fw.fwssys.fwcore.types.commontypes      import SyncPrint
 from _fw.fwssys.fwerrh.fwerrorcodes           import _EFwErrorCode
 from _fw.fwssys.fwerrh.logs.errorlog          import _FatalLog
-from _fwa.fwrteconfig                         import _FwRteConfig
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
@@ -99,9 +99,10 @@ class _LcManager(_FwApiConnector, _TILcManager):
             return self.__bS
 
     class _LcSDHelper(_AbsSlotsObject):
-        __slots__ = [ '__iJR' , '__iSR' ]
+        __slots__ = [ '__bAS' , '__iJR' , '__iSR' ]
 
         def __init__(self):
+            self.__bAS = True
             self.__iJR = 0
             self.__iSR = 0
             super().__init__()
@@ -131,12 +132,13 @@ class _LcManager(_FwApiConnector, _TILcManager):
                 self.__iJR = -1 if bInternal_ else 1
 
         def _CleanUp(self):
+            self.__bAS = None
             self.__iJR = None
             self.__iSR = None
 
         @property
         def __isValid(self):
-            return self.__iJR is not None
+            return self.__bAS is not None
 
     __slots__ = [ '__la' , '__dm' , '__gi' , '__pi' , '__ts' , '__m' , '__s' , '__mi' , '__ld' , '__xh' , '__kpi' , '__sdh' , '__sup' ]
 
@@ -159,9 +161,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
         self.__sup = None
         _FwApiConnector.__init__(self, ppass_)
         _TILcManager.__init__(self, ppass_)
-
-        if suPolicy_.isSyncPrintEnabled:
-            SyncPrint.SetSyncLock(_PyRLock())
 
         if _LcManager.__sgltn is not None:
             self.CleanUpByOwnerRequest(ppass_)
@@ -210,13 +209,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
             _lcfMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_036).format(_tgtScope.value, _tgtScope.compactName)
             _errMsg  = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
             _errCode = _EFwErrorCode.FE_LCSF_095
-
-        elif not _FwRteConfig._GetInstance()._isFrozen:
-            self.CleanUpByOwnerRequest(ppass_)
-            _lcfMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_027).format()
-            _errMsg  = f'{_LcManager.__MSG_PREFIX}' + _lcfMsg
-            _errCode = _EFwErrorCode.FE_LCSF_105
-
         else:
             _myGuard = _LcGuard(self._myPPass, self)
 
@@ -228,7 +220,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
                 self.__kpi = _lcKPI
                 self.__sdh = _LcManager._LcSDHelper()
                 self.__sup = suPolicy_
-
         if (_errMsg is not None) or _LcFailure.IsLcNotErrorFree():
             if _LcFailure.IsLcErrorFree():
                 if _errCode is None:
@@ -284,6 +275,19 @@ class _LcManager(_FwApiConnector, _TILcManager):
             return res
 
     @override
+    def _GetLcFailure(self) -> Union[LcFailure, None]:
+        if _LcManager.__sgltn is None:
+            return _LcFailure._GetLcFailure()
+
+        with self.__la:
+            res = _LcFailure._GetLcFailure()
+            if res is None:
+                _frcv = None if (self.__gi is None) else self.__gi.lcFrcView
+                if _frcv is not None:
+                    res = LcFailure(str(_frcv), _frcv.errorMessage, _frcv.errorCode)
+            return res
+
+    @override
     def _GetXTask(self, xtUID_ : int =0) -> Union[IXTask, None]:
         if not self.__ts.isIPC:
             return None
@@ -310,7 +314,8 @@ class _LcManager(_FwApiConnector, _TILcManager):
                     pass
                 else:
                     _utc = _ti._utConn
-                    res  = None if _utc is None else _utc._utAgent._xtInst
+                    _uta = None if _utc is None else _utc._utAgent
+                    res  = None if _uta is None else _uta._xtInst
                 if (res is None) or res.isDetachedFromFW:
                     res = None
                     logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_046).format(xtUID_))
@@ -343,7 +348,8 @@ class _LcManager(_FwApiConnector, _TILcManager):
                     pass
                 else:
                     _utc = _ti._utConn
-                    res  = None if _utc is None else _utc._utAgent._xtInst
+                    _uta = None if _utc is None else _utc._utAgent
+                    res  = None if _uta is None else _uta._xtInst
                     if res is not None:
                         _xp = _utc._taskProfile
                         _rct = None if _xp is None else _xp._rcTaskInst
@@ -360,6 +366,9 @@ class _LcManager(_FwApiConnector, _TILcManager):
 
     @override
     def _StopFW(self) -> bool:
+        if not self.__ts.isIPC:
+            return True
+
         with self.__la:
             if self.__mi.isLcShutdownEnabled:
                 return True
@@ -369,7 +378,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
     @override
     def _JoinFW(self) -> bool:
         res = self.__JoinFW()
-
         if res:
             _mainXT = self.__m
             if _mainXT is None:
@@ -377,7 +385,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
 
             if _mainXT is not None:
                 _mainXT.DetachFromFW()
-
         return res
 
     @override
@@ -427,6 +434,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
             return False
 
         _curSDR = self.__mi.curShutdownRequest
+
         if eShutdownRequest_.isShutdown:
             if not _curSDR.isShutdown:
                 self.__pi._PxyProcessShutdownRequest(_ELcSDRequest.eShutdown, bPrvRequestReply_=False)
@@ -443,7 +451,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
         _mxt = self.__m
         if _mxt is None:
             _mxt = _LcManager.__GetMainXTask()
-
         if (_mxt is not None) and _mxt.isAttachedToFW:
             if _mxt.isRunning:
                 _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_071).format(_mxt.taskUID)
@@ -477,7 +484,9 @@ class _LcManager(_FwApiConnector, _TILcManager):
             if not self.__lcState.isLcStopped:
                 if not self.__lcState.isLcFailed:
                     self.__SetLcOpState(_ELcCompID.eLcMgr, False)
+
             self.CleanUpByOwnerRequest(self._myPPass)
+
         return True
 
     @staticmethod
@@ -485,49 +494,23 @@ class _LcManager(_FwApiConnector, _TILcManager):
         if _LcManager.__sgltn is not None:
             return None
 
-        res = _LcManager.__DoCreateLcMgr(startupPolicy_, startOptions_)
+        if not _ssshare._GetRteConfig()._isFrozen:
+            res = None
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_110, _EFwTextID.eLogMsg_LcManager_TID_027)
+        else:
+            res = _LcManager.__DoCreateLcMgr(startupPolicy_, startOptions_)
+
         if res is None:
             _LcFailure._PrintLcResult()
         return res
 
     @staticmethod
     def _CreateStartupPolicy(ppass_ : int) -> _FwStartupPolicy:
-        _STARTUP_FAILURE_ERR_MSG = 'Encountered severe error while preparing for startup.'
-
-        _dbCreateSt = _FwTDbEngine.GetCreateStatus()
-        if not _dbCreateSt.isTDBIdle:
-            if not _dbCreateSt.isTDBCreated:
-                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_096, errMsg_=_STARTUP_FAILURE_ERR_MSG)
-                return None
-
-        _lcKPI = _KpiLogBook._CreateStartupKPI(_ELcKpiID.eFwStartRequest)
-        if not _lcKPI.isValid:
-            _lcKPI.CleanUp()
-            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_097, errMsg_=_STARTUP_FAILURE_ERR_MSG)
-            return None
-
-        res = _FwStartupPolicy(ppass_)
-
-        if not res.isValid:
-            res.CleanUpByOwnerRequest(ppass_)
-            res = None
-            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_098, errMsg_=_STARTUP_FAILURE_ERR_MSG)
-
-        elif _dbCreateSt.isTDBIdle:
-            _FwTDbEngine._CreateDB(res.isPackageDist)
-
-            _dbCreateSt = _FwTDbEngine.GetCreateStatus()
-            if not _dbCreateSt.isTDBCreated:
-                res.CleanUpByOwnerRequest(ppass_)
-                res = None
-                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_099, errMsg_=_STARTUP_FAILURE_ERR_MSG)
-
-        if res is not None:
-            _dbFirstFetchTS = None
-            _dbCreateTS     = None
-            _dbFirstFetchTS, _dbCreateTS = _FwTDbEngine._GetDBTimestamps()
-            _lcKPI.AddKPI(_ELcKpiID.eTextDBFirstFetch, usTimeTicksKPI_=_dbFirstFetchTS)
-            _lcKPI.AddKPI(_ELcKpiID.eTextDBCreate, usTimeTicksKPI_=_dbCreateTS)
+        res = _LcManager.__DoCreateStartupPolicy(ppass_)
+        if res is None:
+            _LcFailure._PrintLcResult()
+        else:
+            _LogRDAgent._GetInstance()._AActivate()
         return res
 
     def _AsyncSetUpLcMgr(self, ppass_ : int, startOptions_ : list, mainXT_ =None):
@@ -587,6 +570,43 @@ class _LcManager(_FwApiConnector, _TILcManager):
         return None if self.__dm is None else self.__dm.lcScope
 
     @staticmethod
+    def __DoCreateStartupPolicy(ppass_ : int) -> _FwStartupPolicy:
+        _STARTUP_FAILURE_ERR_MSG = 'Encountered severe error while preparing for startup.'
+
+        _dbCreateSt = _FwTDbEngine.GetCreateStatus()
+        if not _dbCreateSt.isTDBIdle:
+            if not _dbCreateSt.isTDBCreated:
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_096, errMsg_=_STARTUP_FAILURE_ERR_MSG)
+                return None
+
+        _lcKPI = _KpiLogBook._CreateStartupKPI(_ELcKpiID.eFwStartRequest)
+        if not _lcKPI.isValid:
+            _lcKPI.CleanUp()
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_097, errMsg_=_STARTUP_FAILURE_ERR_MSG)
+            return None
+
+        res = _FwStartupPolicy(ppass_)
+        if not res.isValid:
+            res.CleanUpByOwnerRequest(ppass_)
+            res = None
+            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_098, errMsg_=_STARTUP_FAILURE_ERR_MSG)
+        elif _dbCreateSt.isTDBIdle:
+            _FwTDbEngine._CreateDB(res.isPackageDist)
+
+            _dbCreateSt = _FwTDbEngine.GetCreateStatus()
+            if not _dbCreateSt.isTDBCreated:
+                res.CleanUpByOwnerRequest(ppass_)
+                res = None
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_099, errMsg_=_STARTUP_FAILURE_ERR_MSG)
+        if res is not None:
+            _dbFirstFetchTS = None
+            _dbCreateTS     = None
+            _dbFirstFetchTS, _dbCreateTS = _FwTDbEngine._GetDBTimestamps()
+            _lcKPI.AddKPI(_ELcKpiID.eTextDBFirstFetch, usTimeTicksKPI_=_dbFirstFetchTS)
+            _lcKPI.AddKPI(_ELcKpiID.eTextDBCreate, usTimeTicksKPI_=_dbCreateTS)
+        return res
+
+    @staticmethod
     def __DoCreateLcMgr(startupPolicy_ : _FwStartupPolicy, startOptions_ : list):
         if _LcManager.__sgltn is not None:
             return None
@@ -629,8 +649,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
             return None
 
         _lcMgrSetupRunner = _LcManager._LcMgrSetupRunner(_lcmgr, _ppass, startOptions_)
-
-        _bLcGuardStarted = _lcmgr.__StartLcGuard(_lcMgrSetupRunner)
+        _bLcGuardStarted  = _lcmgr.__StartLcGuard(_lcMgrSetupRunner)
 
         _bAsyncSetupOK = _bLcGuardStarted and _LcFailure.IsSetupPhasePassed()
         _bAsyncSetupOK = _bAsyncSetupOK   and _lcMgrSetupRunner.isLcMgrSetupRunnerSucceeded
@@ -639,8 +658,12 @@ class _LcManager(_FwApiConnector, _TILcManager):
         _bAsyncSetupOK = _bAsyncSetupOK   and _eExecHist.hasReachedRuntimePhase
 
         _bStopFW = False
+
+        _lcmgr.__SetUpLRD(_bAsyncSetupOK)
+
         if not _bAsyncSetupOK:
             _bStopFW = _bLcGuardStarted
+
         elif not _lcmgr.__CheckStartMainXT():
             _bStopFW = True
 
@@ -657,6 +680,17 @@ class _LcManager(_FwApiConnector, _TILcManager):
     @staticmethod
     def __GetMainXTask():
         return _FwSubsysShare._GetMainXTask()
+
+    @staticmethod
+    def __GetLogRDService(bEnablePM_ =False):
+        res = None
+        if _ssshare._IsLogRDActiveServiceRequired():
+            _sid = _EFwsID.eFwsLogRD
+            if _AbsFwService.IsDefinedFws(_sid):
+                res = _AbsFwService._GetFwsInstance(_sid)
+                if (res is not None) and bEnablePM_:
+                    res._EnablePM()
+        return res
 
     def __SetLcOpState( self, lcCID_ : _ELcCompID, bStartStopFlag_ : bool, atask_ : _AbsFwTask =None) -> bool:
         if self.__gi is None:
@@ -690,6 +724,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
             else:
                 res = self.__pi._PxyStartFwMain()
                 res = res and _LcFailure.IsLcErrorFree()
+
         if not res:
             if _LcFailure.IsLcErrorFree():
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_008).format(self.__ts.compactName, self.__curLcScope.compactName)
@@ -704,6 +739,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
         if _NO_SUPPORT_FOR_INTERMEDIATE_SCOPES_AT_RUNTIME:
             if bReinjCurScope_:
                 bReinjCurScope_ = False
+
         _eFS = _LcConfig.GetTargetScope()
 
         _bBadUse = False
@@ -735,7 +771,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
             if not res:
                 _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_053)
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00369)
-
         if res:
             if _bFinalSemiIPC:
                 self.__CreateLcProxy()
@@ -769,8 +804,8 @@ class _LcManager(_FwApiConnector, _TILcManager):
             self.__ts = _eFS
 
         res = self.__UpdateScope(self.__curLcScope, self.__ts)
-
         res = res and _LcFailure.IsLcErrorFree()
+        res = res and self.__curLcScope.isFullIPC
         res = res and self.__lcState.isLcStarted
         res = res and self.__lcState.isTaskManagerStarted
 
@@ -779,7 +814,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
                 _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_057)
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00372)
             return False
-
         self.__CreateLcProxy()
 
         res = res and _LcFailure.IsLcErrorFree()
@@ -811,29 +845,29 @@ class _LcManager(_FwApiConnector, _TILcManager):
             else:
                 if self.__sdh._isStopRequestSubmitted:
                     return True
-                else:
-                    self.__sdh._SetStopRequest()
-                    self.__xh._AddExecutionState(_ELcXState.eStopPhase, self)
 
-                    if bForceStop_:
-                        logif._LogErrorEC(_EFwErrorCode.UE_00217, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_062))
-                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_059)
-                    elif bAutoStop_:
-                        if _FwRteConfig._GetInstance()._isAutoStopEnabledByDefault:
-                            _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_060)
-                        else:
-                            _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_051)
+                self.__sdh._SetStopRequest()
+                self.__xh._AddExecutionState(_ELcXState.eStopPhase, self)
+
+                if bForceStop_:
+                    logif._LogErrorEC(_EFwErrorCode.UE_00217, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_062))
+                    _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_059)
+                elif bAutoStop_:
+                    if _ssshare._GetRteConfig()._isAutoStopEnabledByDefault:
+                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_060)
                     else:
-                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_012)
-                    logif._LogKPI(_msg)
+                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_051)
+                else:
+                    _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_012)
+                logif._LogKPI(_msg)
 
-                    self.__mi._EnableCoordinatedShutdown()
-                    return True
+                self.__mi._EnableCoordinatedShutdown()
+                _LcManager.__GetLogRDService(bEnablePM_=True)
+                return True
 
         vlogif._LogNewline()
-        vlogif._LogNewline()
-
         self.__xh._AddExecutionState(_ELcXState.eStopPhase, self)
+
         if self.__mi.curShutdownRequest is None:
             self.__pi._PxyProcessShutdownRequest(_ELcSDRequest.ePreShutdown, bPrvRequestReply_=False)
         return True
@@ -843,6 +877,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
             return _LcFailure.IsLcErrorFree()
 
         _bPendingSR = False
+
         with self.__la:
             if self.__mi._isCurrentThreadAttachedToFW:
                 logif._LogErrorEC(_EFwErrorCode.UE_00103, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_010).format(_TaskUtil.GetCurPyThread().name))
@@ -873,7 +908,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
         logif._LogInfo(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_011))
         try:
             self.__xh._AddExecutionState(_ELcXState.eJoinPhase, self)
-
             _TaskUtil.SleepMS(200)
             self.__gi._GJoin()
 
@@ -918,8 +952,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
 
         if not res:
             if _LcFailure.IsLcErrorFree():
-                _midPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_Async)
-                _errMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_013).format(_midPart)
+                _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_013).format(_FwTDbEngine.GetText(_EFwTextID.eMisc_Async))
                 _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_102, errMsg_=_errMsg)
             _lcdm.CleanUpByOwnerRequest(ppass_)
             return False
@@ -931,8 +964,12 @@ class _LcManager(_FwApiConnector, _TILcManager):
         self.__dm = _lcdm
         self.__ts = _ELcScope(_tgtScope.value)
 
-        vlogif._LogNewline()
-        vlogif._LogNewline()
+        if self.__ts.isPreIPC:
+            self.__xh._AddExecutionState(_ELcXState.eCustomSetupPhase, self)
+
+            self.__xh._AddExecutionState(_ELcXState.eSetupPassed, self)
+            self.__xh._AddExecutionState(_ELcXState.eRuntimePhase, self)
+            return True
 
         res = True
         res = res and self.__BoostFW()                 
@@ -966,8 +1003,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
             self.__kpi.AddKPI(_ELcKpiID.eLcCustomSetupEnd)
             self.__xh._AddExecutionState(_ELcXState.eSetupPassed, self)
             self.__xh._AddExecutionState(_ELcXState.eRuntimePhase, self)
-            print()
-
             if not self.__sup.isReleaseModeEnabled:
                 self.__PrintLcKPI()
 
@@ -979,10 +1014,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
             logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_018).format(_kpiTD.timeParts))
             _kpiTD.CleanUp()
 
-            if not logif._IsReleaseModeEnabled():
-                print()
-                print()
-
         _vffe = vlogif._GetFirstFatalError()
         if not res:
             if _vffe is not None:
@@ -991,6 +1022,13 @@ class _LcManager(_FwApiConnector, _TILcManager):
         elif _vffe is not None:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00375)
         return res
+
+    def __SetUpLRD(self, bSetuOK_ : bool):
+        _bHL  = False if self.__dm is None else self.__dm.fwConfig.fwStartupConfig._isLogHighlightingEnabled
+        _lrds = None
+        if bSetuOK_:
+            _lrds = _LcManager.__GetLogRDService()
+        _LogRDAgent._GetInstance()._ADeactivate(_ssshare._IsLogRDConsoleSinkEnabled(), _bHL, _lrds)
 
     def __PrintLcKPI(self, bForce_ =False):
         if (self.__kpi is None) or not self.__kpi.isValid:
@@ -1008,6 +1046,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
             return True
 
         res= True
+
         if srcScope_ == dstScope_:
             if not (bForceReinject_ or bFinalize_):
                 pass
@@ -1053,6 +1092,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
     def __CreateLcProxy(self):
         _lcMon  = _LcMonitorImpl(self._myPPass, self.__xh)
         _bMonOK = _lcMon.isValid and not _lcMon.isDummyMonitor
+
         if not _bMonOK:
             _lcMon.CleanUpByOwnerRequest(self._myPPass)
             _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_070, errMsg_=_EFwTextID.eLogMsg_LcManager_TID_019)
@@ -1096,6 +1136,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
                 _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_002, errMsg_=_EFwTextID.eLogMsg_LcManager_TID_022)
         else:
             self.__s.acquire()
+
             if not self.__gi._isGRunning:
                 res = False
                 if _LcFailure.IsLcErrorFree():
@@ -1105,9 +1146,9 @@ class _LcManager(_FwApiConnector, _TILcManager):
         return res
 
     def __EnterPendingSR(self):
-        _rteCfg = _FwRteConfig._GetInstance()
+        _rteCfg = _ssshare._GetRteConfig()
 
-        _bTM_CFG_ENABLED  = _rteCfg.isTerminalModeEnabled
+        _bTM_CFG_ENABLED  = _rteCfg._isTerminalModeEnabled
         _bFAS_CFG_ENABLED = _rteCfg._isForcedAutoStopEnabled
         _bAS_CFG_DISABLED = False if _bFAS_CFG_ENABLED else not _rteCfg._isAutoStopEnabled
 
@@ -1119,7 +1160,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
         while True:
             if _bXcp:
                 break
-
             try:
                 _tskMgr = _TTaskMgr()
                 if _tskMgr is None:
@@ -1154,7 +1194,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
                                 logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_050).format(_midPart))
                             else:
                                 logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_052))
-
                 else:
                     _bWait = not (_bFAS_CFG_ENABLED or (_numXT<1))
                     if _bWait:
@@ -1167,7 +1206,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
                                 logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_061).format(_numXT, _midPart))
                             else:
                                 logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_053).format(_numXT, _midPart))
-
                 _ii += 1
 
                 if _kpiStart is not None:
@@ -1214,7 +1252,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
                                 logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_056).format(_kpiTD.timeParts))
                             _kpiTD.CleanUp()
                         break
-
             except KeyboardInterrupt:
                 _bXcp = True
                 _midPart = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_068)
@@ -1232,6 +1269,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
                     else:
                         _bAutoStop, _bForceStop = True, False
                     self.__StopFW(bAutoStop_=_bAutoStop, bForceStop_=_bForceStop)
+        _LcManager.__GetLogRDService(bEnablePM_=True)
 
     def __JoinXUnits(self, bTasks_ : bool, xunits_: Union[int, List[int], None] =None, timeout_: Union[int, float] =None) -> Tuple[int, Union[List[int], None]]:
         _errRes = 0, None
@@ -1290,7 +1328,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
             if _lstXU is None:
                 _numJ = 0 if _xunits is None else len(_xunits)
                 return _numJ, None
-
         else:
             with self.__la:
                 _cxtUID   = None
@@ -1362,7 +1399,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
                         _bBreak = self.__sdh._isStopRequestSubmitted
                 if _bBreak:
                     break
-
             except KeyboardInterrupt:
                 _bXcp = True
                 _midPart = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcManager_TID_069).format(_midPart)
@@ -1432,7 +1468,6 @@ class _LcManager(_FwApiConnector, _TILcManager):
             if not _ti.isValid:
                 _srt[_ii] = None
                 continue
-
             if _ti.isEnclosingPyThread and _TaskUtil.IsMainPyThread(_ti.dHThrd):
                 _mxtTI = _ti
                 _srt[_ii] = None
@@ -1500,6 +1535,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
                         _bOK = not (bSkipAutoStartMainXT_ or self.__xh.hasPassedMxtStartPhase)
                 else:
                     _bOK = False
+
                 if not _bOK:
                     if self.__xh.hasReachedRuntimePhase:
                         self.__xh._RemoveExecutionState(_ELcXState.eRuntimePhase, self)
@@ -1519,6 +1555,7 @@ class _LcManager(_FwApiConnector, _TILcManager):
                     _bOK = not self.__xh.hasPassedMxtStartPhase
                 else:
                     _bOK = bSkipAutoStartMainXT_ or self.__xh.hasPassedMxtStartPhase
+
             if not _bOK:
                 if self.__xh.hasReachedRuntimePhase:
                     self.__xh._RemoveExecutionState(_ELcXState.eRuntimePhase, self)

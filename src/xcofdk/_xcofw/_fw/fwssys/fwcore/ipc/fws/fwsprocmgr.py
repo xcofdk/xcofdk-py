@@ -24,7 +24,6 @@ from _fw.fwssys.fwcore.ipc.tsk.taskxcard  import _TaskXCard
 from _fw.fwssys.fwcore.ipc.tsk.fwtaskprf  import _FwTaskProfile
 from _fw.fwssys.fwcore.ipc.tsk.taskutil   import _ETaskRightFlag
 from _fw.fwssys.fwcore.types.aobject      import _AbsSlotsObject
-from _fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from _fw.fwssys.fwerrh.fwerrorcodes       import _EFwErrorCode
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
@@ -32,21 +31,21 @@ from _fw.fwtdb.fwtdbengine import _FwTDbEngine
 
 class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
     class _ProcEntry(_AbsSlotsObject):
-        __slots__ = [ '__xpi' ]
+        __slots__ = [ '__xpa' ]
 
         def __init__(self, xpa_ : _IXProcAgent):
             super().__init__()
-            self.__xpi = xpa_
+            self.__xpa = xpa_
 
         @property
         def _xpAgent(self) -> _IXProcAgent:
-            return self.__xpi
+            return self.__xpa
 
         def _ToString(self):
             pass
 
         def _CleanUp(self):
-            self.__xpi = None
+            self.__xpa = None
 
     __slots__ = [ '__ma' , '__md' ]
 
@@ -55,7 +54,7 @@ class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
     __tskPrf = None
 
     def __init__(self):
-        self.__ma  = None
+        self.__ma = None
         self.__md = None
         _IFwsProcMgr.__init__(self)
 
@@ -63,16 +62,15 @@ class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00951)
             return
 
-        _cyclCeaseTimespanMS   = 20
-        _runPhaseFrequencyMS   = 40
-        _runPhaseMaxProcTimeMS = None
-        _xc = _TaskXCard(runPhaseFreqMS_=_runPhaseFrequencyMS, runPhaseMPTMS_=_runPhaseMaxProcTimeMS, cceaseFreqMS_=_cyclCeaseTimespanMS)
+        _FreqMS  = 40
+        _CeaseMS = 20
+        _xc = _TaskXCard(runPhaseFreqMS_=_FreqMS, cceaseFreqMS_=_CeaseMS)
 
-        _tout     = _Timeout.CreateTimeoutSec(3)
-        _logAlert = _TimeAlert(_tout.toNSec)
-        _tout.CleanUp()
+        _t = _Timeout.CreateTimeoutSec(3)
+        _a = _TimeAlert(_t.toNSec)
+        _t.CleanUp()
 
-        _AbsFwService.__init__(self, _ERblType.eFwProcMgrRbl, runLogAlert_=_logAlert, txCard_=_xc)
+        _AbsFwService.__init__(self, _ERblType.eFwProcMgrRbl, runLogAlert_=_a, txCard_=_xc)
         _xc.CleanUp()
 
         if self._rblType is None:
@@ -135,7 +133,7 @@ class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
     
             _mtx.CleanUp()
 
-        super()._CleanUp()
+        _AbsFwService._CleanUp(self)
 
     def _TearDownExecutable(self):
         _tbl = _FwsProcMgr.__GetTable()
@@ -170,7 +168,7 @@ class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
 
         if not self._PcIsLcProxyModeNormal():
             return False
-        if not (isinstance(xprocConn_, _IXProcConn) and (xprocConn_._xprocessImplInst is not None) and isinstance(puid_, int) and (puid_<0)):
+        if not (isinstance(xprocConn_, _IXProcConn) and (xprocConn_._xprocessAgent is not None) and isinstance(puid_, int) and (puid_<0)):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00962)
             return False
 
@@ -180,7 +178,7 @@ class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
                 xprocConn_._ConfirmPUID()
 
                 _tbl = _FwsProcMgr.__GetTable()
-                _tbl[-1*puid_] = _FwsProcMgr._ProcEntry(xprocConn_._xprocessImplInst)
+                _tbl[-1*puid_] = _FwsProcMgr._ProcEntry(xprocConn_._xprocessAgent)
                 return True
 
     def _GetJoinableList(self, lstPIDs_ : list =None) -> Union[List[_IXProcAgent], None]:
@@ -219,10 +217,6 @@ class _FwsProcMgr(_AbsFwService, _IFwsProcMgr):
     @staticmethod
     def __GetProcEntryList(bRemovableOnly_ =False, bJoiniableOnly_ =False) -> List[int]:
         res = []
-
-        if bRemovableOnly_ == bJoiniableOnly_:
-            vlogif._LogOEC(True, _EFwErrorCode.VFE_00961)
-            return res
 
         _tbl = _FwsProcMgr.__GetTable()
         for _kk, _vv in _tbl.items():

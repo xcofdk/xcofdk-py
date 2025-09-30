@@ -69,7 +69,7 @@ class CustomPayload(IPayload):
         return self.__bSer is not None
 
     @IPayload.isMarshalingRequired.getter
-    def isMarshalingRequired(self):
+    def isMarshalingRequired(self) -> bool:
         return self.__bSer
 
     @IPayload.isCustomMarshalingRequired.getter

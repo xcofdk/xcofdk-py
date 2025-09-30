@@ -24,6 +24,8 @@ sys.path.extend(((_xua := os.path.normpath(os.path.join(os.path.dirname(__file__
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
+import xuserapp.util.tkimport as _TkImportCheck
+
 from xcofdk       import fwapi
 from xcofdk.fwapi import rtecfg
 
@@ -37,6 +39,9 @@ from xuserapp.basic.xmt.rc.exampleB21.maintask import _CreateMainTask
 # Interface
 # ------------------------------------------------------------------------------
 def Main(cmdLineOpts_ : CLOptions):
+    # optional: disable subsystem xmp
+    rtecfg.RtePolicyDisableSubSystemMultiProcessing()
+
     # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()

@@ -72,7 +72,7 @@ class _XProcessConn(_IXProcConn):
             return
 
         if aliasn_ is not None:
-            if not (isinstance(aliasn_, str) and len(aliasn_.strip())):
+            if not _TaskUtil.IsValidAliasName(aliasn_):
                 logif._LogErrorEC(_EFwErrorCode.UE_00248, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_013).format(str(aliasn_)))
                 self.CleanUp()
                 return
@@ -147,8 +147,8 @@ class _XProcessConn(_IXProcConn):
         self.__an = aliasn_
         self.__st = _XProcessState(hostProc_=_hproc)
 
-    @_IXProcConn._xprocessImplInst.getter
-    def _xprocessImplInst(self) -> _IXProcAgent:
+    @_IXProcConn._xprocessAgent.getter
+    def _xprocessAgent(self) -> _IXProcAgent:
         return self.__a
 
     @override
@@ -206,7 +206,8 @@ class _XProcessConn(_IXProcConn):
             return False
 
         with self.__ma:
-            self.__dx._SetPStartArgs(*args_, **kwargs_)
+            if not self.__dx._SetPStartArgs(*args_, **kwargs_):
+                return False
             if not self._PcIsLcProxySet():
                 self.__pmiInst._AddProcess(self, self.__u)
                 if not self._PcIsLcProxySet():
@@ -277,7 +278,7 @@ class _XProcessConn(_IXProcConn):
                 _ssshare._BookKBI(_msg, bVLog_=True)
             except BaseException as _xcp:
                 _bXcp = True
-                _msg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_022).format(_pn, str(_xcp))
+                _msg  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_023).format(_pn, str(_xcp))
                 vlogif._LogUrgentWarning(_msg)
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00969)
         return res
@@ -364,16 +365,7 @@ class _XProcessConn(_IXProcConn):
 
     @staticmethod
     def __IsUnAvailable():
-        return isinstance(_XProcessConn.__pmi, int)
-
-    @property
-    def __isInvalid(self):
-        return self.__ma is None
-
-    @property
-    def __pmiInst(self) -> Union[_IFwsProcMgr, None]:
-        _pmi = _XProcessConn.__pmi
-        return None if not isinstance(_pmi, _IFwsProcMgr) else _pmi
+        return (_XProcessConn.__pmi is None) or isinstance(_XProcessConn.__pmi, int)
 
     @staticmethod
     def __SetPMI(dinjCmd_ : _EDepInjCmd, ak_, pmi_ : _IFwsProcMgr):
@@ -396,25 +388,36 @@ class _XProcessConn(_IXProcConn):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00955)
         return res
 
+    @staticmethod
+    def __FetchExitCode(hproc_ : _PyProcess):
+        _bA, _xc = hproc_.is_alive(), None
+        if not _bA:
+            _xc = hproc_.exitcode
+        return _bA, _xc
+
+    @property
+    def __isInvalid(self):
+        return self.__ma is None
+
+    @property
+    def __pmiInst(self) -> Union[_IFwsProcMgr, None]:
+        _pmi = _XProcessConn.__pmi
+        return None if not isinstance(_pmi, _IFwsProcMgr) else _pmi
+
     def __IsReadyToLoad(self) -> _ERteTXErrorID:
-        _bTerm = (not self.__h.is_alive()) or (self.__h.exitcode is not None)
-        _MAX_RETRY = 3 if _bTerm else 1
+        _MAX_RETRY = 1 if self.__h.is_alive() else 3
         _TIMES_MS  = 50
 
         _cnt = 1
         while True:
             _errID = self.__t._IsReadyToLoad()
-            if _errID.isSuccess or _errID.isLowLevelTokenError:
-                break
-
-            if not _bTerm:
+            if not _errID.isDontCare:
                 break
             if _cnt >= _MAX_RETRY:
                 break
 
             _TaskUtil.SleepMS(_TIMES_MS)
-            _cnt  += 1
-            _bTerm = (not self.__h.is_alive()) or (self.__h.exitcode is not None)
+            _cnt += 1
         return _errID
 
     def __CloseHostProc(self, bWait_ =True) -> Tuple[bool, Union[int, None]]:
@@ -429,19 +432,17 @@ class _XProcessConn(_IXProcConn):
         self.__h = None
 
         if not bWait_:
-            res = _hproc.is_alive()
+            res, _xc = _XProcessConn.__FetchExitCode(_hproc)
         else:
             while True:
                 _TaskUtil.SleepMS(_timeMS)
                 _totalTimeMS += _timeMS
 
-                res = _hproc.is_alive()
+                res, _xc = _XProcessConn.__FetchExitCode(_hproc)
                 if not res:
                     break
                 if _totalTimeMS >= _MAX_TIME_MS:
                     break
-
-        _xc = _hproc.exitcode
 
         if not res:
             try:
@@ -481,13 +482,12 @@ class _XProcessConn(_IXProcConn):
             break
         return res
 
-    def __UpdatePState(self, errID_ : _ERteTXErrorID, bTermByCmd_ =False):
-        _xc   = self.__h.exitcode
-        _sd   = None
-        _pn   = f'{self._processAliasName}:{self._processPID}'
-        _prfx = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_002).format(_pn)
-
-        _bTProc  = bTermByCmd_ or (not self.__h.is_alive()) or (_xc is not None)
+    def __UpdatePState(self, errID_ : _ERteTXErrorID, bTermByCmd_ =False) -> Union[_EPState, None]:
+        _bA, _xc = _XProcessConn.__FetchExitCode(self.__h)
+        _bT      = bTermByCmd_ or not _bA
+        _sd      = None
+        _pn      = f'{self._processAliasName}:{self._processPID}'
+        _prfx    = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_002).format(_pn)
 
         if bTermByCmd_:
             errID_ = _ERteTXErrorID.eDontCare
@@ -504,10 +504,10 @@ class _XProcessConn(_IXProcConn):
                 logif._LogWarning(_msg)
 
         if not errID_.isDontCare:
+            res = _EPState.ePFailed
+
             if errID_.isLowLevelTokenError:
                 _xc = errID_.value
-                res = _EPState.ePFailed
-
                 _msg = _prfx + _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_017)
                 logif._LogErrorEC(_EFwErrorCode.UE_00249, _msg)
 
@@ -523,7 +523,6 @@ class _XProcessConn(_IXProcConn):
                     _bAlive, _xc = self.__CloseHostProc(bWait_=False)
 
                 if isinstance(_procXD, _RteException):
-                    res  = _EPState.ePFailed
                     _xc  = _procXD.code
                     _msg = _prfx
                     if isinstance(_procXD, _RtePSException):
@@ -534,7 +533,6 @@ class _XProcessConn(_IXProcConn):
                         logif._LogErrorEC(_EFwErrorCode.UE_00254, _msg)
 
                 elif _procXD is None:
-                    res = _EPState.ePFailed
                     if _xc is None:
                         _xc = _ERteTXErrorID.eWriteRteToken.value
                     _msg = _prfx + _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_019)
@@ -545,17 +543,15 @@ class _XProcessConn(_IXProcConn):
                     _xc = _procXD.exitCode
 
                     if isinstance(_sd, _RteTSException):
-                        res  = _EPState.ePFailed
                         _xc  = _sd.code
                         _msg = _prfx + _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_006).format(str(_sd))
                         logif._LogErrorEC(_EFwErrorCode.UE_00255, _msg)
                     elif not _procXD.isProcessSucceeded:
-                        res  = _EPState.ePFailed
                         _msg = _prfx + _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_007).format(_xc, _procXD.errorID.compactName)
                         logif._LogErrorEC(_EFwErrorCode.UE_00116, _msg)
                     else:
                         res = _EPState.ePDone
-        elif _bTProc:
+        elif _bT:
             _msg = _prfx
             if not isinstance(_xc, int):
                 _xc2  = _ERteTXErrorID.eInvalidExitCodeByHostProc.value

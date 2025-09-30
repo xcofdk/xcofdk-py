@@ -11,10 +11,10 @@ from enum import auto
 from enum import Enum
 from enum import unique
 
-from _fw.fwssys.fwcore.types.commontypes import SyncPrint
-
 from _fw.fwtdb.fwtextid  import _EFwTextID
 from _fw.fwtdb.fwtextdef import _GetFwTextDefines
+
+_TDBPrint = print
 
 @unique
 class _ETextDBCreateStatus(Enum):
@@ -52,14 +52,14 @@ class _FwTextDB:
         self.__bP = None
 
         if _FwTextDB.__txtDbCSt.isTDBCreated:
-            SyncPrint.Print('[FwTDB] Violation against singleton of text DB.')
+            _TDBPrint('[FwTDB] Violation against singleton of text DB.\n')
             return
         if _FwTextDB.__txtDbCSt.isTDBFailed:
-            SyncPrint.Print('[FwTDB] Violation against no-re-try of failed attempts to create text DB.')
+            _TDBPrint('[FwTDB] Violation against no-retry of failed attempts to create text DB.\n')
             return
         if _FwTextDB.__txtDbCSt.isTDBDestroyed:
             if not bReCreate_:
-                SyncPrint.Print('[FwTDB] Violation against no-re-creation after destroy text DB.')
+                _TDBPrint('[FwTDB] Violation against no-recreation after destroy text DB.\n')
                 return
             _FwTextDB.__txtDbCSt = _ETextDBCreateStatus.eTDBIdle
 
@@ -87,7 +87,7 @@ class _FwTextDB:
         if self.__at[0] is None:
             self._Destroy()
             _FwTextDB.__txtDbCSt = _ETextDBCreateStatus.eTDBFailed
-            SyncPrint.Print(f'[FwTDB] Unexpected fatal error while trying to create text DB.')
+            _TDBPrint(f'[FwTDB] Unexpected fatal error while trying to create text DB.\n')
         else:
             _FwTextDB.__txtDbCSt   = _ETextDBCreateStatus.eTDBCreated
             _FwTextDB.__theFwTxtDB = self
@@ -121,9 +121,9 @@ class _FwTextDB:
         if not self._IsFwTextAvailable(fwTxtID_):
             if not isinstance(fwTxtID_, _EFwTextID):
                 _bBadReq = True
-                SyncPrint.Print(f'[FwTDB] Invalid fw text id object: {type(fwTxtID_).__name__}')
+                _TDBPrint(f'[FwTDB] Invalid fw text id object: {type(fwTxtID_).__name__}\n')
             else:
-                SyncPrint.Print(f'[FwTDB] Missing text for passed in id: {fwTxtID_.compactName}')
+                _TDBPrint(f'[FwTDB] Missing text for passed in id: {fwTxtID_.compactName}\n')
 
         if _bBadReq:
             res = _FwTextDB.__at[_EFwTextID.eInvalidText.value] if self.__bP else None
@@ -152,7 +152,7 @@ class _FwTextDB:
     def _CreateDB(bPkgDist_ =False, bReCreate_ =False):
         _FwTextDB(bPkgDist_, bReCreate_=bReCreate_)
         if not _FwTextDB.__txtDbCSt.isTDBCreated:
-            SyncPrint.Print('[FwTDB] Failed to create text DB.')
+            _TDBPrint('[FwTDB] Failed to create text DB.\n')
         return _FwTextDB.__theFwTxtDB
 
     @staticmethod

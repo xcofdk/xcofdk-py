@@ -127,11 +127,6 @@ class _TaskInfo(_AbsSlotsObject):
         return False if self._isInvalid else self.taskBadge.isDrivingXTask
 
     @property
-    def hasUnitTestTaskRight(self):
-        _tb = self.taskBadge
-        return False if _tb is None else _tb.hasUnitTestTaskRight
-
-    @property
     def dtaskUID(self) -> int:
         return None if self._isInvalid else self.taskBadge.dtaskUID
 
@@ -190,7 +185,7 @@ class _TaskInfo(_AbsSlotsObject):
 class _ProxyInfo(_AbsSlotsObject):
     __slots__ = [ '__ci' , '__mi' ]
 
-    def __init__(self, curTaskInst_ : _AbsFwTask, fwMainTaskInfo_ : _TaskInfo, bIgnoreCeaseMode_ =True):
+    def __init__(self, curTaskInst_ : _AbsFwTask, fwMainTaskInfo_ : _TaskInfo):
         self.__ci = None
         self.__mi = None
         super().__init__()
@@ -209,11 +204,6 @@ class _ProxyInfo(_AbsSlotsObject):
             self.CleanUp()
         elif (self.__mi is not None) and not self.__mi._isResponsive:
             self.CleanUp()
-        elif not bIgnoreCeaseMode_:
-            if curTaskInst_.isInLcCeaseMode:
-                self.CleanUp()
-            elif (self.__mi is not None) and self.__mi._taskInst.isInLcCeaseMode:
-                self.CleanUp()
 
     @property
     def curTaskInfo(self) -> _TaskInfo:

@@ -67,47 +67,12 @@ class _TimeUtil:
         return 0.0 if timespanSec_ < 0.0 else int(timespanSec_ * _TimeUtil.TICKS_PER_SECOND)
 
     @staticmethod
-    def GetCurDate(dateFormat_ =None) -> str:
-        if dateFormat_ is not None:
-            res = _PyDateTime.today().strftime(dateFormat_)
-        else:
-            res = _PyDateTime.today()
-            res = str(res).split('.')[0]
-            res = res.split(_CommonDefines._CHAR_SIGN_SPACE)[0]
-        return res
-
-    @staticmethod
-    def GetCurDateTime() -> str:
-        res = _PyDateTime.today()
-        res = str(res).split('.')[0]
-        return res
-
-    @staticmethod
-    def GetFromIsoFormat(isoFormat_ : str ) -> _PyDateTime:
-        if not (isinstance(isoFormat_, str) and len(isoFormat_)):
-            return None
-        return _PyDateTime.fromisoformat(isoFormat_)
-
-    @staticmethod
-    def GetTimestampMSec() -> str:
-        return _TimeUtil.GetTimestamp(bMilliSec_=True)
-
-    @staticmethod
-    def GetTimestampUSec() -> str:
-        return _TimeUtil.GetTimestamp(bMilliSec_=False)
-
-    @staticmethod
-    def GetTimestamp(bMilliSec_ =True) -> str:
+    def GetTimestamp(bMS_ =True) -> str:
         if _PyDateTime.__name__ not in sys.modules:
-            res = _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_01)
-        else:
-            _dt = _PyDateTime.now()
-            if not bMilliSec_:
-                _tailPart = _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_02).format(_dt.microsecond)
-            else:
-                _tailPart = _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_03).format(_dt.microsecond // 1000)
-            res = _dt.strftime(_FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_04)) + _tailPart
-        return res
+            return _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_01)
+
+        tstamp_ = _PyDateTime.now().isoformat(timespec='milliseconds')
+        return tstamp_[tstamp_.index('T')+1:]
 
     @staticmethod
     def GetHash(*args_):
@@ -603,7 +568,7 @@ class _KpiLogBook(_AbsSlotsObject):
         if self.__isInvalid:
             return _CommonDefines._STR_EMPTY
 
-        _fmtStr = f'{_CommonDefines._STR_TIME_UNIT_MS}{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}'
+        _fmtStr = f'{_CommonDefines._STR_TIME_UNIT_MS}{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_TAB}'
         _fmtStr = _FwTDbEngine.GetText(_EFwTextID.eKpiLogBook_ToString_01) + _fmtStr
 
         _sortedLB = dict(sorted(self.__lb.items(), key=lambda t: t[1], reverse=False))
@@ -616,7 +581,7 @@ class _KpiLogBook(_AbsSlotsObject):
 
             _kk, _pkk = _keys[_ii], _keys[_ii-1]
             _vv, _pvv = _sortedLB[_kk], _sortedLB[_pkk]
-            _sw = _StopWatch(_pvv, _vv)
+            _sw  = _StopWatch(_pvv, _vv)
             res += _fmtStr.format(_pkk.compactName, _kk.compactName, _sw.timeDelta.totalMS)
             _sw.CleanUp()
         return res.rstrip()

@@ -208,7 +208,7 @@ class PTWrappedException(PTException):
     # --------------------------------------------------------------------------
     # API
     # --------------------------------------------------------------------------
-    @property
+    @PTException.message.getter
     def message(self) -> str:
         """
         Returns:
@@ -223,7 +223,7 @@ class PTWrappedException(PTException):
         return self.__xcp.message
 
 
-    @property
+    @PTException.code.getter
     def code(self) -> int:
         """
         Returns:

@@ -11,6 +11,10 @@ from enum   import auto
 from enum   import unique
 from enum   import IntEnum
 from signal import SIGTERM
+try:
+    from signal import SIGKILL
+except (ImportError, Exception):
+    SIGKILL = SIGTERM
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
@@ -58,6 +62,9 @@ class _ERteTXErrorID(IntEnum):
         elif (val_ != 0) and not (_ERteTXErrorID.eDontCare.value <= val_ <= _ERteTXErrorID.eOtherXcpByChildProcess.value):
             if val_ == (-1*SIGTERM):
                 res = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_021)
+                res = f'{val_}:{res}'
+            elif val_ == (-1*SIGKILL):
+                res = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessConn_TID_022)
                 res = f'{val_}:{res}'
             else:
                 res = f'{val_}'

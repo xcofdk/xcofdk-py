@@ -97,7 +97,8 @@ class _ELcCompID(_FwIntEnum):
     eFwMain  = eFwSrv   - 1
     eFwDspr  = eFwMain  - 1
     eProcMgr = eFwDspr  - 1
-    eTmrMgr  = eProcMgr - 1
+    eFwLogRD = eProcMgr - 1
+    eTmrMgr  = eFwLogRD - 1
     eUThrd     = eXTask - 1
     eMainXTask = eUThrd - 1
     eFwRbl   = eMiscComp - 1
@@ -117,6 +118,7 @@ class _ELcCompID(_FwIntEnum):
         elif self == _ELcCompID.eFwMain    : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_FwMain)
         elif self == _ELcCompID.eFwDspr    : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_FwDspr)
         elif self == _ELcCompID.eProcMgr   : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_ProcMgr)
+        elif self == _ELcCompID.eFwLogRD   : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_FwLogRD)
         elif self == _ELcCompID.eTmrMgr    : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_TmrMgr)
         elif self == _ELcCompID.eMainXTask : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_MainXTask)
         elif self == _ELcCompID.eFwRbl     : res = _FwTDbEngine.GetText(_EFwTextID.eELcCompID_FwRbl)
@@ -188,11 +190,3 @@ class _LcConfig:
         res = _FwTDbEngine.GetText(_EFwTextID.eLcConfig_ToString).format(str(_LcConfig.GetTargetScope().compactName))
         return res
 
-    @staticmethod
-    def _SetTargetScope(tgtScope_ : _ELcScope):
-        if isinstance(tgtScope_, _ELcScope):
-            _LcConfig.__eTargetScope = tgtScope_
-
-    @staticmethod
-    def _Restore():
-        _LcConfig.__eTargetScope = None

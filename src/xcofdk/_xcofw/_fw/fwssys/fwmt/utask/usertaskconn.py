@@ -153,18 +153,17 @@ class _UserTaskConn(_LcProxyClient, _IUTaskConn):
             if _stateID is None:
                 return _EUTaskXState.eUTInitialized
 
-            _curTskStVal = _stateID.value
-            if _curTskStVal >= _TaskState._EState.eRunProgressAborted.value:
-                _curTskStVal = _EUTaskXState.eUTAborting.value
-            elif _curTskStVal >= _TaskState._EState.ePendingStopRequest.value:
-                _bCancel = (_curTskStVal > _TaskState._EState.ePendingStopRequest.value) and (_curTskStVal < _TaskState._EState.eProcessingStopped.value)
-                if _bCancel:
-                    _curTskStVal = _EUTaskXState.eUTCanceling.value
+            _curVal = _stateID.value
+            if _curVal >= _TaskState._EState.eRunProgressAborted.value:
+                _curVal = _EUTaskXState.eUTAborting.value
+            elif _curVal >= _TaskState._EState.ePendingStopRequest.value:
+                if (_curVal > _TaskState._EState.ePendingStopRequest.value) and (_curVal < _TaskState._EState.eProcessingStopped.value):
+                    _curVal = _EUTaskXState.eUTCanceling.value
                 else:
-                    _curTskStVal = _EUTaskXState.eUTStopping.value
-            elif _curTskStVal >= _TaskState._EState.eFailed.value:
-                _curTskStVal = _EUTaskXState.eUTFailed.value
-            res = _EUTaskXState(_curTskStVal)
+                    _curVal = _EUTaskXState.eUTStopping.value
+            elif _curVal >= _TaskState._EState.eFailed.value:
+                _curVal = _EUTaskXState.eUTFailed.value
+            res = _EUTaskXState(_curVal)
             return res
 
         def _ToString(self):
@@ -250,7 +249,6 @@ class _UserTaskConn(_LcProxyClient, _IUTaskConn):
         else:
             res = _tmgr.SelfCheckTask(self.__utaskUID)
             self.__utm._mrSelfCheckResult = res
-
         return res
 
     @_IUTaskConn._isUTConnected.getter
@@ -318,20 +316,20 @@ class _UserTaskConn(_LcProxyClient, _IUTaskConn):
             if not res:
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00033)
             elif self.__utm is None:
-                if not (_atSt.isTerminated or _atSt.isTerminating):
+                if not (_atSt.isTerminated or _atSt.isTerminating or _atSt.isFailedByXCmdReturn):
+                    print(f'>>> _atSt: {_atSt}')
                     res = res
                     vlogif._LogOEC(True, _EFwErrorCode.VFE_00034)
             else:
-                _xtSt        = self.__xd.utaskXState
-                _bAborting   = _atSt.isAborting
-                _bTerminated = _atSt.isTerminated
+                _xtSt = self.__xd.utaskXState
+                _bA, _bT = _atSt.isAborting, _atSt.isTerminated
 
-                if _bTerminated or _bAborting:
-                    if _bAborting or _atSt.isFailed:
+                if _bA or _bT:
+                    if _bA or _atSt.isFailed:
                         if not _bWasXtFailed:
+                            _bT, _xtSt = True, _EUTaskXState.eUTFailed
                             logif._LogInfo(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_UserTaskConn_TID_024).format(self.__GetFormattedUTLabel().capitalize()))
-
-                if _bTerminated:
+                if _bT:
                     self.__DisconnectUTMirror(_xtSt)
                 else:
                     self.__utm._MrUpdateTaskState(_xtSt)
@@ -349,11 +347,11 @@ class _UserTaskConn(_LcProxyClient, _IUTaskConn):
                     if self._isRunning:
                         if bDetachApiRequest_:
                             if self._PcIsTaskMgrAvailable():
-                                _oppc     = self.__PreCheckTaskOperation(_EATaskOpID.eStop)
-                                _bTryStop = not (_oppc.isNotApplicable or _oppc.isIgnorable)
+                                _oppc  = self.__PreCheckTaskOperation(_EATaskOpID.eStop)
+                                _bStop = not (_oppc.isNotApplicable or _oppc.isIgnorable)
 
                                 _oppc.CleanUp()
-                                if _bTryStop:
+                                if _bStop:
                                     self._PcGetTaskMgr().StopUTask(self, bCancel_=False, bCleanupDriver_=False)
                     _xtSt = self.__xd.utaskXState
 
@@ -905,8 +903,8 @@ class _UserTaskConn(_LcProxyClient, _IUTaskConn):
             _curEE = _tskErr._currentErrorEntry
             if _curEE is not None:
                 _bFatal = _curEE.isFatalError or _curEE.hasNoImpactDueToFrcLinkage
-                _tmp    = _XTaskErrorImpl(_curEE.uniqueID, _bFatal, _bFatal and logif._IsFwDieModeEnabled(), _curEE.shortMessage, errCode_=None if _curEE.isAnonymousError else _curEE.errorCode)
-                res     = XTaskError(_tmp)
+                _tmp = _XTaskErrorImpl(_curEE.uniqueID, _bFatal, _bFatal and logif._IsFwDieModeEnabled(), _curEE.shortMessage, errCode_=None if _curEE.isAnonymousError else _curEE.errorCode)
+                res  = XTaskError(_tmp)
         return res
 
     def __DisconnectUTMirror(self, xtDetachState_ : _EUTaskXState):

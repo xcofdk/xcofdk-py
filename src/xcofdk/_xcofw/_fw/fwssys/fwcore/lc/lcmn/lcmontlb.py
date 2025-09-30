@@ -547,8 +547,7 @@ class _LcCeaseTLB(_AbsSlotsObject):
             _bLocked = self.__md.TakeWait(timeout_)
         if _bLocked:
             if not _ELcCeaseGateFlag.IsCeasingGateSet(self.__cgf):
-                eBM = _ELcCeaseGateFlag.ebfCeasingGate
-                self.__cgf = _ELcCeaseGateFlag.AddLcCeaseGateFlag(self.__cgf, eBM)
+                self.__cgf = _ELcCeaseGateFlag.AddLcCeaseGateFlag(self.__cgf, _ELcCeaseGateFlag.ebfCeasingGate)
             self.__md.Give()
 
     def _OpenPreShutdownGate(self, timeout_ =None):
@@ -561,8 +560,7 @@ class _LcCeaseTLB(_AbsSlotsObject):
             _bLocked = self.__md.TakeWait(timeout_)
         if _bLocked:
             if not _ELcCeaseGateFlag.IsPreShutdownGateSet(self.__cgf):
-                eBM = _ELcCeaseGateFlag.ebfPreShutdownGate
-                self.__cgf = _ELcCeaseGateFlag.AddLcCeaseGateFlag(self.__cgf, eBM)
+                self.__cgf = _ELcCeaseGateFlag.AddLcCeaseGateFlag(self.__cgf, _ELcCeaseGateFlag.ebfPreShutdownGate)
             self.__md.Give()
 
     def _OpenShutdownGate(self, timeout_ =None):
@@ -575,8 +573,7 @@ class _LcCeaseTLB(_AbsSlotsObject):
             _bLocked = self.__md.TakeWait(timeout_)
         if _bLocked:
             if not _ELcCeaseGateFlag.IsShutdownGateSet(self.__cgf):
-                eBM = _ELcCeaseGateFlag.ebfShutdownGate
-                self.__cgf = _ELcCeaseGateFlag.AddLcCeaseGateFlag(self.__cgf, eBM)
+                self.__cgf = _ELcCeaseGateFlag.AddLcCeaseGateFlag(self.__cgf, _ELcCeaseGateFlag.ebfShutdownGate)
             self.__md.Give()
 
     def _ToString(self):

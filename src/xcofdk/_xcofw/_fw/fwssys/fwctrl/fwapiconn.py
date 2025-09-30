@@ -12,6 +12,7 @@ from typing    import List
 from typing    import Tuple
 from typing    import Union
 
+from xcofdk.fwcom     import LcFailure
 from xcofdk.fwapi     import IRCTask
 from xcofdk.fwapi     import IRCCommTask
 from xcofdk.fwapi.xmt import IXTask
@@ -50,6 +51,11 @@ class _FwApiConnector(_IFwApiConn):
         if not self._FwCNIsFwApiAvailable():
             return False
         return self._IsXTaskRunning(xtUID_)
+
+    def _FwCNGetLcFailure(self) -> Union[LcFailure, None]:
+        if not self._FwCNIsFwApiAvailable():
+            return _LcFailure._GetLcFailure()
+        return self._GetLcFailure()
 
     def FwCNGetXTask(self, xtUID_ : int =0) -> Union[IXTask, None]:
         if not self._FwCNIsFwApiAvailable():

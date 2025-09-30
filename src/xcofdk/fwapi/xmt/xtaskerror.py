@@ -29,7 +29,7 @@ class XTaskError(ITaskError):
 
     Associating a task with an instance of this class is the result of a
     multilayered, multithreaded per-task error handling by the framework,
-    also refered to as error qualification.
+    also referred to as error qualification.
 
     See:
     -----

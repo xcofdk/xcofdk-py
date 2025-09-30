@@ -22,8 +22,7 @@ from _fw.fwtdb.fwtdbengine import _FwTDbEngine
 class _AbsFwProfile(_AbsSlotsObject):
     @unique
     class _EProfileType(_FwIntEnum):
-        eTimer  = 0
-        eTask   = auto()
+        eTask   = 0
         eThread = auto()
 
     @unique
@@ -84,10 +83,6 @@ class _AbsFwProfile(_AbsSlotsObject):
     @property
     def isFrozen(self):
         return (self.__ps is not None) and (self.__ps == _AbsFwProfile._EValidationStatus.eFrozen)
-
-    @property
-    def isTimerProfile(self):
-        return (self.__pt is not None) and self.__pt == _AbsFwProfile._EProfileType.eTimer
 
     @property
     def isTaskProfile(self):

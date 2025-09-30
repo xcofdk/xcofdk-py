@@ -12,7 +12,6 @@ from _fw.fwssys.fwcore.logging.logdefines import _ELogType
 from _fw.fwssys.fwcore.logging.logdefines import _LogUtil
 from _fw.fwssys.fwcore.logging.logdefines import _ELogifOperationOption
 from _fw.fwssys.fwcore.logging.alogmgr    import _AbsLogMgr
-from _fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from _fw.fwssys.fwerrh.fwerrorcodes       import _EFwErrorCode
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
@@ -51,12 +50,12 @@ def _PrintException(anyXcp_):
     else:
         _lm._AddLog(_ELogType.FTL, msg_=anyXcp_, logifOpOption_=_ELogifOperationOption.ePrintXcpOnly)
 
-def _PrintSummary(bPrintFFL_ =True):
+def _PrintSummary():
     _lm = _AbsLogMgr.GetInstance()
     if _lm is None:
         vlogif._PrintVSummary()
     else:
-        _lm._PrintSummary(bPrintFFL_=bPrintFFL_)
+        _lm._PrintSummary()
 
 def _GetFormattedTraceback():
     return _LogUtil._GetFormattedTraceback()
@@ -64,26 +63,6 @@ def _GetFormattedTraceback():
 def _LogOEC(bFatal_ , errCode_):
     vlogif._LogOEC(bFatal_, errCode_)
 
-def _LogNewline():
-    _lm = _AbsLogMgr.GetInstance()
-    if _lm is None:
-        vlogif._LogNewline()
-    else:
-        _lm._AddLog(_ELogType.FREE, msg_=_CommonDefines._CHAR_SIGN_NEWLINE)
-
-def _LogFree(msg_):
-    _lm = _AbsLogMgr.GetInstance()
-    if _lm is None:
-        vlogif._LogFree(msg_)
-    else:
-        _lm._AddLog(_ELogType.FREE, msg_=msg_)
-
-def _LogTrace(msg_):
-    _lm = _AbsLogMgr.GetInstance()
-    if _lm is None:
-        vlogif._LogTrace(msg_)
-    else:
-        _lm._AddLog(_ELogType.TRC, msg_=msg_)
 def _XLogTrace(msg_):
     _lm = _AbsLogMgr.GetInstance()
     if _lm is None:
@@ -91,12 +70,6 @@ def _XLogTrace(msg_):
     else:
         _lm._AddLog(_ELogType.XTRC, msg_=msg_)
 
-def _LogDebug(msg_):
-    _lm = _AbsLogMgr.GetInstance()
-    if _lm is None:
-        vlogif._LogDebug(msg_)
-    else:
-        _lm._AddLog(_ELogType.DBG, msg_=msg_)
 def _XLogDebug(msg_):
     _lm = _AbsLogMgr.GetInstance()
     if _lm is None:
@@ -232,7 +205,7 @@ def _LogSysExceptionEC(errCode_, msg_, sysOpXcp_, xcpTraceback_):
         if sysOpXcp_ is not None:
             if msg_ is None:
                 msg_ = 'sysOpXcp: {}'.format(str(sysOpXcp_))
-            else:
+            elif sysOpXcp_ is not None:
                 msg_ += '\nsysOpXcp: {}'.format(str(sysOpXcp_))
             if xcpTraceback_ is not None:
                 msg_ += '\ntraceback: {}'.format(str(xcpTraceback_))

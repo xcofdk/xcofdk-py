@@ -13,7 +13,7 @@
 # ------------------------------------------------------------------------------
 try:
     from typing import override
-except ImportError:
+except ImportError :
     def override(method_):
         def DecoFunc(*args_, **kwargs_): return method_(*args_, **kwargs_)
         def _DecoFunc(*args_, **kwargs_): return method_(*args_, **kwargs_)
@@ -52,40 +52,50 @@ class ERtePolicyID(IntEnum):
 
     Currently available RTE policies are grouped acc. to their purpose:
         a) addressing control operation to start the framework:
-            - eBypassExperimentalFTGuard :
-              allows running the framework with an experimental free-threaded
-              Python interpreter with GIL disabled, even though it is officially
-              not supprted yet,
+             - eBypassExperimentalFTGuard :
+               allows running the framework with an experimental free-threaded
+               Python interpreter with GIL disabled, even though it is
+               officially not supprted yet,
 
         b) addressing control operation to wait for framework's shutdown:
            Mutually exclusive policies of this group all make the otherwise
            mandatory request to stop the framework before it is joined an
            optional operation:
-            - eEnableAutoStop :
-              when joining the framework, the RTE will first wait for all
-              currently running tasks to stop before entering the shutdown
-              sequence. This RTE policy is enabled by default,
-            - eEnableForcedAutoStop :
-              when joining the framework, the RTE will first request all
-              currently running tasks to stop before entering the shutdown
-              sequence,
-            - eEnableTerminalMode :
-              enables terminal mode of the framework.
-              When joining the framework, the RTE will wait for an explicit
-              request to stop the framework before entering the shutdown
-              sequence,
+             - eEnableAutoStop :
+               when joining the framework, the RTE will first wait for all
+               currently running tasks to stop before entering the shutdown
+               sequence. This RTE policy is enabled by default,
+             - eEnableForcedAutoStop :
+               when joining the framework, the RTE will first request all
+               currently running tasks to stop before entering the shutdown
+               sequence,
+             - eEnableTerminalMode :
+               enables terminal mode of the framework.
+               When joining the framework, the RTE will wait for an explicit
+               request to stop the framework before entering the shutdown
+               sequence,
 
         c) addressing (availability of) specific subsystems:
-            - eDisableSubSystemMessaging :
-              disables framework's subsysteem for messaging, i.e. 'xmsg',
-            - eDisableSubSystemMultiProcessing :
-              disables framework's subsysteem for multiprocessing, i.e. 'xmp',
+             - eDisableSubSystemMessaging :
+               disables framework's subsysteem for messaging, i.e. 'xmsg',
+             - eDisableSubSystemMultiProcessing :
+               disables framework's subsysteem for multiprocessing, i.e. 'xmp',
 
-        d) addressing child processes
-            - eDisableExceptionTrackingOfChildProcesses :
-              disables the ability of exception tracking of child processes,
-              i.e. instances of class XProcess, on target side.
-              This feature of exception tracking is enabled by default.
+        d) addressing child processes:
+             - eDisableExceptionTrackingOfChildProcesses :
+               disables the ability of exception tracking of child processes,
+               i.e. instances of class XProcess, on target side.
+               This feature of exception tracking is enabled by default,
+
+        e) addressing redirection of log output:
+             - eDisableLogRDConsoleSink :
+               disables console output, that is nothing shall be put to the
+               output stream 'stdout',
+             - eEnableLogRDFileSink :
+               enables output of submitted logs to the specified file sink,
+             - eEnableLogRDTcpSink :
+               enables output of submitted logs to the specified TCP connection
+               sink.
 
     Note:
     ------
@@ -96,6 +106,7 @@ class ERtePolicyID(IntEnum):
     -----
         - subpackage xcofdk.fwapi.fwctrl
         - subpackage xcofdk.fwapi.rtecfg
+        >>> ELineEnding
     """
 
     # a) addressing framework control operation StartXcoFW()
@@ -112,7 +123,68 @@ class ERtePolicyID(IntEnum):
 
     # d) addressing child processes
     eDisableExceptionTrackingOfChildProcesses = auto()
+
+    # e) addressing redirection of log output
+    eDisableLogRDConsoleSink = auto()
+    eEnableLogRDFileSink     = auto()
+    eEnableLogRDTcpSink      = auto()
 #END class ERtePolicyID
+
+
+@unique
+class ELineEnding(IntEnum):
+    """
+    Enum class with its members each define a line ending to be used whenever
+    TCP redirection of log output is enabled.
+
+    Defined line endings are as follows:
+        - NOLE
+          no line ending, corresponds to an empty string, i.e. ''.
+
+        - LF
+          line feed or new line, corresponds to ASCII escape code '\n'.
+
+        - CR
+          carriage return, corresponds to ASCII escape code '\r'.
+
+        - CRLF
+          carriage return followed by line feed, corresponds to ASCII escape
+          sequence '\r\n'.
+
+    See:
+    -----
+        >>> ERtePolicyID.eEnableLogRDTcpSink
+        >>> ELineEnding.Decode()
+    """
+
+    NOLE = 0
+    LF   = auto()
+    CR   = auto()
+    CRLF = auto()
+
+    @staticmethod
+    def Decode(code_ : str) -> Union[IntEnum, None]:
+        """
+        Returns:
+            - ELineEnding.NOLE  if code_=='NOLE'
+            - ELineEnding.LF    if code_=='LF'
+            - ELineEnding.CR    if code_=='CR'
+            - ELineEnding.CRLF  if code_=='CRLF'
+            - None otherwise
+
+        Parameters:
+        -------------
+           - code_ :
+             string object whose matching enum is to be returned.
+        """
+        res = None
+        if isinstance(code_, str):
+            for _n, _m in ELineEnding.__members__.items():
+                if _m.name == code_:
+                    res = ELineEnding(_m.value)
+                    break
+        return res
+#END class ELineEnding
 
 
 @unique
@@ -134,12 +206,6 @@ class EExecutionCmdID(IntEnum):
         - CONTINUE
           to indicate a request to continue the execution by the next 3-PhXF
           callback or run phase iteration, respectively.
-
-    Note:
-    ------
-        - In order to avoid possible confusion no enum called FAILED is provided
-          by this enum class.
-
 
     Deprecated API:
     ----------------
@@ -271,3 +337,79 @@ class EExecutionCmdID(IntEnum):
             res = EExecutionCmdID.CONTINUE if b_ else EExecutionCmdID.STOP
         return res
 #END class EExecutionCmdID
+
+
+class LcFailure:
+    """
+    Instances of this class represent each a lifecycle (LC) failure.
+
+    An LC failure is given whenever the RTE of XCOFDK has encountered a
+    qualified fatal error.
+    """
+
+    __slots__ = [ '__c' , '__f' , '__m' ]
+
+    # ------------------------------------------------------------------------------
+    # c-tor / built-in
+    # ------------------------------------------------------------------------------
+    def __init__(self, lcf_ : str, msg_ : str, ec_ : Union[int, None]):
+        """
+        Constructor of a new LC failure instance.
+
+        Parameters:
+        -------------
+            - lcf_ :
+              string representation of this LC failure including callstack
+              and/or traceback (if available).
+            - msg_ :
+              a brief message describing this LC failure.
+            - ec_ :
+              if available, an integer value as the error code assigned to this
+              LC failure.
+        """
+        self.__f = lcf_
+        self.__c = ec_
+        self.__m = msg_
+
+
+    def __str__(self):
+        """
+        Returns:
+        ----------
+            A nicely printable string representation of this instance.
+        """
+        return self.__f
+    # ------------------------------------------------------------------------------
+    #END c-tor / built-in
+    # ------------------------------------------------------------------------------
+
+
+    # ------------------------------------------------------------------------------
+    # API
+    # ------------------------------------------------------------------------------
+    @property
+    def errorMessage(self) -> str:
+        """
+        Getter property for the brief description of this instance.
+
+        Returns:
+        ----------
+            The brief description of this instance.
+        """
+        return self.__m
+
+
+    @property
+    def errorCode(self) -> Union[int, None]:
+        """
+        Getter property for the error code of this instance.
+
+        Returns:
+        ----------
+            If available, the error code of this instance, None otherwise.
+        """
+        return self.__c
+    # ------------------------------------------------------------------------------
+    #END API
+    # ------------------------------------------------------------------------------
+#END class LcFailure

@@ -88,7 +88,9 @@ class RCTask(IRCTask):
             - phasedXFCallback_ :
               a class instance or a class supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bSyncTask_ :
               if True this instance will be configured to be a sync. task,
               async. task otherwise
@@ -359,16 +361,6 @@ class RCTask(IRCTask):
             >>> ITask.isCanceling
         """
         return self.__a._RcIsCanceling()
-
-
-    @ITask.isAborting.getter
-    def isAborting(self) -> bool:
-        """
-        See:
-        -----
-            >>> ITask.isAborting
-        """
-        return self.__a._RcIsAborting()
     # ------------------------------------------------------------------------------
     #END 4) task state
     # ------------------------------------------------------------------------------
@@ -777,7 +769,6 @@ class RCCommTask(RCTask, IRCCommTask):
         >>> XFMessageDrivenTask
     """
 
-
     # --------------------------------------------------------------------------
     # 1) c-tor / built-in
     # --------------------------------------------------------------------------
@@ -809,7 +800,9 @@ class RCCommTask(RCTask, IRCCommTask):
             - phasedXFCallback_ :
               a class instance or a class supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bSyncTask_ :
               if True this instance will be configured to be sync. task,
               async. task otherwise
@@ -933,7 +926,9 @@ class SyncTask(RCTask):
             - teardownCallback_ :
               callback function of the teardown phase
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1001,7 +996,9 @@ class XFSyncTask(RCTask):
             - phasedXFCallback_ :
               mandatory class (instance) supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1069,7 +1066,9 @@ class AsyncTask(RCTask):
             - teardownCallback_ :
               callback function of the teardown phase
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1138,7 +1137,9 @@ class XFAsyncTask(RCTask):
             - phasedXFCallback_ :
               mandatory class (instance) supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1210,7 +1211,9 @@ class SyncCommTask(RCCommTask):
             - teardownCallback_ :
               callback function of the teardown phase
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1278,7 +1281,9 @@ class XFSyncCommTask(RCCommTask):
             - phasedXFCallback_ :
               mandatory class (instance) supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1351,7 +1356,9 @@ class AsyncCommTask(RCCommTask):
             - teardownCallback_ :
               callback function of the teardown phase
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1421,7 +1428,9 @@ class XFAsyncCommTask(RCCommTask):
             - phasedXFCallback_ :
               mandatory class (instance) supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1490,7 +1499,9 @@ class MessageDrivenTask(RCCommTask):
             - teardownCallback_ :
               callback function of the teardown phase
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1560,7 +1571,9 @@ class XFMessageDrivenTask(RCCommTask):
             - procExtMsgCallback_ :
               mandatory class (instance) supporting 3-PhXF callbacks
             - aliasName_ :
-              alias name of this instance
+              if specified, the alias name of this instance, an arbitrary
+              non-empty and printable string literal without spaces which
+              optionally may have a trailing '_'
             - bMainTask_ :
               if True this instance will be configured to be application's
               main task, a reqular task otherwise
@@ -1615,7 +1628,8 @@ def GetCurTask() -> Union[IRCTask, IRCCommTask, None]:
               - not called from within the 3-PhXF of the currently executed
                 instance of class RCTask or RCCommTask,
         - currently executed instance of class RCTask or RCCommTask otherwise.
-          Note that the task state of the returned task is 'running'.
+          Note that the task state of the returned task is 'running' unless
+          the call was made out of the teardown phase.
 
     See:
     ------

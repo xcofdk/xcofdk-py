@@ -7,7 +7,9 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
+from _fw.fwssys.assys                               import fwsubsysshare as _ssshare
 from _fw.fwssys.fwcore.logging                      import vlogif
+from _fw.fwssys.fwcore.logging.vlogif               import _PutLR
 from _fw.fwssys.fwcore.logging.logdefines           import _LogConfig
 from _fw.fwssys.fwcore.base.timeutil                import _TimeUtil
 from _fw.fwssys.fwcore.config.fwconfig              import _FwConfig
@@ -20,14 +22,12 @@ from _fw.fwssys.fwcore.lc.ifs.iflcguard             import _ILcGuard
 from _fw.fwssys.fwcore.ssdsupervisor                import _SSDeputySupervisor
 from _fw.fwssys.fwcore.swpfm.sysinfo                import _SystemInfo
 from _fw.fwssys.fwcore.types.apobject               import _ProtAbsSlotsObject
-from _fw.fwssys.fwcore.types.commontypes            import _TextStyle
 from _fw.fwssys.fwcore.types.commontypes            import _CommonDefines
 from _fw.fwssys.fwcore.types.commontypes            import _EExecutionCmdID
 from _fw.fwssys.fwerrh.fwerrorcodes                 import _EFwErrorCode
 from _fw.fwssys.fwerrh.logs.xcoexception            import _XcoXcpRootBase
 from _fw.fwssys.fwerrh.logs.xcoexception            import _XcoBaseException
 from _fwa.fwversion                                 import _FwVersion
-from _fwa.fwrteconfig                               import _FwRteConfig
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
@@ -112,8 +112,8 @@ class _LcDepManager(_ProtAbsSlotsObject):
             if not _ures.isOK:
                 self.CleanUpByOwnerRequest(ppass_)
                 return
-            _LcDepManager.__sgltn = self
 
+            _LcDepManager.__sgltn = self
         except BaseException as _xcp:
             _xcpCaught = _XcoBaseException(_xcp, tb_=vlogif._GetFormattedTraceback(), taskID_=None)
         finally:
@@ -238,11 +238,12 @@ class _LcDepManager(_ProtAbsSlotsObject):
         _dlLong  = _CommonDefines._DASH_LINE_LONG
         _dlShort = _CommonDefines._DASH_LINE_SHORT
 
-        _verstr = _SystemInfo._GetPythonVer()
-        _verstr = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_Python_Version).format(_verstr)
+        _pyv  = _SystemInfo._GetPythonVer()
+        _pyv  = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_Python_Version).format(_pyv)
+        _xcov = _FwVersion._GetVersionInfo(bShort_=False)
 
         res = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble)
-        res = res.format(_dlLong, _dlShort, _dlShort, _FwVersion._GetVersionInfo(bShort_=False), _dlShort, _verstr, _dlShort, _dlLong)
+        res = res.format(_dlLong, _dlShort, _dlShort, _xcov, _dlShort, _pyv, _dlShort, _dlLong)
         return res
 
     @staticmethod
@@ -260,8 +261,6 @@ class _LcDepManager(_ProtAbsSlotsObject):
                 _sopt    = None
                 _errCode = _EFwErrorCode.FE_LCSF_038
             else:
-                _TextStyle._SetHighlightingMode(_sopt._isLogHighlightingDisabled)
-
                 _sopt.CleanUpByOwnerRequest(lcDMH_)
                 _sopt = _FwSOptionsImpl(lcDMH_, suPolicy_, startOptions_=startOptions_)
                 if not _sopt._isValid:
@@ -272,12 +271,9 @@ class _LcDepManager(_ProtAbsSlotsObject):
                 elif _sopt._isSuppressStartPreambleEnabled:
                     _bPrintSP = False
 
-                if (_sopt is not None) and _sopt._isValid:
-                    _TextStyle._SetHighlightingMode(_sopt._isLogHighlightingDisabled)
-
         if _bPrintSP:
-            print(_LcDepManager.__GetPreamble())
-            print(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcDepManager_TID_005).format(_FwRteConfig._GetInstance()))
+            _PutLR(_LcDepManager.__GetPreamble())
+            _PutLR(_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006).format(_ssshare._GetRteConfig()))
         if _errCode is not None:
             _LcFailure.CheckSetLcSetupFailure(_errCode)
             vlogif._LogOEC(True, _errCode)

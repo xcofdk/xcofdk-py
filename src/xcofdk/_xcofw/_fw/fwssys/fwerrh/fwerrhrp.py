@@ -192,17 +192,15 @@ class _FwErrhRP(_LcProxyClient):
 
             if errLog_.hasErrorImpact:
                 errLog_._UpdateErrorImpact(_EErrorImpact.eNoImpactByProcessingFailure)
-
         elif errLog_.hasNoErrorImpact:
             pass
-
         elif logifOpOption_.isSetErrorOnly or bUnhandledXcoBaseXcp_:
             if _ssXcp is not None:
                 _ssXcp.CleanUp()
         elif not _eevCT.isCausedByExceptionMode:
             if _ssXcp is not None:
                 _ssXcp.CleanUp()
-            self.__pd.Flush(errLog_)
+            self.__pd.LMPrint(errLog_)
         else:
             res = _FwErrhRP.__RaiseException(errLog_._enclosedByLogException, _eevCT, bXtLog_, subSeqXcp_=_ssXcp)
         return res

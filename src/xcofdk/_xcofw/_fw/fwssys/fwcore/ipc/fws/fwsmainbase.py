@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-from _fw.fwssys.assys                     import fwsubsysshare as _ssshare
 from _fw.fwssys.fwcore.logging            import vlogif
 from _fw.fwssys.fwcore.base.gtimeout      import _Timeout
 from _fw.fwssys.fwcore.base.util          import _Util
@@ -16,6 +15,7 @@ from _fw.fwssys.fwcore.ipc.tsk.taskdefs   import _EFwsID
 from _fw.fwssys.fwcore.ipc.tsk.taskdefs   import _ERblType
 from _fw.fwssys.fwcore.ipc.tsk.taskxcard  import _TaskXCard
 from _fw.fwssys.fwcore.ipc.fws.fwsdisp    import _FwsDispatcher
+from _fw.fwssys.fwcore.ipc.fws.fwslogrd   import _FwsLogRD
 from _fw.fwssys.fwcore.ipc.fws.fwsprocmgr import _FwsProcMgr
 from _fw.fwssys.fwcore.ipc.rbl.arunnable  import _AbsRunnable
 from _fw.fwssys.fwcore.ipc.fws.afwservice import _AbsFwService
@@ -40,7 +40,7 @@ class _FwsMainBase(_AbsFwService):
         self.__bA = None
         self.__dc = None
 
-        if not ((_AbsFwService.GetDefinedFwsNum() > 0) and _AbsFwService.IsDefinedFws(_EFwsID.eFwsMain)):
+        if not ((_AbsFwService.GetDefinedFwsNum() > 0) and _AbsFwService.IsDefinedFws(_EFwsID.eFwsMain, bWarn_=True)):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00067)
             return
 
@@ -68,7 +68,6 @@ class _FwsMainBase(_AbsFwService):
         if self._rblType != _ERblType.eFwMainRbl:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00069)
             return
-
         self._md = _mtxDataMe
 
     def _StartFWCs(self):
@@ -138,33 +137,45 @@ class _FwsMainBase(_AbsFwService):
         if _AbsFwService.GetDefinedFwsNum() < 2:
             self.__bA = True
             return True
-
         res, self.__dc = False, {}
 
-        _sid  = _EFwsID.eFwsDisp
+        _sid  = _EFwsID.eFwsLogRD
         if _AbsFwService.IsDefinedFws(_sid):
-            _FwsDispatcher._GetInstance(bCreate_=True)
-            comp = _AbsFwService._GetFwsInstance(_sid)
+            _FwsLogRD._GetInstance(bCreate_=True)
+            _comp = _AbsFwService._GetFwsInstance(_sid)
 
-            res = comp is not None
+            res = _comp is not None
             res = res and _AbsFwService.IsActiveFws(_sid)
-            res = res and self.__AddFws(_sid, comp)
+            res = res and self.__AddFws(_sid, _comp)
             if not res:
-                if comp is not None:
-                    comp.CleanUp()
+                if _comp is not None:
+                    _comp.CleanUp()
                 return False
 
-        _sid  = _EFwsID.eFwsProcMgr
+        _sid = _EFwsID.eFwsDisp
+        if _AbsFwService.IsDefinedFws(_sid):
+            _FwsDispatcher._GetInstance(bCreate_=True)
+            _comp = _AbsFwService._GetFwsInstance(_sid)
+
+            res = _comp is not None
+            res = res and _AbsFwService.IsActiveFws(_sid)
+            res = res and self.__AddFws(_sid, _comp)
+            if not res:
+                if _comp is not None:
+                    _comp.CleanUp()
+                return False
+
+        _sid = _EFwsID.eFwsProcMgr
         if _AbsFwService.IsDefinedFws(_sid):
             _FwsProcMgr._GetInstance(bCreate_=True)
-            comp = _AbsFwService._GetFwsInstance(_sid)
+            _comp = _AbsFwService._GetFwsInstance(_sid)
 
-            res = comp is not None
+            res = _comp is not None
             res = res and _AbsFwService.IsActiveFws(_sid)
-            res = res and self.__AddFws(_sid, comp)
+            res = res and self.__AddFws(_sid, _comp)
             if not res:
-                if comp is not None:
-                    comp.CleanUp()
+                if _comp is not None:
+                    _comp.CleanUp()
                 return False
 
         if res:
@@ -181,15 +192,12 @@ class _FwsMainBase(_AbsFwService):
         _keys = list(self.__dc.keys())
         _keys.sort(reverse=False)
         for _kk in _keys:
-            _sid  = _EFwsID(_kk)
-            _vv = self.__dc[_kk]
-
+            _sid, _vv  = _EFwsID(_kk), self.__dc[_kk]
             _x = None
             try:
                 res = _vv.Start()
             except Exception as _xcp:
                 _x = _xcp
-
             if not res:
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00075)
                 break
@@ -198,18 +206,6 @@ class _FwsMainBase(_AbsFwService):
             if not res:
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00076)
                 break
-
-        if res:
-            _rblDisp = self.__GetFws(_EFwsID.eFwsDisp)
-            if _rblDisp is not None:
-                for _kk in _keys:
-                    _sid = _EFwsID(_kk)
-                    if _sid.isFwsDisp:
-                        continue
-
-                    _vv = self.__dc[_kk]
-                    if not _vv.isProvidingExternalQueue:
-                        continue
 
         if not res:
             for _kk in _keys:
@@ -230,7 +226,6 @@ class _FwsMainBase(_AbsFwService):
         _keys = list(self.__dc.keys())
         _keys.sort(reverse=True)
         for _kk in _keys:
-            _sid  = _EFwsID(_kk)
             _vv = self.__dc.pop(_kk)
             _vv.CleanUp()
 

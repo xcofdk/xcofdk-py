@@ -102,10 +102,6 @@ class _FwStartupPolicy(_ProtAbsSlotsObject):
         return False if self.__isInvalid else _FwStartupPolicy._ESUPFlag.IsRMSet(self.__bm)
 
     @property
-    def isSyncPrintEnabled(self):
-        return self.isValid
-
-    @property
     def lcTargetScope(self) -> _ELcScope:
         return None if self.__isInvalid else self.__ts
 
@@ -126,14 +122,6 @@ class _FwStartupPolicy(_ProtAbsSlotsObject):
     @property
     def __isInvalid(self):
         return self.__ts is None
-
-    @staticmethod
-    def _Restore():
-        _FwStartupPolicy.__SUP_TS = None
-        _FwStartupPolicy.__SUP_BM = None
-
-        _FwStartupPolicy.__CheckSetDefaultBM()
-        _LcConfig._Restore()
 
     @staticmethod
     def __CheckSetDefaultBM():

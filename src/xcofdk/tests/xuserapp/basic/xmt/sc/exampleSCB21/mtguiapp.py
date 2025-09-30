@@ -39,6 +39,9 @@ from xuserapp.basic.xmt.sc.exampleSCB21.maintask import MainTask
 # Interface
 # ------------------------------------------------------------------------------
 def Main(cmdLineOpts_ : CLOptions):
+    # optional: disable subsystem xmp
+    rtecfg.RtePolicyDisableSubSystemMultiProcessing()
+
     # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()

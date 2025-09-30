@@ -8,6 +8,7 @@
 # ------------------------------------------------------------------------------
 
 import os
+from   datetime import datetime as _PyDateTime
 
 from _fw.fwssys.fwcore.logging      import logif
 from _fw.fwssys.fwcore.base.util    import _Util
@@ -115,3 +116,23 @@ class _FSUtil:
                 logif._LogSysExceptionEC(_EFwErrorCode.FE_00011, myMsg, _xcp, logif._GetFormattedTraceback())
             return False
         return True
+
+    @staticmethod
+    def GetUniqueFileNameTS() -> str:
+        res = _PyDateTime.now().isoformat(timespec='milliseconds')
+        res =  res[res.index('T')+1:]
+        res = res.replace(':', '_').replace('.', '_')
+        return res
+
+    @staticmethod
+    def GetLogFilePath(filePath_ : str =None):
+        if filePath_ is None:
+            res = os.getcwd()
+        else:
+            res = os.path.normpath(filePath_)
+            if not os.path.isabs(res):
+                res = os.path.join(os.getcwd(), res)
+        if os.path.isdir(res):
+            res = os.path.join(res, f'xcofdk_log__{_FSUtil.GetUniqueFileNameTS()}.txt')
+            res = os.path.normpath(res)
+        return res

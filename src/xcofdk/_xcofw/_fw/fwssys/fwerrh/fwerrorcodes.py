@@ -88,7 +88,6 @@ class _EFwErrorCode(IntEnum):
     FE_LCSF_079  = 4079 + __FE_OFFSET
     FE_LCSF_081  = 4081 + __FE_OFFSET
     FE_LCSF_082  = 4082 + __FE_OFFSET
-    FE_LCSF_083  = 4083 + __FE_OFFSET
     FE_LCSF_084  = 4084 + __FE_OFFSET
     FE_LCSF_085  = 4085 + __FE_OFFSET
     FE_LCSF_086  = 4086 + __FE_OFFSET
@@ -105,12 +104,9 @@ class _EFwErrorCode(IntEnum):
     FE_LCSF_097  = 4097 + __FE_OFFSET
     FE_LCSF_098  = 4098 + __FE_OFFSET
     FE_LCSF_099  = 4099 + __FE_OFFSET
-    FE_LCSF_100  = 4100 + __FE_OFFSET
-    FE_LCSF_101  = 4101 + __FE_OFFSET
     FE_LCSF_102  = 4102 + __FE_OFFSET
     FE_LCSF_103  = 4103 + __FE_OFFSET
     FE_LCSF_104  = 4104 + __FE_OFFSET
-    FE_LCSF_105  = 4105 + __FE_OFFSET
     FE_LCSF_107  = 4107 + __FE_OFFSET
     FE_LCSF_109  = 4109 + __FE_OFFSET
     FE_LCSF_999  = 4999 + __FE_OFFSET
@@ -527,7 +523,6 @@ class _EFwErrorCode(IntEnum):
     VFE_00462  = 6462 + __FE_OFFSET
     VFE_00465  = 6465 + __FE_OFFSET
     VFE_00466  = 6466 + __FE_OFFSET
-    VFE_00467  = 6467 + __FE_OFFSET
     VFE_00468  = 6468 + __FE_OFFSET
     VFE_00469  = 6469 + __FE_OFFSET
     VFE_00470  = 6470 + __FE_OFFSET
@@ -563,9 +558,6 @@ class _EFwErrorCode(IntEnum):
     VFE_00500  = 6500 + __FE_OFFSET
     VFE_00501  = 6501 + __FE_OFFSET
     VFE_00502  = 6502 + __FE_OFFSET
-    VFE_00504  = 6504 + __FE_OFFSET
-    VFE_00505  = 6505 + __FE_OFFSET
-    VFE_00506  = 6506 + __FE_OFFSET
     VFE_00507  = 6507 + __FE_OFFSET
     VFE_00508  = 6508 + __FE_OFFSET
     VFE_00509  = 6509 + __FE_OFFSET
@@ -646,7 +638,6 @@ class _EFwErrorCode(IntEnum):
     VFE_00958  = 6594 + __FE_OFFSET
     VFE_00959  = 6595 + __FE_OFFSET
     VFE_00960  = 6596 + __FE_OFFSET
-    VFE_00961  = 6597 + __FE_OFFSET
     VFE_00962  = 6598 + __FE_OFFSET
     VFE_00963  = 6599 + __FE_OFFSET
     VFE_00965  = 6600 + __FE_OFFSET
@@ -665,6 +656,9 @@ class _EFwErrorCode(IntEnum):
     VFE_00978  = 6613 + __FE_OFFSET
     VFE_00979  = 6614 + __FE_OFFSET
     VFE_00980  = 6615 + __FE_OFFSET
+    VFE_00983  = 6618 + __FE_OFFSET
+    VFE_00984  = 6619 + __FE_OFFSET
+    VFE_00985  = 6620 + __FE_OFFSET
 
     VUE_00002  = 8002
     VUE_00003  = 8003
@@ -1077,7 +1071,6 @@ class _EFwErrorCode(IntEnum):
     UE_00166  = 20166
     UE_00167  = 20167
     UE_00168  = 20168
-    UE_00169  = 20169
     UE_00170  = 20170
     UE_00171  = 20171
     UE_00172  = 20172
@@ -1088,7 +1081,6 @@ class _EFwErrorCode(IntEnum):
     UE_00177  = 20177
     UE_00178  = 20178
     UE_00179  = 20179
-    UE_00180  = 20180
     UE_00181  = 20181
     UE_00182  = 20182
     UE_00183  = 20183
@@ -1167,6 +1159,14 @@ class _EFwErrorCode(IntEnum):
     UE_00258  = 20258
     UE_00259  = 20259
     UE_00260  = 20260
+    UE_00261  = 20261
+    UE_00262  = 20262
+    UE_00263  = 20263
+    UE_00264  = 20264
+    UE_00265  = 20265
+    UE_00266  = 20266
+    UE_00267  = 20267
+    UE_00268  = 20268
 
     @property
     def toStr(self):

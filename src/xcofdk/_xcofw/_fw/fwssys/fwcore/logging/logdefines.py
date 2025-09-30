@@ -7,7 +7,6 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-import os
 import sys
 import traceback
 
@@ -20,6 +19,7 @@ from sys       import maxsize as _PY_MAX_SIZE
 from threading import current_thread as _GetCurThread
 from threading import RLock          as _PyRLock
 
+from _fw.fwssys.fwcore.logrd.logrecord   import _ELRType
 from _fw.fwssys.fwcore.types.commontypes import _CommonDefines
 from _fw.fwssys.fwcore.types.commontypes import _EDepInjCmd
 
@@ -63,22 +63,22 @@ class _ELogLevel(IntEnum):
 
 @unique
 class _ELogType(IntEnum):
-    FREE        =  0  # free logs are 'unformatted' traces
-    TRC         = 10
-    DBG         = 20
-    INF         = 30
-    KPI         = 40
-    WNG         = 50
-    WNG_URGENT  = 51
-    ERR         = 60  
-    ERR_NSY     = 61
-    FTL         = 70  
-    FTL_BU      = 71  
-    FTL_IE      = 72  
-    FTL_NIY     = 73  
-    FTL_SOE     = 74  
-    FTL_SOX     = 75  
-    FTL_NERR    = 76  
+    FREE        = _ELRType.LR_FREE.value  # free logs are 'unformatted' traces  !!??
+    TRC         = _ELRType.LR_TRC.value
+    DBG         = _ELRType.LR_DBG.value
+    INF         = _ELRType.LR_INF.value
+    KPI         = _ELRType.LR_KPI.value
+    WNG         = _ELRType.LR_WNG.value
+    WNG_URGENT  = auto()
+    ERR         = _ELRType.LR_ERR.value  
+    ERR_NSY     = auto()
+    FTL         = _ELRType.LR_FTL.value  
+    FTL_BU      = auto()  
+    FTL_IE      = auto()  
+    FTL_NIY     = auto()  
+    FTL_SOE     = auto()  
+    FTL_SOX     = auto()  
+    FTL_NERR    = auto()  
 
     XTRC        = -1*TRC
     XDBG        = -1*DBG
@@ -120,6 +120,10 @@ class _ELogType(IntEnum):
         return self.value < 0
 
     @property
+    def isFree(self):
+        return self == _ELogType.FREE
+
+    @property
     def isKPI(self):
         return self._absValue == _ELogType.KPI.value
 
@@ -146,6 +150,10 @@ class _ELogType(IntEnum):
     @property
     def _absValue(self):
         return -1*self.value if self.value < 0 else self.value
+
+    @property
+    def _toLRLogType(self):
+        return _ELRType(_LogUtil.GetLogTypeGroup(self).value)
 
 @unique
 class _EErrorImpact(IntEnum):
@@ -269,10 +277,9 @@ class _LogUniqueID:
         _LogUniqueID.__nextUniqueID = 0
 
 class _LogConfig:
-    __slots__ = [ '__bOR' , '__bRM' , '__bXM' , '__bDM' , '__bUDM' , '__bVSEM' , '__eLL'  , '__eULL' ]
+    __slots__ = [ '__bRM' , '__bXM' , '__bDM' , '__bUDM' , '__bVSEM' , '__eLL'  , '__eULL' ]
 
     __cc        = None
-    __bORedir   = None
     __bRelMode  = True
     __bXcpMode  = True
     __bDieMode  = True
@@ -288,9 +295,7 @@ class _LogConfig:
                 , bDieMode_      : bool       =None
                 , bUserDieMode_  : bool       =None
                 , bXcpMode_      : bool       =None
-                , bVSEMode_      : bool       =None
-                , bOutputRedir_  : bool       =None):
-        self.__bOR   = None
+                , bVSEMode_      : bool       =None):
         self.__bRM   = None
         self.__bXM   = None
         self.__bDM   = None
@@ -312,7 +317,7 @@ class _LogConfig:
 
         self.__Assign(_cc)
 
-        _lstp = [bRelMode_, eLogLevel_, eUserLogLevel_, bDieMode_, bUserDieMode_, bXcpMode_, bVSEMode_, bOutputRedir_]
+        _lstp = [bRelMode_, eLogLevel_, eUserLogLevel_, bDieMode_, bUserDieMode_, bXcpMode_, bVSEMode_]
         _lstp = [ee for ee in _lstp if ee is not None]
 
         if len(_lstp) < 1:
@@ -323,7 +328,6 @@ class _LogConfig:
         if bXcpMode_      is not None: self.__bXM   = bXcpMode_
         if bVSEMode_      is not None: self.__bVSEM = bVSEMode_
         if eLogLevel_     is not None: self.__eLL   = eLogLevel_
-        if bOutputRedir_  is not None: self.__bOR   = bOutputRedir_
         if bUserDieMode_  is not None: self.__bUDM  = bUserDieMode_
         if eUserLogLevel_ is not None: self.__eULL  = eUserLogLevel_
 
@@ -343,10 +347,6 @@ class _LogConfig:
     @property
     def isVSystemExistEnabled(self):
         return self.__bVSEM
-
-    @property
-    def isOutputRedirectionEnabled(self):
-        return self.__bOR
 
     @property
     def isDieModeEnabled(self):
@@ -369,7 +369,6 @@ class _LogConfig:
 
     def CleanUp(self):
         if self != _LogConfig.__cc:
-            self.__bOR   = None
             self.__bRM   = None
             self.__bXM   = None
             self.__bDM   = None
@@ -399,7 +398,6 @@ class _LogConfig:
             _logCfg.CleanUp()
 
     def _RestoreDefault(self):
-        self.__bOR   = _LogConfig.__bORedir
         self.__bRM   = _LogConfig.__bRelMode
         self.__bXM   = _LogConfig.__bXcpMode
         self.__bDM   = _LogConfig.__bDieMode
@@ -413,7 +411,6 @@ class _LogConfig:
             _cc.__Assign(self)
 
     def __Assign(self, rhs_):
-        self.__bOR   = rhs_.__bOR
         self.__bRM   = rhs_.__bRM
         self.__bXM   = rhs_.__bXM
         self.__bDM   = rhs_.__bDM
@@ -428,22 +425,14 @@ class _LogUtil:
         return -1
 
     @staticmethod
-    def GetLogTimestamp(tstamp_ : _PyDateTime =None, microsec_=False) -> str:
+    def GetLogTimestamp(tstamp_ : _PyDateTime =None, bUS_=False) -> str:
         if tstamp_ is None:
             if _PyDateTime.__name__ not in sys.modules:
-                res = _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_01)
-                if microsec_:
-                    res += 3*_CommonDefines._CHAR_SIGN_DASH
-                return res
-
+                return _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_01)
             tstamp_ = _PyDateTime.now()
 
-        if microsec_:
-            secfraction = _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_02).format(tstamp_.microsecond)
-        else:
-            secfraction  = _FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_03).format(tstamp_.microsecond // 1000)
-        res = tstamp_.strftime(_FwTDbEngine.GetText(_EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_04)) + secfraction
-        return res
+        tstamp_ = tstamp_.isoformat(timespec='milliseconds')
+        return tstamp_[tstamp_.index('T')+1:]
 
     @staticmethod
     def GetLogTypeGroup(logType_):
@@ -481,8 +470,8 @@ class _LogUtil:
     def _GetFormattedTraceback():
         res = traceback.format_exc()
         if res is not None:
-            res = res.split(_CommonDefines._CHAR_SIGN_NEWLINE)
-            res = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}'.join(res)
+            res = res.split(_CommonDefines._CHAR_SIGN_LF)
+            res = f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_TAB}'.join(res)
             res = _CommonDefines._CHAR_SIGN_TAB + res
         return res
 

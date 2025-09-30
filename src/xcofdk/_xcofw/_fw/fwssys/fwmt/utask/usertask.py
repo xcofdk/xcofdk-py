@@ -26,6 +26,7 @@ from _fw.fwssys.fwcore.logging           import vlogif
 from _fw.fwssys.fwctrl.fwapiconnap       import _FwApiConnectorAP
 from _fw.fwssys.fwcore.base.strutil      import _StrUtil
 from _fw.fwssys.fwcore.ipc.tsk.taskdefs  import _EUTaskApiID
+from _fw.fwssys.fwcore.ipc.tsk.taskutil  import _TaskUtil
 from _fw.fwssys.fwcore.ipc.tsk.taskmgr   import _TaskMgr
 from _fw.fwssys.fwcore.ipc.tsk.taskutil  import _PyThread
 from _fw.fwssys.fwcore.types.commontypes import override
@@ -170,7 +171,7 @@ class _UserTask(_IUserTask):
 
     @_IXUnit._isTerminating.getter
     def _isTerminating(self) -> bool:
-        return self._isStopping or self._isAborting
+        return self._isStopping or self._isCanceling or self._isAborting
 
     @_IXUnit._taskUID.getter
     def _taskUID(self) -> int:
@@ -200,7 +201,7 @@ class _UserTask(_IUserTask):
         return False if _utc is None else _utc._StopUTask(bCancel_=bCancel_, bCleanupDriver_=bCleanupDriver_)
 
     @override
-    def _Join(self, timeout_: [int, float] =None) -> bool:
+    def _Join(self, timeout_: Union[int, float] =None) -> bool:
         if not self.__isConnected:
             return True
         _utc = self.__utConn
@@ -228,7 +229,7 @@ class _UserTask(_IUserTask):
                 res = res.format(type(self).__name__, _midPart)
             else:
                 res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_014)
-                res = res.format(type(self).__name__, _midPart, self.__utm._mrUTaskXStateAsStr)
+                res = res.format(self.__utm.mrUTaskName, _midPart, self.__utm._mrUTaskXStateAsStr)
         else:
             res       = self._taskName
             _uid      = self._taskUID
@@ -526,9 +527,9 @@ class _UserTask(_IUserTask):
             if len(_aliasName) < 1:
                 _xtp.aliasName = _StrUtil.DeCapialize(type(self).__name__)
                 logif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_UserTask_TID_008).format(_aliasName))
-            elif not _aliasName.isidentifier():
+            elif not _TaskUtil.IsValidAliasName(_aliasName):
                 res = False
-                logif._XLogErrorEC(_EFwErrorCode.UE_00169, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_UserTask_TID_009).format(_aliasName))
+                logif._XLogErrorEC(_EFwErrorCode.UE_00268, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_UserTask_TID_029).format(_aliasName))
         return res
 
     def __CheckIQueue(self, xtProfileExt_: _XTaskPrfExt) -> bool:

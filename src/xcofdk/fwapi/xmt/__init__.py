@@ -46,7 +46,8 @@ def GetCurXTask() -> Union[IXTask, None]:
               - not called from within the 3-PhXF of the currently executed
                 instance of class XTask,
         - currently executed instance of class XTask otherwise.
-          Note that the task state of the returned task is 'running'.
+          Note that the task state of the returned task is 'running' unless
+          the call was made out of the teardown phase.
 
     See:
     ------

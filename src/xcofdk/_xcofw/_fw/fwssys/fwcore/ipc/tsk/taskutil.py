@@ -7,8 +7,7 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-from _fw.fwssys.fwcore.logging import vlogif
-
+import string
 import threading
 
 from enum      import auto
@@ -22,6 +21,7 @@ from typing    import Union
 
 from xcofdk.fwcom import CompoundTUID
 
+from _fw.fwssys.fwcore.logging           import vlogif
 from _fw.fwssys.fwcore.base.gtimeout     import _Timeout
 from _fw.fwssys.fwcore.base.util         import _Util
 from _fw.fwssys.fwcore.swpfm.sysinfo     import _SystemInfo
@@ -86,8 +86,7 @@ class _ETaskType(_FwIntEnum):
 
 @unique
 class _ETaskResFlag(IntFlag):
-    eNone  = _EBitMask.eNone.value
-    eTimer = (1 << 0)
+    eNone = _EBitMask.eNone.value
 
     @staticmethod
     def IsResourceFlagSet(resMask_, resFlags_):
@@ -98,10 +97,8 @@ class _ETaskResFlag(IntFlag):
         return _EBitMask.AddEnumBitFlag(resMask_, resFlags_)
 
     @staticmethod
-    def GetRessourcesMask(enableTimer_ =False) -> IntFlag:
+    def GetRessourcesMask() -> IntFlag:
         res = _ETaskResFlag.eNone
-        if enableTimer_:
-            res = _ETaskResFlag.AddResourceFlag(res, _ETaskResFlag.eTimer)
         return res
 
 @unique
@@ -109,8 +106,7 @@ class _ETaskRightFlag(IntFlag):
     eNone                 = 0x0000
     eFwTask               = 0x8000
     eUserTask             = 0x4000
-    eXTaskTask          = (1 << 0)
-    eUTTask               = (1 << 1)
+    eXTaskTask            = (1 << 0)
     eErrorObserver        = (1 << 2)
     eDieXcpTarget         = (1 << 3)
     eDieXcpDelegateTarget = (1 << 4)
@@ -141,13 +137,6 @@ class _ETaskRightFlag(IntFlag):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00315)
             return None
         return _EBitMask.AddEnumBitFlag(trMask_, _ETaskRightFlag.eXTaskTask)
-
-    @staticmethod
-    def AddUnitTestTaskRight(trMask_ : IntFlag):
-        if not _ETaskRightFlag.IsValidTaskRightMask(trMask_):
-            vlogif._LogOEC(True, _EFwErrorCode.VFE_00316)
-            return None
-        return _EBitMask.AddEnumBitFlag(trMask_, _ETaskRightFlag.eUTTask)
 
     @staticmethod
     def IsFwTaskRightFlagSet(trMask_, trFlags_):
@@ -205,10 +194,6 @@ class _ETaskRightFlag(IntFlag):
     @property
     def hasXTaskTaskRight(self):
         return _ETaskRightFlag.IsTaskRightFlagSet(self, _ETaskRightFlag.eXTaskTask)
-
-    @property
-    def hasUnitTestTaskRight(self):
-        return _ETaskRightFlag.IsTaskRightFlagSet(self, _ETaskRightFlag.eUTTask)
 
     @property
     def hasErrorObserverTaskRight(self):
@@ -608,6 +593,16 @@ class _TaskUtil:
         if isinstance(tskID_, IntEnum):
             tskID_ = tskID_.value
         return tskID_ > _TaskIDDefines._UTASK_ID_BASE
+
+    @staticmethod
+    def IsValidAliasName(aliasName_ : str) -> bool:
+        res = isinstance(aliasName_, str) and len(aliasName_)
+        if res:
+            res = aliasName_.isprintable()
+            if res:
+                _tmp = [ _cc for _cc in list(string.whitespace) if aliasName_.find(_cc)>-1 ]
+                res = False if len(_tmp) else True
+        return res
 
     @staticmethod
     def GetNextTaskID(bUserTask_ : bool, bEnclSThrd_ : bool =False, bAEnclHThrd_ =False) -> CompoundTUID:

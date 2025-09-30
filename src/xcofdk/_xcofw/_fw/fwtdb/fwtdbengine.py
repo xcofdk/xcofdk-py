@@ -11,18 +11,18 @@ import os.path
 import time
 
 from _fw.fwssys.fwcore.types.commontypes import _CommonDefines
-from _fw.fwssys.fwcore.types.commontypes import SyncPrint
 
 from _fw.fwtdb.fwtextid import _EFwTextID
 from _fw.fwtdb.fwtextdb import _FwTextDB
 from _fw.fwtdb.fwtextdb import _ETextDBCreateStatus
+from _fw.fwtdb.fwtextdb import _TDBPrint
 
 class _FwTDbEngine:
     __slots__ = []
 
-    __txtDB        = None
+    __txtDB      = None
     __bPkgDist   = True
-    __bLiveCheck   = True
+    __bLiveCheck = True
 
     __PDRDN   = None
     __PDRDPN  = None
@@ -132,12 +132,12 @@ class _FwTDbEngine:
         for _ii in range(_bwDepth):
             _xcofdkRootDir = os.path.dirname(_xcofdkRootDir)
         if not os.path.exists(_xcofdkRootDir):
-            SyncPrint.Print(f'Non-existing xco root path: {_xcofdkRootDir}')
+            _TDBPrint(f'Non-existing xco root path: {_xcofdkRootDir}\n')
             return None, None
 
         _rootDirBN = os.path.basename(_xcofdkRootDir)
         if _rootDirBN != _FwTDbEngine.__PDRDN:
-            SyncPrint.Print(f'Unexpected path while trying to identify xco root path: {_xcofdkRootDir}')
+            _TDBPrint(f'Unexpected path while trying to identify xco root path: {_xcofdkRootDir}\n')
             return None, None
 
         _pdirBN = os.path.basename(os.path.dirname(_xcofdkRootDir))

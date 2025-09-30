@@ -468,7 +468,6 @@ class _FwMessageHeader(_IFwMessageHeader):
                     return _EMsgHeaderCtorErrorID.eFetchingReceiverTaskBadge, _sndID, _rcvID, _bm
 
                 _rcvID = _tbadgeRcv.dtaskUID
-
         else:
             if isinstance(receiverID_, IntEnum):
                 _rcvID = receiverID_.value
@@ -480,13 +479,9 @@ class _FwMessageHeader(_IFwMessageHeader):
 
         if _tbadgeRcv is None:
             pass
-
         elif _bIntMsg:
             pass
-
         elif not _tbadgeRcv.isSupportingExternalQueue:
-            if not _tbadgeCur.hasUnitTestTaskRight:
-                vlogif._LogOEC(True, _EFwErrorCode.VFE_00554)
-                return _EMsgHeaderCtorErrorID.eReceiverMissingExtQueueSupport, _sndID, _rcvID, _bm
-
+            vlogif._LogOEC(True, _EFwErrorCode.VFE_00554)
+            return _EMsgHeaderCtorErrorID.eReceiverMissingExtQueueSupport, _sndID, _rcvID, _bm
         return _EMsgHeaderCtorErrorID.eNone, _sndID, _rcvID, _bm

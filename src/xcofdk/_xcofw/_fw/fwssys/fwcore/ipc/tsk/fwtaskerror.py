@@ -155,7 +155,7 @@ class _FwTaskError(_AbsSlotsObject):
             return None
         with self.__ma:
             if self.isErrorFree:
-                res = str(None)
+                res = _CommonDefines._STR_NONE
             else:
                 res = self.__cee.ToString()
             res = self.__msgPrefix + res
@@ -258,22 +258,18 @@ class _FwTaskError(_AbsSlotsObject):
             _bCleanUpCurEE = True
 
             if self.isNoImpactFatalErrorDueToFrcLinkage:
-                if not self.taskBadge.hasUnitTestTaskRight:
-                    _bCleanUpCurEE = False
-                    _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwTaskError_TID_001)
-                    logif._LogWarning(_wngMsg.format(self.dtaskUID, self.currentErrorUniqueID))
+                _bCleanUpCurEE = False
+                _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwTaskError_TID_001)
+                logif._LogWarning(_wngMsg.format(self.dtaskUID, self.currentErrorUniqueID))
 
             elif self.isFatalError:
                 if self.__cee.errorImpact.isCausedByDieMode:
                     if bOnCleanup_:
                         _bCleanUpCurEE = False
                     else:
-                        if self.taskBadge.hasUnitTestTaskRight:
-                            _bCleanUpCurEE = True
-                        else:
-                            _bCleanUpCurEE = False
-                            _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwTaskError_TID_001)
-                            logif._LogWarning(_wngMsg.format(self.dtaskUID, self.currentErrorUniqueID))
+                        _bCleanUpCurEE = False
+                        _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwTaskError_TID_001)
+                        logif._LogWarning(_wngMsg.format(self.dtaskUID, self.currentErrorUniqueID))
             if _bCleanUpCurEE:
                 self.__cee.CleanUp()
                 self.__cee = None

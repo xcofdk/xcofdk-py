@@ -35,18 +35,7 @@ class _FwStartupConfig(_ProtAbsSlotsObject):
     @property
     def _isReleaseModeEnabled(self) -> bool:
         if self.__isInvalid: return False
-
-        if self.__sup.isReleaseModeEnabled:
-            if self.__sopt._isReleaseModeDisabled:
-                res = self.__sup.isDevModeEnabled
-            else:
-                res = True
-        else:
-            if self.__sopt._isReleaseModeEnabled:
-                res = self.__sup.isDevModeEnabled
-            else:
-                res = False
-        return res
+        return self.__sup.isReleaseModeEnabled and not self.__sopt._isReleaseModeDisabled
 
     @property
     def _isSilentFwLogLevel(self) -> bool:

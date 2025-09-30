@@ -18,6 +18,7 @@ from xcofdk.fwapi.xmt import ITaskProfile
 
 from _fw.fwssys.assys.ifs.ifutagent      import _IUTAgent
 from _fw.fwssys.assys.ifs.ifutaskconn    import _IUTaskConn
+from _fw.fwssys.fwcore.types.commontypes import _CommonDefines
 from _fw.fwssys.fwcore.types.serdes      import SerDes
 from _fw.fwssys.fwcore.ipc.tsk.taskstate import _TaskState
 from _fw.fwssys.fwcore.ipc.tsk.taskdefs  import _ETaskSelfCheckResultID
@@ -225,7 +226,7 @@ class _UTaskMirror:
     def _MrUpdateTaskState(self, xtState_ : _EUTaskXState, bDetach_ =False):
         self.__ust = xtState_
         if bDetach_:
-            self.__a  = None
+            self.__a = None
             self.__c = None
 
     def _MrGetUData(self, bDeser_ =True) -> _PyAmy:
@@ -249,7 +250,7 @@ class _UTaskMirror:
 
     def __MapUtXStateToString(self) -> str:
         if not self.mrIsConnected:
-            res = str(None) if self.__ust is None else self.__ust._ToString(bDetached_=True)
+            res = _CommonDefines._STR_NONE if self.__ust is None else self.__ust._ToString(bDetached_=True)
         else:
             res = self.__c._utXStateToString
         return res

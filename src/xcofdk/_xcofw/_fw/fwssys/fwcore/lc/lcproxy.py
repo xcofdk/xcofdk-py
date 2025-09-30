@@ -25,7 +25,6 @@ from _fw.fwssys.fwcore.ipc.sync.mutex         import _Mutex
 from _fw.fwssys.fwcore.ipc.tsk.afwtask        import _AbsFwTask
 from _fw.fwssys.fwcore.ipc.tsk.taskmgr        import _TaskMgr
 from _fw.fwssys.fwcore.ipc.tsk.taskmgr        import _TaskManager
-from _fw.fwssys.fwcore.ipc.tsk.taskutil       import _TaskUtil
 from _fw.fwssys.fwcore.lc.lcmn.lcmonimpl      import _LcMonitorImpl
 from _fw.fwssys.fwcore.lc.lcdefines           import _ELcScope
 from _fw.fwssys.fwcore.lc.lcdefines           import _ELcCompID
@@ -265,8 +264,6 @@ class _LcProxy(_ILcProxy):
 
         self.__LockAPI(_bLock)
 
-        if self._PxyIsLcProxyModeShutdown():
-            pass
         if not self.__g._GSetLcFailure(eFailedCompID_, frcError_, atask_=atask_, bSkipReply_=_bSkipReply):
             if _bLock is not None:
                 self.__LockAPI(False)
@@ -281,7 +278,6 @@ class _LcProxy(_ILcProxy):
                 _frc    = _CreateLogImplErrorEC(_EFwErrorCode.FE_00375, _frcMsg)
                 if _frc is not None:
                     self.__g._GSetLcFailure(_ELcCompID.eFwMain, frcError_=_frc, atask_=self.__m, bSkipReply_=True)
-
                 if _LcFailure.IsLcErrorFree():
                     _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_005, errMsg_=_frcMsg)
         return res
@@ -528,34 +524,32 @@ class _LcProxy(_ILcProxy):
         if not _bFwOK:
             if _LcFailure.IsLcErrorFree():
                 _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_082)
-
             if _myTB is None:
                 vlogif._LogOEC(False, _EFwErrorCode.VUE_00037)
             else:
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00396)
-
-        _bFwOK = _bFwOK and _myTB.hasDieXcpTargetTaskRight
-        _bFwOK = _bFwOK and _myTB.hasErrorObserverTaskRight
-        _bFwOK = _bFwOK and _myTB.hasDieExceptionDelegateTargetTaskRight
-        if not _bFwOK:
-            _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_084)
-            vlogif._LogOEC(True, _EFwErrorCode.VFE_00398)
         else:
-            _bFwOK = tmgr_._AddTaskEntry(_fwMain, bRemoveAutoEnclTE_=True)
+            _bFwOK = _bFwOK and _myTB.hasDieXcpTargetTaskRight
+            _bFwOK = _bFwOK and _myTB.hasErrorObserverTaskRight
+            _bFwOK = _bFwOK and _myTB.hasDieExceptionDelegateTargetTaskRight
             if not _bFwOK:
-                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_085)
-                vlogif._LogOEC(True, _EFwErrorCode.VFE_00399)
+                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_084)
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00398)
+            else:
+                _bFwOK = tmgr_._AddTaskEntry(_fwMain, bRemoveAutoEnclTE_=True)
+                if not _bFwOK:
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_085)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00399)
+            if _bFwOK:
+                _mm = _Mutex()
+                _tiFwMain = _TaskInfo(_fwMain, _mm)
+                _bFwOK = not _tiFwMain._isInvalid
+                if not _bFwOK:
+                    _tiFwMain.CleanUp()
+                    _mm.CleanUp()
 
-        if _bFwOK:
-            _mm = _Mutex()
-            _tiFwMain = _TaskInfo(_fwMain, _mm)
-            _bFwOK = not _tiFwMain._isInvalid
-            if not _bFwOK:
-                _tiFwMain.CleanUp()
-                _mm.CleanUp()
-
-                _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_086)
-                vlogif._LogOEC(True, _EFwErrorCode.VFE_00400)
+                    _LcFailure.CheckSetLcSetupFailure(_EFwErrorCode.FE_LCSF_086)
+                    vlogif._LogOEC(True, _EFwErrorCode.VFE_00400)
 
         if not _bFwOK:
             if _LcFailure.IsLcErrorFree():
@@ -571,7 +565,6 @@ class _LcProxy(_ILcProxy):
         if self.__isInvalid:
             return
         self.__tm._InjectLcProxy(None)
-
         if self.__m.isRunning:
             _semStop = None if self.__m.isEnclosingPyThread else _BinarySemaphore(take_=True)
             self.__m.StopFwMain(semStop_=_semStop)

@@ -62,7 +62,7 @@ class _RteException(Exception):
 
     def __str__(self):
         _code = _CommonDefines._CHAR_SIGN_DASH if self.__code is None else self.__code
-        res   = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteException_TID_002).format(type(self).__name__, _code, self.__msg)
+        res   = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteException_TID_002).format(type(self).__name__[1:], _code, self.__msg)
         if self.__rsnt is not None:
             res += _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteException_TID_003).format(self.__rsnt.__name__, self.__rsn)
         return res

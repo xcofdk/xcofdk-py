@@ -25,14 +25,14 @@ from typing import Union
 
 from xcofdk.fwcom import EExecutionCmdID
 
-from _fw.fwssys.fwcore.swpfm.sysinfo import _SystemInfo
-
 class _CommonDefines:
     __SIZE__DASH_LINE_LONG        = 80
     __SIZE__DASH_LINE_SHORT       = 5
     __VALID_BOOLEAN_TRUE_AS_STR   = [ 'true'  ] #, 'yes' , 'on' , 'y']
     __VALID_BOOLEAN_FALSE_AS_STR  = [ 'false' ] #, 'no' , 'off' , 'n']
 
+    _CHAR_SIGN_LF                       = '\n'
+    _CHAR_SIGN_CR                       = '\r'
     _CHAR_SIGN_DOT                      = '.'
     _CHAR_SIGN_TAB                      = '\t'
     _CHAR_SIGN_DASH                     = '-'
@@ -41,8 +41,9 @@ class _CommonDefines:
     _CHAR_SIGN_COMMA                    = ','
     _CHAR_SIGN_SLASH                    = '/'
     _CHAR_SIGN_SPACE                    = ' '
-    _CHAR_SIGN_NEWLINE                  = '\n'
+    _CHAR_SIGN_ESCAP                    = '\\'
     _CHAR_SIGN_UNDERSCORE               = '_'
+    _CHAR_SIGN_APOSTROPHE               = '\''
     _CHAR_SIGN_LEFT_BRACE               = '{'
     _CHAR_SIGN_RIGHT_BRACE              = '}'
     _CHAR_SIGN_LESS_THAN                = '<'
@@ -54,10 +55,13 @@ class _CommonDefines:
 
     _CHAR_SIGN_FILE_MODE_READ           = 'r'
     _CHAR_SIGN_FILE_MODE_WRITE          = 'w'
+    _CHAR_SIGN_FILE_MODE_APPEND         = 'a'
     _CHAR_SIGN_FILE_MODE_BINARY         = 'b'
 
-    _STR_EMPTY        = str('')
-    _STR_TIME_UNIT_MS = str('ms')
+    _STR_NONE          = str('None')
+    _STR_EMPTY         = str('')
+    _STR_TIME_UNIT_MS  = str('ms')
+    _STR_ENCODING_UTF8 = str('utf-8')
 
     _DASH_LINE_LONG  = _CHAR_SIGN_DASH*__SIZE__DASH_LINE_LONG
     _DASH_LINE_SHORT = _CHAR_SIGN_DASH*__SIZE__DASH_LINE_SHORT
@@ -233,135 +237,3 @@ class _EDepInjCmd(_FwIntEnum):
     @property
     def isFinalize(self):
         return self==_EDepInjCmd.eFinalize
-
-@unique
-class _EColorCode(IntEnum):
-    NONE    = -1
-    END     = auto()
-    GREEN   = auto()
-    BLUE    = auto()
-    RED     = auto()
-    YELLOW  = auto()
-    MAGENTA = auto()
-
-    @property
-    def isColor(self):
-        return self.value > _EColorCode.END.value
-
-    @property
-    def isEnd(self):
-        return self == _EColorCode.END
-
-    @property
-    def isGreen(self):
-        return self == _EColorCode.GREEN
-
-    @property
-    def isBlue(self):
-        return self == _EColorCode.BLUE
-
-    @property
-    def isRed(self):
-        return self == _EColorCode.RED
-
-    @property
-    def isYellow(self):
-        return self == _EColorCode.YELLOW
-
-    @property
-    def isMagenta(self):
-        return self == _EColorCode.MAGENTA
-
-    @property
-    def code(self):
-        res = _EColorCode.NONE
-        if not self.isColor:
-            if self.isEnd:
-                res = '\033[0m'
-        elif self.isGreen:
-            res = '\033[32m'
-        elif self.isBlue:
-            res = '\033[34m'
-        elif self.isRed:
-            res = '\033[31m'
-        elif self.isYellow:
-            res = '\033[33m'
-        elif self.isMagenta:
-            res = '\033[35m'
-        return res
-
-class _TextStyle:
-    __slots__ = []
-
-    __bHighlightingDisabled = False
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def ColorText(txt_ : str, color_ : _EColorCode, bAddEnd_ =True):
-        if _TextStyle.__bHighlightingDisabled:
-            return txt_
-        if not (isinstance(txt_, str)):
-            return txt_
-
-        if not _SystemInfo._IsPythonVersionCompatible(3, 9):
-            return txt_
-        if not isinstance(color_, _EColorCode):
-            return txt_
-
-        _CC = color_.code
-        if _CC is None:
-            return txt_
-
-        for _n, _m in _EColorCode.__members__.items():
-            if _m == _EColorCode.NONE:
-                continue
-            if _m.code in txt_:
-                txt_ = txt_.replace(_m.code, _CommonDefines._STR_EMPTY)
-
-        res = f'{color_.code}{txt_}'
-        if color_.isEnd:
-            pass
-        elif bAddEnd_:
-            res += f'{_EColorCode.END.code}'
-        return res
-
-    @staticmethod
-    def _SetHighlightingMode(bDisabled_ =False):
-        _TextStyle.__bHighlightingDisabled = bDisabled_
-
-class SyncPrint:
-    __slots__ = []
-
-    def __init__(self):
-        pass
-
-    __syncLck = None
-    __SYNY_PRINT_TIMEOUT_SEC = 0.01
-
-    @staticmethod
-    def SetSyncLock(syncLck_):
-        if SyncPrint.__syncLck is not None:
-            try:
-                SyncPrint.__syncLck.release()
-            except RuntimeError:
-                pass
-            finally:
-                SyncPrint.__syncLck = None
-        SyncPrint.__syncLck = syncLck_
-
-    @staticmethod
-    def Print(buf_, endLine_ =None):
-        _bLocked = SyncPrint.__syncLck is not None
-        if _bLocked:
-            _bLocked = SyncPrint.__syncLck.acquire(blocking=True, timeout=SyncPrint.__SYNY_PRINT_TIMEOUT_SEC)
-        try:
-            if endLine_ is not None:
-                print(buf_, endLine_)
-            else:
-                print(buf_)
-        except AttributeError as _xcp:
-            pass
-        if _bLocked:
-            SyncPrint.__syncLck.release()

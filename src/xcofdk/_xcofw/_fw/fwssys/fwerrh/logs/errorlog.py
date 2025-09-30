@@ -44,8 +44,8 @@ class _ErrorLog(_LogEntry):
             super().__init__(None, doSkipSetup_=True)
             return
 
-        super().__init__(errLogType_, taskName_=taskName_, taskID_=taskID_
-            , shortMsg_=shortMsg_, longMsg_=longMsg_, cloneby_=cloneby_, xrn_=xrn_)
+        super().__init__( errLogType_, taskName_=taskName_, taskID_=taskID_
+                        , shortMsg_=shortMsg_, longMsg_=longMsg_, cloneby_=cloneby_, xrn_=xrn_)
         if self.isInvalid:
             errCode_ = None
         elif cloneby_ is not None:
@@ -58,20 +58,6 @@ class _ErrorLog(_LogEntry):
 
         if errCode_ is not None:
             self.__c = errCode_
-
-    def __eq__(self, other_):
-        res = isinstance(other_, _ErrorLog)
-        if not res:
-            pass
-        elif id(self) == id(other_):
-            pass
-        elif (self.uniqueID is not None) and (self.uniqueID == other_.uniqueID):
-            pass
-        elif not _LogEntry.__eq__(self, other_):
-            res = False
-        else:
-            res = self.__c == other_.__c
-        return res
 
     @property
     def isAnonymousError(self):
@@ -167,9 +153,7 @@ class _ErrorLog(_LogEntry):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00424)
             return
 
-        _curErrImp = self.errorImpact
-        _curErrImpStr = str(None) if _curErrImp is None else _curErrImp.compactName
-        if _curErrImp is not None:
+        if self.errorImpact is not None:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00425)
             return
         if (mtxErrImpact_ is not None) and (self.__m is not None):
@@ -195,7 +179,6 @@ class _ErrorLog(_LogEntry):
 
         _tmp      = self.__ei
         self.__ei = eErrImpact_
-
         if _m is not None:
             _m.Give()
 
@@ -293,16 +276,6 @@ class _FatalLog(_ErrorLog):
             if self.logType._absValue == _ELogType.FTL_SOX.value:
                 self.__bx = xcoBaseXcp_
 
-    def __eq__(self, rhs_):
-        res = isinstance(rhs_, _FatalLog)
-        if not res:
-            pass
-        elif self.__lx is None:
-            res = self._IsEqual(rhs_)
-        else:
-            res = self.__lx == rhs_.__lx
-        return res
-
     @property
     def callstack(self) -> str:
         return self.__cs
@@ -352,7 +325,6 @@ class _FatalLog(_ErrorLog):
         else:
             _errImp   = self.errorImpact
             _bFlagSet = (not self._isShared) or (_errImp == _EErrorImpact.eNoImpactBySharedCleanup)
-
             if not _bFlagSet:
                 _AbsSlotsObject.ResetCleanupFlag(self)
                 if _errImp is not None:
@@ -426,3 +398,4 @@ class _FatalLog(_ErrorLog):
         _cs = [_ee for _ee in _cs if len(_ee) > 0 and not _ee.isspace()]
         res = _CommonDefines._STR_EMPTY.join(_cs)
         return res
+

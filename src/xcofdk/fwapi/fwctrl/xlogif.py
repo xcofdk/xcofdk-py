@@ -79,7 +79,7 @@ def LogError(logMsg_ : str):
     xlogifbase._XLogError(logMsg_)
 
 
-def LogErrorEC(logMsg_ : str, errorCode_ : int =None):
+def LogErrorEC(logMsg_ : str, errorCode_ : int):
     """
     Submitts a user error message with a given error code.
 
@@ -112,7 +112,7 @@ def LogFatal(logMsg_ : str):
     xlogifbase._XLogFatal(logMsg_)
 
 
-def LogFatalEC(logMsg_ : str, errorCode_ : int =None):
+def LogFatalEC(logMsg_ : str, errorCode_ : int):
     """
     Submitts a fatal error message with a given error code.
 

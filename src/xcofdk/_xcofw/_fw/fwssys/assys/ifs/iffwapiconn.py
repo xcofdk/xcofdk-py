@@ -11,6 +11,7 @@ from typing import List
 from typing import Tuple
 from typing import Union
 
+from xcofdk.fwcom     import LcFailure
 from xcofdk.fwapi     import IRCTask
 from xcofdk.fwapi     import IRCCommTask
 from xcofdk.fwapi.xmt import IXTask
@@ -32,10 +33,13 @@ class _IFwApiConn(_ProtAbsSlotsObject):
     def _IsXTaskRunning(self, xtUID_ : int) -> bool:
         pass
 
+    def _GetLcFailure(self) -> Union[LcFailure, None]:
+        pass
+
     def _GetXTask(self, xtUID_ : int =0) -> Union[IXTask, None]:
         pass
 
-    def _GetCurXTask(self) -> Tuple[Union[IXTask, None], Union[IRCTask, None]]:
+    def _GetCurXTask(self, bRcTask_ =False) -> Tuple[Union[IXTask, None], Union[IRCTask, None]]:
         pass
 
     def _GetCurRcTask(self) -> Union[IRCTask, IRCCommTask, None]:

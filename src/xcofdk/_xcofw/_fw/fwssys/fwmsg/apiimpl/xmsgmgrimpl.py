@@ -202,7 +202,7 @@ class _XMsgMgrImpl:
                 if _rcvXT is None:
                     logif._LogErrorEC(_EFwErrorCode.UE_00203, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TID_018).format(_midPart, rcvID_))
                     return _failedTuple
-                if not (_rcvXT.isRunning or _rcvXT.isStopping):
+                if not (_rcvXT.isRunning or _rcvXT.isStopping or _rcvXT.isCanceling):
                     logif._LogErrorEC(_EFwErrorCode.UE_00205, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XcoMsgMgrImpl_TID_020).format(_midPart, rcvID_))
                     return _failedTuple
                 if not _rcvXT.taskProfile.isExternalQueueEnabled:

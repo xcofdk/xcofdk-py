@@ -335,7 +335,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                 _bErr = True
             else:
                 if rblType_.isFwMainRunnable:
-                    _bErr =         not self.__ag.isProvidingRunCeaseIteration
+                    _bErr =          not self.__ag.isProvidingRunCeaseIteration
                     _bErr = _bErr or not self.__ag.isProvidingPrepareCeasing
                     _bErr = _bErr or not self.__ag.isProvidingProcFwcErrorHandlerCallback
                     if _bErr:
@@ -776,6 +776,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         if not self.isRunning:
             return _EExecutionCmdID.Stop()
         if not self.__ag.isProvidingOnTimeoutExpired:
+            _midPart = _ERblApiFuncTag.eRFTOnTimeoutExpired.functionName
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00100)
             return _EExecutionCmdID.Abort()
 
@@ -1028,7 +1029,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
             _bExtQueue = _extQueue is not None
 
             if _bIntQueue != self.isProvidingInternalQueue or _bExtQueue != self.isProvidingExternalQueue:
-                _bNOT_COMPACT = False
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00109)
                 return
 
@@ -1128,8 +1128,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
         if not res.isFeasible:
             if errLog_ is not None:
-                _bOwnErr = errLog_.IsMyTaskError(self.__taskID)
-                if _bOwnErr:
+                if errLog_.IsMyTaskError(self.__taskID):
                     errLog_._UpdateErrorImpact(_EErrorImpact.eNoImpactByOwnerCondition)
         if _frcv is not None:
             _frcv.CleanUp()
@@ -1273,7 +1272,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
         try:
             self._RblSetTaskXPhase(_ETaskXPhaseID.eFwHandling)
-
             self.__ExecutePreRun(semStart_)
             if self.isRunning:
                 if _bInclSetup:
@@ -1305,6 +1303,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                                         self._RblSetTaskAContext(_ETaskApiContextID.eTeardown)
                                         self.__ExecuteTeardown()
                                         self._RblSetTaskAContext(_ETaskApiContextID.eDontCare)
+
                                         self.__NotifyRunProgress(_ERunProgressID.eExecuteTeardownDone)
 
                 if not self._isAborting:
@@ -1322,16 +1321,15 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         finally:
             if self._isInvalid:
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00114)
-
             else:
                 if not self._isTerminating:
                     if _caughtXcp:
-                        st = _TaskState._EState.eProcessingAborted
+                        _st = _TaskState._EState.eProcessingAborted
                     else:
-                        st = _TaskState._EState.eProcessingStopped
+                        _st = _TaskState._EState.eProcessingStopped
 
                     vlogif._LogOEC(True, _EFwErrorCode.VFE_00565)
-                    self._SetTaskState(st)
+                    self._SetTaskState(_st)
 
                 _semStop = None
                 with self.__ft._tstMutex:
@@ -1346,7 +1344,9 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                     if self.__t.isXTaskRunnable:
                         if self.__xp.isIncludingTeardownExecutable:
                             self._PcGetTTaskMgr()._DetachTask(self.__ft)
+
                 self.__PreProcessCeaseMode()
+
                 self.__ProcessCeaseMode()
 
     def _ExecuteTeardown(self) -> _EExecutionCmdID:
@@ -1356,7 +1356,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
     def _CheckNotifyLcFailure(self):
         if self._isInvalid:
-            return
+            return False
 
         _cid = self.__t.toLcCompID
 
@@ -1371,9 +1371,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         if _curEE is not None:
             _curEE = _curEE._currentErrorEntry
 
-        if _curEE is None:
-            pass
-        elif _curEE.isFatalError:
+        if (_curEE is not None) and _curEE.isFatalError:
             _frc = _curEE
             _myMtx = None if _frc is None else _frc._LockInstance()
             if _frc is not None:
@@ -1404,7 +1402,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
             else:
                 res = True
                 self._PcNotifyLcFailure(_cid, _frcClone, atask_=self.__ft)
-
                 _frc._UpdateErrorImpact(_EErrorImpact.eNoImpactByFrcLinkage)
 
             if _myMtx is not None:
@@ -1597,8 +1594,8 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         return _xres
 
     def __ExecutePreRun(self, semStart_ : _BinarySemaphore) -> _EExecutionCmdID:
-        _bCheckOK = True
-        _drvTask = self.__ft
+        _bCheckOK   = True
+        _drvTask    = self.__ft
         _bEnclHThrd = False if _drvTask is None else _drvTask.isEnclosingPyThread
 
         if _drvTask is None:
@@ -1606,6 +1603,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00122)
 
         elif (self.taskError is None) or self.taskError.isFatalError or self.taskError.isNoImpactFatalErrorDueToFrcLinkage:
+            _bCheckOK = False
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00124)
 
         elif _bEnclHThrd and (semStart_ is not None):
@@ -1632,12 +1630,10 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         if _bCheckOK:
             if not self.__isErrorFree:
                 self.taskError.ClearError()
-
         _xres = self.__EvaluateExecResult(xres_=_bCheckOK, bCheckBefore_=True, abortState_=_TaskState._EState.ePreRunAborted)
 
         if semStart_ is not None:
             semStart_.Give()
-
         return _xres
 
     def __ExecuteSetup(self):
@@ -1653,7 +1649,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
         if self.__xp.isIncludingTeardownExecutable:
             self.__ClearCurUserError()
-
             _xtor = self.__xtors._GetApiExecutor(_ERblApiFuncTag.eRFTTearDownExecutable)
             _xres = self.__EvaluateExecResult(executor_=_xtor, bCheckBefore_=False, abortState_=_TaskState._EState.eTeardownAborted)
         return _xres
@@ -1661,7 +1656,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
     def __ExecuteRun(self) -> _EExecutionCmdID:
         if self.__xp.isIncludingCustomManagedExternalQueue:
             return self.__ExecuteCustomManagedExtQueue()
-
         if self.__xp.isIncludingAutoManagedExternalQueue:
             return self.__ExecuteAutoManagedExtQueue(bCombinedManaged_=False)
 
@@ -1698,19 +1692,16 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
                     if _bInclCustomManagedIntQueueByRunXtbl:
                         _xres = self.__ExecuteCustomManagedIntQueue()
-
                         if not _xres.isContinue:
                             break
 
                     if _bInclAutoManagedIntQueueByRunXtbl:
                         _xres = self.__ExecuteAutoManagedIntQueue()
-
                         if not _xres.isContinue:
                             break
 
                     if _bInclAutoManagedExtQueueByRunXtbl:
                         _xres = self.__ExecuteAutoManagedExtQueue(bCombinedManaged_=True)
-
                         if not _xres.isContinue:
                             break
 
@@ -1737,13 +1728,11 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
             finally:
                 if not _xres.isContinue:
                     _bBreak = True
-
                 elif _runCycleMS == 0:
                     _xres = _EExecutionCmdID.Stop()
                     if self.isRunning:
                         self._SetTaskState(_TaskState._EState.eProcessingStopped)
                     _bBreak = True
-
                 else:
                     _TaskUtil.SleepMS(_runCycleMS)
 
@@ -2051,7 +2040,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                     if abortState_ is None:
                         abortState_ = _TaskState._EState.eProcessingAborted
                     _nst = abortState_
-
             else:
                 if self.isRunning or self._isPendingStopRequest or self._isPendingCancelRequest:
                     _bCancel = res.isCancel
@@ -2130,16 +2118,16 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
             if not (self._isAborting or self._isInLcCeaseMode):
                 if not bCaughtByApiExecutor_:
-                    _eProcRes = self._ProcErrors()
+                    _procRes = self._ProcErrors()
 
-                    if not _eProcRes.isContinue:
-                        if _eProcRes.isStop:
+                    if not _procRes.isContinue:
+                        if _procRes.isStop:
                             _nts = _TaskState._EState.eProcessingAborted
                         else:
-                            if _eProcRes.isStop and self._isCanceling:
-                               _eProcRes = _EExecutionCmdID.Cancel()
+                            if _procRes.isStop and self._isCanceling:
+                               _procRes = _EExecutionCmdID.Cancel()
 
-                            _nts = _TaskState._EState.eProcessingCanceled if _eProcRes.isCancel else _TaskState._EState.eProcessingStopped
+                            _nts = _TaskState._EState.eProcessingCanceled if _procRes.isCancel else _TaskState._EState.eProcessingStopped
                         self._SetTaskState(_nts)
 
             if not self.isRunning:
@@ -2155,8 +2143,7 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
     def __CheckMutuallyExclusiveAPI(self) -> bool:
         res = True
 
-        _bNOT_COMPACT = False
-        _tname        = type(self).__name__
+        _tname = type(self).__name__
 
         _bProvidingRunExecutable        = self.__ag.isProvidingRunExecutable
         _bProvidingProcessInternalMsg   = self.__ag.isProvidingProcessInternalMsg
@@ -2167,15 +2154,12 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         if _bProvidingProcessInternalMsg and _bProvidingProcessInternalQueue:
             res = False
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00127)
-
         elif _bProvidingProcessExternalMsg and _bProvidingProcessExternalQueue:
             res = False
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00128)
-
         elif _bProvidingRunExecutable and _bProvidingProcessExternalQueue:
             res = False
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00129)
-
         elif not (_bProvidingRunExecutable or _bProvidingProcessExternalQueue or _bProvidingProcessExternalMsg):
             res = False
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00130)
@@ -2199,7 +2183,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         if self.isProvidingCustomManagedExternalQueue:
             _sid = _ERblExecStepID.eCustomManagedExternalQueue
             _dsid[_sid] = True
-
         else:
             _sid = _ERblExecStepID.eRunExecutable
             _dsid[_sid] = True
@@ -2282,7 +2265,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                 _bAborting = self.isAborting
                 if not _lcMon.isLcShutdownEnabled:
                     _lcMon._EnableCoordinatedShutdown(bManagedByMR_=not _bAborting)
-
                 if not self._isInLcCeaseMode:
                     self._CreateCeaseTLB(bEnding_=_bAborting)
 
@@ -2309,20 +2291,14 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                 return
 
         _eCurCS = self.__lcCeaseState
-
         if _eCurCS.isPrepareCeasing:
             self.__PrepareDefaultCeasing()
-
             _eCurCS = self.__lcCeaseState
-
         if _eCurCS.isEnterCeasing:
             self.__EnterDefaultCeasing()
-
             _eCurCS = self.__lcCeaseState
-
         if _eCurCS.isEndingCease:
             self.__ProcessLeavingCease()
-
             _eCurCS = self.__lcCeaseState
 
         if not _eCurCS.isDeceased:
@@ -2343,7 +2319,6 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
 
         if _bCP:
             self.__ag.prepareCeasing()
-
         else:
             while True:
                 _ctlb = self._lcCeaseTLB
@@ -2356,13 +2331,12 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
                 _ctlb = self._lcCeaseTLB
                 if _ctlb is None:
                     return
-
                 if not _ctlb.isCoordinatedShutdownRunning:
                     self._lcCeaseTLB.UpdateCeaseState(True)
                     break
-
                 if _ctlb._isCeasingGateOpened:
                     break
+
             self._lcCeaseTLB.HopToNextCeaseState(bEnding_=self._isAborting)
 
     def __EnterDefaultCeasing(self):
@@ -2421,10 +2395,8 @@ class _AbsRunnable(_IDispAgent, _PcErrHandler, _AbsFwXUnit):
         _eCurCS = self.__lcCeaseState
         if not self._lcCeaseTLB.isEndingCease:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00134)
-
             if self._lcCeaseTLB.isDeceased:
                 return
-
             self._lcCeaseTLB.UpdateCeaseState(True)
 
         while True:

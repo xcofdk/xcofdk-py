@@ -11,7 +11,7 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
-
+from typing import Union
 
 # ------------------------------------------------------------------------------
 # Interface
@@ -40,7 +40,7 @@ class IPayload:
           classes if it is supposed to represent the usual funtionality expected
           from a container type maintaining data on commonly known key-value
           mechanism. Data items managed/maintained by the container are generall
-          refered to as 'parameters'.
+          referred to as 'parameters'.
 
           Note that derived classes are free to just ignore this group if they
           wish to replace it with their own data structure organization as
@@ -147,7 +147,7 @@ class IPayload:
         pass
 
 
-    def DetachContainer(self):
+    def DetachContainer(self) -> Union[dict, None]:
         """
         Request to detach the underlying container (if any) of this instance.
 
@@ -166,7 +166,7 @@ class IPayload:
     # SerDes API
     # ------------------------------------------------------------------------------
     @property
-    def isMarshalingRequired(self):
+    def isMarshalingRequired(self) -> bool:
         """
         Getter property stating whether marshaling of this instance is expected.
 

@@ -157,16 +157,16 @@ class _FwSOptionsImpl(_ProtAbsSlotsObject):
         return None if self.__isInvalid else self.__pns.log_level
 
     @property
-    def _fwLogLevel(self) -> str:
-        return None if self.__isInvalid else self.__pns.fw_log_level
-
-    @property
     def _userConfigFile(self) -> str:
         return None
 
     @property
     def _fwwCustomConfigFile(self) -> str:
         return None
+
+    @property
+    def _fwLogLevel(self) -> str:
+        return None if self.__isInvalid else self.__pns.fw_log_level
 
     @property
     def _isFwDieModeDisabled(self) -> bool:

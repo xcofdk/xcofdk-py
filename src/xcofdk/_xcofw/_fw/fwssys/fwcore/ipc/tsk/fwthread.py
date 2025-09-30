@@ -542,7 +542,6 @@ class _FwThread(_AbsFwTask):
 
         if (self._lcDynTLB is not None) and self._lcDynTLB.isCoordinatedShutdownRunning:
             return False
-
         with self.__ma:
             _oppc = tskOpPCheck_
             if _oppc is None:
@@ -861,7 +860,6 @@ class _FwThread(_AbsFwTask):
         if self.__ma is not None:
             self.__ma.CleanUp()
             self.__ma = None
-
         self.__md.CleanUp()
         self.__md = None
 
@@ -870,14 +868,8 @@ class _FwThread(_AbsFwTask):
             return False
         if self._isInLcCeaseMode:
             return False
-
-        _bOwnErr  = errLog_.IsMyTaskError(self.dtaskUID)
-        _teKind   = _FwTDbEngine.GetText(_EFwTextID.eMisc_TE) if _bOwnErr else _FwTDbEngine.GetText(_EFwTextID.eMisc_FTE)
-        _tailPart = '{}[{}:{}]:\n\t{}'.format(_teKind, errLog_.uniqueID, errLog_.errorImpact.compactName, errLog_.shortMessage)
-
         if self.isAborting:
             return False
-
         res = self._AddError(errLog_)
         return res
 
@@ -900,7 +892,6 @@ class _FwThread(_AbsFwTask):
                     if self.__isReturnedXCmdAbort:
                         _tstate = _TaskState._EState.eFailedByXCmdReturn
                         newState_ = _tstate
-
             if newState_ != res:
                 _utc   = None if self.__utr is None else self.__utr._utaskConn
                 _lcCID = self._GetLcCompID()
@@ -908,15 +899,12 @@ class _FwThread(_AbsFwTask):
                 if _utc is not None:
                     if newState_.isFailedByXCmdReturn:
                         self._CheckNotifyLcFailure()
-
                 res = _AbsFwTask._SetGetTaskState(self, newState_)
 
                 if res != newState_:
                     vlogif._LogOEC(True, _EFwErrorCode.VFE_00220)
-
                 elif _utc is not None:
                     _utc._UpdateUTD(self)
-
                     if newState_.isTerminated:
                         if newState_.isFailed:
                             pass
@@ -941,7 +929,6 @@ class _FwThread(_AbsFwTask):
         _curEE = self.taskError
         if _curEE is not None:
             _curEE = _curEE._currentErrorEntry
-
         if _curEE is None:
             pass
         elif _curEE.isFatalError:
@@ -975,7 +962,6 @@ class _FwThread(_AbsFwTask):
             else:
                 res = True
                 self._PcNotifyLcFailure(_myCID, _frcClone, atask_=self)
-
                 _frc._UpdateErrorImpact(_EErrorImpact.eNoImpactByFrcLinkage)
 
             if _myMtx is not None:
@@ -1005,7 +991,6 @@ class _FwThread(_AbsFwTask):
         if not (_hdr.typeID.isTIntraProcess and (_hdr.channelID.isChInterTask or _hdr.channelID.isChIntraTask)):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00949)
             return False
-
         if _hdr.isInternalMsg:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00950)
             return False
@@ -1069,8 +1054,7 @@ class _FwThread(_AbsFwTask):
             res = _EUTaskApiFuncTag.AddApiFuncTag(eApiMask_=res, apiFTag_=_EUTaskApiFuncTag.eXFTSetUpXTask)
 
         if not _utp.isTeardownPhaseEnabled:
-            _fid = _EUTaskApiFuncTag.eXFTTearDownXTask
-            res = _EUTaskApiFuncTag.AddApiFuncTag(eApiMask_=res, apiFTag_=_fid)
+            res = _EUTaskApiFuncTag.AddApiFuncTag(eApiMask_=res, apiFTag_=_EUTaskApiFuncTag.eXFTTearDownXTask)
         return res
 
     def __UpdateCeaseTLB(self, bEnding_ : bool):
@@ -1104,9 +1088,11 @@ class _FwThread(_AbsFwTask):
                 if (_tnid is None) and _bNIDSupported:
                     _tnid = self.dHThrd.native_id
                 self.taskBadge._UpdateRuntimeIDs(threadUID_=_tuid, threadNID_=_tnid)
+
         self._CheckSetTaskState(_TaskState._EState.eRunning)
 
         _bXT = self.taskBadge.isDrivingXTask
+
         _myArgs    = None
         _myKwargs  = None
         _myThrdTgt = None
@@ -1179,7 +1165,6 @@ class _FwThread(_AbsFwTask):
         except _XcoXcpRootBase as _xcp:
             _caughtXcp = True
             self.__HandleException(_xcp, bCaughtByApiExecutor_=False)
-
         except BaseException as _xcp:
             _caughtXcp = True
             _xcp = _XcoBaseException(_xcp, tb_=logif._GetFormattedTraceback())
@@ -1275,7 +1260,6 @@ class _FwThread(_AbsFwTask):
 
             except _XcoXcpRootBase as _xcp:
                 _xres = self.__HandleException(_xcp, bCaughtByApiExecutor_=False)
-
             except BaseException as _xcp:
                 _xcp  = _XcoBaseException(_xcp, tb_=logif._GetFormattedTraceback())
                 _xres = self.__HandleException(_xcp, bCaughtByApiExecutor_=False)
@@ -1330,13 +1314,11 @@ class _FwThread(_AbsFwTask):
                     res = self._PcOnLcPreShutdownDetected()
                 elif _newMode.isLcShutdown:
                     res = self._PcOnLcShutdownDetected()
-
         if not res.isContinue:
             pass
         else:
             if executor_ is None:
                 res = _EExecutionCmdID.ConvertFrom(xres_)
-
                 if res.isStop and self.isCanceling:
                     res = _EExecutionCmdID.Cancel()
             else:
@@ -1379,7 +1361,6 @@ class _FwThread(_AbsFwTask):
                 if self.isRunning or self.isPendingStopRequest or self.isPendingCancelRequest:
                     _bCancel = res.isCancel
                     _nst = _TaskState._EState.eProcessingCanceled if _bCancel else _TaskState._EState.eProcessingStopped
-
             if _nst is not None:
                 self._CheckSetTaskState(_nst)
         return res
@@ -1417,7 +1398,6 @@ class _FwThread(_AbsFwTask):
 
         if _ret.isContinue and self._isInLcCeaseMode:
             _ret = _EExecutionCmdID.Stop()
-
         if not _ret.isContinue:
             res = _ETaskSelfCheckResultID.eScrAbort if _ret.isAbort else _ETaskSelfCheckResultID.eScrStop
             self._CheckSetTaskState(_TaskState._EState.eProcessingStopped)
@@ -1442,7 +1422,6 @@ class _FwThread(_AbsFwTask):
 
                     if xcp_.shortMessage == _xmlrMsg:
                         return _EExecutionCmdID.MapExecState2ExecCmdID(self)
-
             if self.isAborting:
                 pass
             elif _xbx is not None:
@@ -1452,16 +1431,16 @@ class _FwThread(_AbsFwTask):
 
             if not self.isAborting:
                 if not bCaughtByApiExecutor_:
-                    _eProcRes = self._ProcErrors()
+                    _procRes = self._ProcErrors()
 
-                    if not _eProcRes.isContinue:
-                        if _eProcRes.isAbort:
+                    if not _procRes.isContinue:
+                        if _procRes.isAbort:
                             _nst = _TaskState._EState.eProcessingAborted
                         else:
-                            if _eProcRes.isStop and self.isCanceling:
-                                _eProcRes = _EExecutionCmdID.Cancel()
+                            if _procRes.isStop and self.isCanceling:
+                                _procRes = _EExecutionCmdID.Cancel()
 
-                            _nst = _TaskState._EState.eProcessingCanceled if _eProcRes.isCancel else _TaskState._EState.eProcessingStopped
+                            _nst = _TaskState._EState.eProcessingCanceled if _procRes.isCancel else _TaskState._EState.eProcessingStopped
                         self._CheckSetTaskState(_nst)
 
             if not self.isRunning:
@@ -1501,16 +1480,8 @@ class _FwThread(_AbsFwTask):
 
         if not res.isFeasible:
             if errLog_ is not None:
-                _bOwnErr   = errLog_.IsMyTaskError(self.dtaskUID)
-
-                _teKind   = _FwTDbEngine.GetText(_EFwTextID.eMisc_TE) if _bOwnErr else _FwTDbEngine.GetText(_EFwTextID.eMisc_FTE)
-                _tailPart = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_Shared_TID_003).format(_teKind, errLog_.uniqueID, errLog_.errorImpact.compactName, errLog_.shortMessage)
-
-                if _bOwnErr:
+                if errLog_.IsMyTaskError(self.dtaskUID):
                     errLog_._UpdateErrorImpact(_EErrorImpact.eNoImpactByOwnerCondition)
-            else:
-                _tailPart = _CommonDefines._CHAR_SIGN_DOT
-
         if _frcv is not None:
             _frcv.CleanUp()
         return res
@@ -1620,7 +1591,6 @@ class _FwThread(_AbsFwTask):
             return
 
         _eCurCS = self.__lcCeaseState
-
         if _eCurCS.isPrepareCeasing:
             self.__PrepareDefaultCeasing()
             _eCurCS = self.__lcCeaseState
@@ -1657,11 +1627,9 @@ class _FwThread(_AbsFwTask):
                 _ctlb = self._lcCeaseTLB
                 if _ctlb is None:
                     return
-
                 if not _ctlb.isCoordinatedShutdownRunning:
                     self._lcCeaseTLB.UpdateCeaseState(True)
                     break
-
                 if _ctlb._isCeasingGateOpened:
                     break
 
@@ -1690,11 +1658,9 @@ class _FwThread(_AbsFwTask):
 
             if self._isInvalid:
                 break
-
             if not self._lcCeaseTLB.isCeasing:
                 self._lcCeaseTLB.UpdateCeaseState(True)
                 break
-
             if not _bPreShutdownPassed:
                 if self._lcCeaseTLB._isPreShutdownGateOpened:
                     _bPreShutdownPassed = True
@@ -1707,7 +1673,6 @@ class _FwThread(_AbsFwTask):
 
             if self._lcCeaseTLB._isShutdownGateOpened:
                 break
-
         if self._lcCeaseTLB is not None:
             self._lcCeaseTLB.HopToNextCeaseState(bEnding_=self.isAborting)
 
@@ -1718,10 +1683,8 @@ class _FwThread(_AbsFwTask):
         _eCurCS = self.__lcCeaseState
         if not self._lcCeaseTLB.isEndingCease:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00235)
-
             if self._lcCeaseTLB.isDeceased:
                 return
-
             self._lcCeaseTLB.UpdateCeaseState(True)
 
         while True:
@@ -1731,14 +1694,12 @@ class _FwThread(_AbsFwTask):
             self._lcCeaseTLB.IncrementCeaseAliveCounter()
 
             _TaskUtil.SleepMS(self.xCard.cyclicCeaseTimespanMS)
-
             if self._isInvalid:
                 break
 
             _eCSR = self._lcCeaseTLB.curShutdownRequest
             if (_eCSR is None) or _eCSR.isShutdown:
                 break
-
             continue
 
         if self._lcCeaseTLB is not None:

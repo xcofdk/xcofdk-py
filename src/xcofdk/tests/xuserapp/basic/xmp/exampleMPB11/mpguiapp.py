@@ -86,6 +86,9 @@ def Main(cmdLineOpts_ : CLOptions):
         - _CheckSetProcessStartMode()
     """
 
+    # optional: disable subsystem xmsg
+    rtecfg.RtePolicyDisableSubSystemMessaging()
+
     # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()

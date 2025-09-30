@@ -11,7 +11,7 @@ from enum   import IntFlag
 from enum   import unique
 from typing import Union
 
-from .fwrteconfig import _FwRteConfig
+from .fwrtecfg.fwrteconfig import _FwRteConfig
 
 class _FwSubsysCoding:
     @unique
@@ -84,15 +84,15 @@ class _FwSubsysCoding:
 
     @staticmethod
     def IsSubsysXMsgEnabled():
-        return not _FwSubsysCoding.__RTE_CFG._isSubSysXMsgDisabled
+        return not _FwSubsysCoding.__RTE_CFG._isSubSystemMessagingDisabled
 
     @staticmethod
     def IsSubsysXmpEnabled():
-        return not _FwSubsysCoding.__RTE_CFG._isSubSysXmpDisabled
+        return not _FwSubsysCoding.__RTE_CFG._isSubSystemMultiProcessingDisabled
 
     @staticmethod
     def IsSubsysXmpXcpTrackingDisabled():
-        return _FwSubsysCoding.__RTE_CFG._isSubSysXmpXcpTrackingDisabled
+        return _FwSubsysCoding.__RTE_CFG._isExceptionTrackingOfChildProcessesDisabled
 
     @staticmethod
     def IsSubsysTmrConfigured():

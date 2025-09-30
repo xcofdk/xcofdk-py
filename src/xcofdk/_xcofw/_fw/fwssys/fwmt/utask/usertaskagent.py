@@ -262,11 +262,7 @@ class _UserTaskAgent(_IUTAgent):
 
     @override
     def ToString(self) -> str:
-        if self.__isInvalid:
-            res = _CommonDefines._STR_EMPTY
-        else:
-            res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_003).format(self.__ut._taskUID, self.__ut._taskAliasName)
-        return res
+        return _CommonDefines._STR_EMPTY if self.__isInvalid else self.__ut._ToString()
 
     @property
     def __isInvalid(self) -> bool:

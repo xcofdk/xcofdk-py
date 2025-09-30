@@ -50,12 +50,12 @@ class _AbsFwService(_AbsRunnable):
             pass
 
         @staticmethod
-        def _IsDefinedFws(fwSID_ :  _EFwsID):
-            return _AbsFwService._FwsTable.__IsValidRequest(fwSID_, bWarnOnly_=True)
+        def _IsDefinedFws(fwSID_ :  _EFwsID, bWarn_ =False):
+            return _AbsFwService._FwsTable.__IsValidRequest(fwSID_, bWarnOnly_=True if bWarn_ else None)
 
         @staticmethod
         def _IsActiveFws(fwSID_ :  _EFwsID):
-            res = _AbsFwService._FwsTable._IsDefinedFws(fwSID_)
+            res = _AbsFwService._FwsTable._IsDefinedFws(fwSID_, bWarn_=True)
             res = res and (_AbsFwService._FwsTable._GetFwsInstance(fwSID_) is not None)
             return res
 
@@ -116,7 +116,7 @@ class _AbsFwService(_AbsRunnable):
                 _tbl = dict()
 
                 if lstFwcIDs_ is None:
-                    lstFwcIDs_ = [_mm for _nn, _mm in  _EFwsID.__members__.items()]
+                    lstFwcIDs_ = [ _mm for _nn, _mm in  _EFwsID.__members__.items() ]
 
                 for _ee in lstFwcIDs_:
                     if not isinstance(_ee,  _EFwsID):
@@ -126,7 +126,7 @@ class _AbsFwService(_AbsRunnable):
                 _AbsFwService._FwsTable.__tbl = _tbl
 
         @staticmethod
-        def __IsValidRequest(fwSID_ :  _EFwsID, bWarnOnly_ =False):
+        def __IsValidRequest(fwSID_ :  _EFwsID, bWarnOnly_ : bool =None):
             res = True
             if not isinstance(fwSID_,  _EFwsID):
                 res = False
@@ -135,10 +135,9 @@ class _AbsFwService(_AbsRunnable):
                 _tbl = _AbsFwService._FwsTable.__tbl
                 if _tbl is None:
                     res = False
-                else:
-                    _kk = fwSID_.value
-                    if _kk not in _tbl:
-                        res = False
+                elif fwSID_.value not in _tbl:
+                    res = False
+                    if bWarnOnly_ is not None:
                         if not bWarnOnly_:
                             vlogif._LogOEC(True, _EFwErrorCode.VFE_00156)
             return res
@@ -169,7 +168,7 @@ class _AbsFwService(_AbsRunnable):
         if _xc is None:
             _xc = _TaskXCard()
 
-        numActiveOLD = _AbsFwService.GetActiveFwsNum()
+        _oldNumActive = _AbsFwService.GetActiveFwsNum()
         _AbsRunnable.__init__(self, rblType_=rblType_, utaskConn_=None , rblXM_=rblXM_ , runLogAlert_=runLogAlert_, txCard_=_xc)
         if txCard_ is None:
             _xc.CleanUp()
@@ -182,7 +181,7 @@ class _AbsFwService(_AbsRunnable):
             _AbsFwService._FwsTable._SetFwsInst(_sid, self)
 
             _bOK =          _AbsFwService._GetFwsInstance(_sid) is not None
-            _bOK = _bOK and (_AbsFwService.GetActiveFwsNum() == numActiveOLD+1)
+            _bOK = _bOK and (_AbsFwService.GetActiveFwsNum() == _oldNumActive+1)
             if not _bOK:
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00160)
                 self.CleanUp()
@@ -190,8 +189,8 @@ class _AbsFwService(_AbsRunnable):
                 self.__sid = _sid
 
     @staticmethod
-    def IsDefinedFws(fwSID_:  _EFwsID):
-        return _AbsFwService._FwsTable._IsDefinedFws(fwSID_)
+    def IsDefinedFws(fwSID_:  _EFwsID, bWarn_ =False):
+        return _AbsFwService._FwsTable._IsDefinedFws(fwSID_, bWarn_=bWarn_)
 
     @staticmethod
     def IsActiveFws(fwSID_:  _EFwsID):
@@ -236,6 +235,8 @@ class _AbsFwService(_AbsRunnable):
 
     def _ToString(self, bVerbose_ =False, annex_ : str =None):
         res = _AbsRunnable._ToString(self, not bVerbose_)
+        if (res is not None) and (annex_ is not None):
+            res += annex_
         return res
 
     def _CleanUp(self):

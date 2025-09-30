@@ -188,7 +188,6 @@ class _FwTask(_AbsFwTask):
         if _rbl._rblTask is None:
             self.CleanUp()
             return
-
         if self.__tp.isAutoStartEnclHThrdEnabled:
             self.__SyncStart()
 
@@ -322,7 +321,7 @@ class _FwTask(_AbsFwTask):
             try:
                 _TaskUtil._StartHThread(self.dHThrd)
             except Exception as _xcp:
-                print(f'>>>[_StartTask:{self.dHThrd.name}] Caught {type(_xcp).__name__} below:\n\t{_xcp}')
+                vlogif._LogOEC(True, _EFwErrorCode.VFE_00983)
 
             if _prvBid is not None:
                 curTask_._SetFwApiBookmark(_prvBid)
@@ -436,7 +435,6 @@ class _FwTask(_AbsFwTask):
 
             elif tskOpPCheck_ is None:
                 _oppc.CleanUp()
-
         _prvBid = None
         if self.taskBadge.isDrivingXTask:
             _prvBid = None if curTask_ is None else curTask_.fwApiBookmarkID
@@ -498,7 +496,6 @@ class _FwTask(_AbsFwTask):
 
         except _XcoXcpRootBase as _xcp:
             pass
-
         except KeyboardInterrupt:
             _tn  = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwTask_TID_002).format(_tn)
             _msg = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_KeyboardInterrupt).format(_lpf, _tn)
@@ -509,10 +506,8 @@ class _FwTask(_AbsFwTask):
         finally:
             if _prvBid is not None:
                 curTask_._SetFwApiBookmark(_prvBid)
-
             if _xcpCaught is not None:
                 logif._LogUnhandledXcoBaseXcpEC(_EFwErrorCode.FE_00019, _xcpCaught)
-
         if not res:
             if _bCSDRunning:
                 pass
@@ -622,7 +617,6 @@ class _FwTask(_AbsFwTask):
 
                 if res != newState_:
                     vlogif._LogOEC(True, _EFwErrorCode.VFE_00202)
-
                 elif _utc is not None:
                     _utc._UpdateUTD(self)
 

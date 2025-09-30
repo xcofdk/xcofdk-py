@@ -13,8 +13,6 @@ from _fw.fwssys.fwcore.logging.logdefines import _EErrorImpact
 from _fw.fwssys.fwcore.logging.logdefines import _LogErrorCode
 from _fw.fwssys.fwcore.lc.lcdefines       import _ELcCompID
 from _fw.fwssys.fwcore.types.commontypes  import _CommonDefines
-from _fw.fwssys.fwcore.types.commontypes  import _EColorCode
-from _fw.fwssys.fwcore.types.commontypes  import _TextStyle
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
@@ -59,8 +57,14 @@ class _LcFrcView:
         return None if self._isInvalid else self.__c.dtaskName
 
     @property
+    def errorMessage(self):
+        return None if self._isInvalid else self.__c.message
+
+    @property
     def errorCode(self):
-        return None if self._isInvalid else self.__c.errorCode
+        res = None if self._isInvalid else self.__c.errorCode
+        res = None if _LogErrorCode.IsAnonymousErrorCode(res) else res
+        return res
 
     @property
     def errorImpact(self) -> _EErrorImpact:
@@ -142,5 +146,4 @@ class _LcFrcView:
             res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_016).format(self.__c.shortMessage)
         else:
             res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_012).format(self.__c)
-        res = _TextStyle.ColorText(res, _EColorCode.RED)
         return res

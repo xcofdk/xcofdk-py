@@ -131,7 +131,7 @@ class _FwTaskProfile(_AbsFwProfile):
                     if _trm is not None:
                         _dictAttrs[_TRM_KEY] = _trm
                     if _rbl._rblType.isXTaskRunnable:
-                        _resm = _ETaskResFlag.GetRessourcesMask(False)
+                        _resm = _ETaskResFlag.GetRessourcesMask()
                         if not (_resm is None or _resm == _ETaskResFlag.eNone):
                             _dictAttrs[_RESM_KEY] = _resm
                     if (_sb is None) and not _rbl._rblType.isXTaskRunnable:
@@ -220,14 +220,6 @@ class _FwTaskProfile(_AbsFwProfile):
     @property
     def kwargs(self) -> dict:
         return self._GetProfileAttr(_FwTaskProfile._ATTR_KEY_KWARGS)
-
-    @property
-    def timerResource(self):
-        return None
-
-    @property
-    def timerProfile(self):
-        return None
 
     @property
     def internalQueue(self) -> _FwQueue:
@@ -381,9 +373,6 @@ class _FwTaskProfile(_AbsFwProfile):
             self.profileStatus = _AbsFwProfile._EValidationStatus.eValid
             rbl_._RblSetTaskProfile(self)
         return self.isValid
-
-    def AddResourceTimer(self, timerResource_):
-        return self.SetResources(rmask_=_ETaskResFlag.eTimer, timerResource_=timerResource_)
 
     def SetResources(self, rmask_ : _ETaskResFlag =None, timerResource_ =None):
         _rr =  self._GetProfileAttr(_FwTaskProfile._ATTR_KEY_RUNNABLE, ignoreStatus_=False)
@@ -549,7 +538,6 @@ class _FwTaskProfile(_AbsFwProfile):
                     return False
             elif rbl_._rblType.isXTaskRunnable:
                 _xqSize = _FwQueue.GetFiniteQueueDefaultSize()
-
             _bOnSizeBlockingXQ = not (rbl_.isProvidingAutoManagedExternalQueue and rbl_.isProvidingRunExecutable)
 
             if rbl_._rblType.isXTaskRunnable:

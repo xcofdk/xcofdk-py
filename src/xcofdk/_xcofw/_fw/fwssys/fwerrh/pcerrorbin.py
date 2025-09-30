@@ -45,8 +45,6 @@ class _PcErrorBin(_AbsSlotsObject):
 
     __slots__ = [ '__b' , '__ht' , '__bt' , '__ma' , '__f' , '__p' ]
 
-    __bAEBRC = True
-
     def __init__(self, ownerTID_ : int, binTID_ : int, ma_ : _Mutex, errorEntry_ : _ErrorLog):
         self.__b  = None
         self.__f  = None
@@ -56,24 +54,7 @@ class _PcErrorBin(_AbsSlotsObject):
         self.__ma = None
         super().__init__()
 
-        _bError = False
-        if _PcErrorBin.__bAEBRC:
-            if not isinstance(ownerTID_, int):
-                _bError = True
-                vlogif._LogOEC(True, _EFwErrorCode.VFE_00504)
-            elif not isinstance(binTID_, int):
-                _bError = True
-                vlogif._LogOEC(True, _EFwErrorCode.VFE_00505)
-            elif not isinstance(ma_, _Mutex):
-                _bError = True
-                vlogif._LogOEC(True, _EFwErrorCode.VFE_00506)
-
-        if _bError:
-            pass
-
-        elif not _PcErrorBin._IsRegistrableEE(ownerTID_, errorEntry_, binTID_=binTID_):
-            _bError = True
-
+        _bError = not _PcErrorBin._IsRegistrableEE(ownerTID_, errorEntry_, binTID_=binTID_)
         if _bError:
             self.CleanUp()
         else:
@@ -135,9 +116,7 @@ class _PcErrorBin(_AbsSlotsObject):
                         res = _PcErrorBin._EErrBinOpResult.eErrBinOpResultOverwriteError
                     else:
                         _bForceCleanup = False
-
                         _bForceCleanup = _bForceCleanup and self.isForeignBin
-
                         if _bForceCleanup:
                             self.__b._ForceCleanUp()
                         else:

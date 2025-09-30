@@ -49,6 +49,11 @@ from typing import Union
 
 from _fw.fwssys.fwctrl.fwapibase import _FwApiBase
 
+from .fwutil import LcFailure
+from .fwutil import IsFwAvailable
+from .fwutil import IsLcFailureFree
+from .fwutil import GetLcFailure
+
 from xcofdk.fwapi            import ITask
 from xcofdk.fwapi.xmp        import XProcess
 from xcofdk.fwapi.xmt.rctask import RCTask
@@ -69,7 +74,7 @@ from xcofdk.fwapi.xmt.rctask import GetCurTask
 # ------------------------------------------------------------------------------
 # Interface
 # ------------------------------------------------------------------------------
-def StartXcoFW(fwStartOptions_ : Union[list, str] =None) -> bool:
+def StartXcoFW(fwStartOptions_ : Union[str, List[str]] =None) -> bool:
     """
     Starts the runtime environment (RTE) of XCOFDK, also referred to as
     the framework.
@@ -78,7 +83,7 @@ def StartXcoFW(fwStartOptions_ : Union[list, str] =None) -> bool:
     -------------
         - fwStartOptions_ :
           None if the default for each start option shall be assumed,
-          a list of string literals or a space separated sequence of string
+          a space separated sequence of string literals or a list of string
           literals otherwise.
 
     Returns:
@@ -111,25 +116,25 @@ def StartXcoFW(fwStartOptions_ : Union[list, str] =None) -> bool:
            the specified framework log level will be ignored by the framework.
 
         c) --disable-log-timestamp :
-           defaulting to False, it disables/hides timestamp of the output of
-           submitted logs.
+           defaulting to False, it disables/hides the timestamp of the output
+           of submitted logs.
 
         d) --disable-log-highlighting :
-           defaulting to False, disables color highlighting of the output of
-           submitted logs.
+           defaulting to False, disables color highlighting of the console
+           output of submitted logs.
 
-           Color highlighting of log output is supported for Python versions 3.9
-           and higher. Useful usecase for supplying this option is whenever used
-           terminal/console program of the platform, e.g. Windows Commond Prompt,
-           does not support colored output to stdout/stderr.
+           Color highlighting of log output is supported for Python versions
+           3.9 and higher. Useful usecase for supplying this option is whenever
+           used terminal/console program of the platform, e.g. Windows Commond
+           Prompt 'cmd.exe', does not support colored output to stdout/stderr.
 
         e) --disable-log-callstack
-           defaulting to False, disables/hides callstack of fatal errors
+           defaulting to False, disables/hides the callstack of fatal errors
            (if any).
 
         f) --suppress-start-preamble
-           defaulting to False, it suppresses print output of framework's start
-           preamble.
+           defaulting to False, it suppresses the log output of framework's
+           start preamble.
 
            Also, whenever framework log lelve is set to 'error', this start
            option will be treated as if enabled.
@@ -152,7 +157,8 @@ def StartXcoFW(fwStartOptions_ : Union[list, str] =None) -> bool:
 
 def StopXcoFW() -> bool:
     """
-    Asynchronous request to stop the RTE of XCOFDK if it is running.
+    Asynchronous request to stop the RTE of the framework if it is (still)
+    running.
 
     Returns:
     ----------

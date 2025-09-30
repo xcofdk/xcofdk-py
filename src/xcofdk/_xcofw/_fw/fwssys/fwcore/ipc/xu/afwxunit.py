@@ -7,6 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
+from typing import Union
+
 from xcofdk.fwapi.xmt import ITaskProfile
 
 from _fw.fwssys.assys.ifs.ifxunit import _IXUnit
@@ -90,7 +92,7 @@ class _AbsFwXUnit(_IXUnit):
     def Cancel(self) -> bool:
         return self._Stop(bCancel_=True, bCleanupDriver_=True)
 
-    def Join(self, timeout_: [int, float] =None) -> bool:
+    def Join(self, timeout_: Union[int, float] =None) -> bool:
         return self._Join(timeout_=timeout_)
 
     def SelfCheck(self) -> bool:

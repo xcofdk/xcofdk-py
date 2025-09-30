@@ -7,8 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
-from enum     import auto
-from enum     import unique
+from enum import auto
+from enum import unique
 
 from _fw.fwssys.assys.ifs.tiflcmgr          import _TILcManager
 from _fw.fwssys.fwcore.logging.logif        import _CreateLogImplErrorEC
@@ -22,7 +22,6 @@ from _fw.fwssys.fwcore.ipc.sync.syncresbase import _PySemaphore
 from _fw.fwssys.fwcore.ipc.tsk.afwtask      import _AbsFwTask
 from _fw.fwssys.fwcore.ipc.tsk.taskutil     import _TaskUtil
 from _fw.fwssys.fwcore.ipc.tsk.taskutil     import _PyThread
-from _fw.fwssys.fwcore.lc.lcdefines         import _LcConfig
 from _fw.fwssys.fwcore.lc.lcdefines         import _ELcCompID
 from _fw.fwssys.fwcore.lc.lcxstate          import _LcFailure
 from _fw.fwssys.fwcore.lc.lcproxydefines    import _ELcSDRequest
@@ -126,7 +125,7 @@ class _LcGuard(_ILcGuard):
             self.__csdr = None
             self.__trsh = None
 
-    __slots__ = [ '__l' , '__h' , '__s' , '__mst' , '__st' , '__mi' , '__m' , '__md' , '__f' , '__msr' , '__a' , '__aa' , '__am' ]
+    __slots__ = [ '__l' , '__h' , '__s' , '__mst' , '__st' , '__mi' , '__m' , '__md' , '__f' , '__msr' , '__a' , '__aa' ]
 
     __LOG_ALERT_TIMESPAN_MS                   = 3000
     __LOG_ALERT_AA_TIMESPAN_MS                = 1000 
@@ -145,7 +144,6 @@ class _LcGuard(_ILcGuard):
         self.__m   = None
         self.__s   = None
         self.__aa  = None
-        self.__am  = None
         self.__mi  = None
         self.__md  = None
         self.__st  = None
@@ -400,7 +398,9 @@ class _LcGuard(_ILcGuard):
                 if atask_ is None:
                     atask_ = frcError_._taskInstance
                 self.__mi._TIFOnLcFailure(eFailedCompID_, frcError_, atask_=atask_, bPrvRequestReply_=not bInternalCall_)
+
         self.__l.release()
+
         return res
 
     def _GStart(self, semStartStop_ : _PySemaphore, lcMgrSetupRunner_):
@@ -412,12 +412,14 @@ class _LcGuard(_ILcGuard):
         elif not isinstance(semStartStop_, _PySemaphore):
             _iImplErr = _EFwErrorCode.FE_LCSF_043
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00355)
+
         if _iImplErr is not None:
             _LcFailure.CheckSetLcSetupFailure(_iImplErr)
             return False
 
+        _name      = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcGuard_TID_004)
         self.__s   = semStartStop_
-        self.__h   = _PyThread(group=None, target=self.__RunThrdTgt, args=(), kwargs={}, daemon=None)
+        self.__h   = _PyThread(group=None, target=self.__RunThrdTgt, name=_name, args=(), kwargs={}, daemon=None)
         self.__mst = _LcGuard._ELcGuardState.ePendingRun
         self.__msr = lcMgrSetupRunner_
 
@@ -475,7 +477,6 @@ class _LcGuard(_ILcGuard):
             self.__m   = None
             self.__s   = None
             self.__aa  = None
-            self.__am  = None
             self.__mi  = None
             self.__md  = None
             self.__st  = None
@@ -491,8 +492,8 @@ class _LcGuard(_ILcGuard):
 
         if not self.__ExecuteSetupRunner():
             return
-        _aliveCtr = self.__RunFull()
 
+        _aliveCtr = self.__RunFull()
         if self.__s is not None:
             self.__s.release()
             self.__s = None
@@ -529,7 +530,6 @@ class _LcGuard(_ILcGuard):
                 pass
             elif _lcm.isLcMonitorAlive:
                 self.__CheckLcMonAliveness(_aliveCtr)
-
             if _lcm.isLcShutdownEnabled:
                 self.__ExecuteShutdownSequence()
                 break
@@ -553,7 +553,6 @@ class _LcGuard(_ILcGuard):
             if not _lcm._isCoordinatedShutdownManagedByMR:
                 _bSdcME = _LcSDCoordinator(_lcm)
                 _bSdcME._ExecuteCoordinatedCeasingGate()
-
                 if _lcm.isCoordinatedShutdownRunning:
                     _bSdcME._ExecuteCoordinatedPreShutdownGate()
             else:
@@ -651,6 +650,7 @@ class _LcGuard(_ILcGuard):
         _frcError = _CreateLogImplErrorEC(_EFwErrorCode.FE_00376, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcGuard_TID_001).format(_missingMS))
 
         _lcm._EnableCoordinatedShutdown(bManagedByMR_=False)
+
         if _lcm._isCoordinatedShutdownManagedByMR:
             if _frcError is not None:
                 _frcError._UpdateErrorImpact(_EErrorImpact.eNoImpactByOwnerCondition)

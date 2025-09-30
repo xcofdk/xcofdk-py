@@ -13,12 +13,11 @@ def _GetFwTextDefines():
     res = {
           _EFwTextID.eInvalidText                                   : "INVALID_FWDB_TEXT"
 
-        , _EFwTextID.eMisc_TE                                       : "TE"
-        , _EFwTextID.eMisc_FTE                                      : "FTE"
         , _EFwTextID.eMisc_Main                                     : "main"
         , _EFwTextID.eMisc_Name                                     : "name"
         , _EFwTextID.eMisc_Task                                     : "task"
         , _EFwTextID.eMisc_User                                     : "user"
+        , _EFwTextID.eMisc_Sync                                     : "sync"
         , _EFwTextID.eMisc_Async                                    : "async"
         , _EFwTextID.eMisc_Fatal                                    : "fatal"
         , _EFwTextID.eMisc_Tasks                                    : "tasks"
@@ -35,8 +34,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eMisc_TNPrefix_Process                         : 'Prc_'
         , _EFwTextID.eMisc_TNPrefix_Runnable                        : 'Rbl'
 
-        , _EFwTextID.eMisc_ShutdownCoordinatorName_MR               : "MR"
-        , _EFwTextID.eMisc_ShutdownCoordinatorName_LcG              : "LcG"
         , _EFwTextID.eMisc_LcResultFailed                           : "FAILED"
         , _EFwTextID.eMisc_LcResultSuccess                          : "SUCCESS"
         , _EFwTextID.eMisc_VLogIF_VanillaLogPrefix                  : ">>VL<< "
@@ -48,7 +45,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eMisc_PyParserArgAction_Store                  : "store"
         , _EFwTextID.eMisc_PyParserArgAction_StoreTrue              : "store_true"
         , _EFwTextID.eMisc_PyParserArgAction_StoreFalse             : "store_false"
-        , _EFwTextID.eMisc_PyModuleName_DateTime                    : "datetime"
         , _EFwTextID.eMisc_QueueType_Internal                       : "internal"
         , _EFwTextID.eMisc_QueueType_External                       : "external"
 
@@ -147,6 +143,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eELcCompID_FwMain                          : "FwMain"
         , _EFwTextID.eELcCompID_FwDspr                          : "FwDspr"
         , _EFwTextID.eELcCompID_ProcMgr                         : "ProcMgr"
+        , _EFwTextID.eELcCompID_FwLogRD                         : "FwLogRD"
         , _EFwTextID.eELcCompID_TmrMgr                          : "TmrMgr"
         , _EFwTextID.eELcCompID_MainXTask                       : "XMainTask"
         , _EFwTextID.eELcCompID_FwRbl                           : "FwRbl"
@@ -259,16 +256,13 @@ def _GetFwTextDefines():
         , _EFwTextID.ePcErrorBin_ToString_07                : ", {}"
 
         , _EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_01       : "--:--:--.---"
-        , _EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_02       : "{:>06d}"
-        , _EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_03       : "{:>03d}"
-        , _EFwTextID.eTimeUtil_GetTimeStamp_FmrStr_04       : "%H:%M:%S."
         , _EFwTextID.eTimeParts_ToString_01                 : "{0:2d}d, {1:02d}:{2:02d}:{3:02d}.{4:03d}"
         , _EFwTextID.eTimeParts_ToString_02                 : "{0:02d}:{1:02d}:{2:02d}.{3:03d}"
         , _EFwTextID.eStopWatch_ToString_01                 : "ttStartUS={}"
         , _EFwTextID.eStopWatch_ToString_02                 : " , ttStopUS={}  , timeDelta={}"
         , _EFwTextID.eKpiLogBook_ToString_01                : "[{:<18s} .. {:>18s}] : {}"
 
-        , _EFwTextID.eLogMgr_ToString_01                    : "{}: (DM, XM, LL, ULL)=({}, {}, {}, {})\n"
+        , _EFwTextID.eLogMgr_ToString_01                    : "{}: (DM, XM, LL, ULL)=({}, {}, {}, {})"
         , _EFwTextID.eLogMgr_AddLog_FmtStr_01               : "[{}][{}] Printing exception below:\n\t{}"
         , _EFwTextID.eLogMgr_AddLog_FmtStr_02               : "[LogIF] Set up instance: {}"
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_01         : "Fatals("
@@ -277,7 +271,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_04         : "), Infos("
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_05         : " [LC] BEGIN:  LogIF-Summary  "
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_06         : "First fatal log occurred:\n{}"
-        , _EFwTextID.eLogMgr_PrintSummary_FmtStr_07         : "\nEND of first fatal log.\n"
+        , _EFwTextID.eLogMgr_PrintSummary_FmtStr_07         : "\nEND of first fatal log."
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_08         : "Done (maxLogTime="
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_09         : " ,  maxErrLogTime="
         , _EFwTextID.eLogMgr_PrintSummary_FmtStr_10         : " [LC] END:  LogIF-Summary  "
@@ -297,8 +291,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eVLogIF_VPrint_FmtStr_01               : "[{} v{}]"
         , _EFwTextID.eVLogIF_VPrint_FmtStr_03               : "[{} {}]"
         , _EFwTextID.eVLogIF_VPrint_FmtStr_04               : "{}[{}]{}"
-        , _EFwTextID.eVLogIF_SetVSystemExitStatus           : "Switched VSystemExitMode: from {} to {}"
-        , _EFwTextID.eVLogIF_ClearLogHistory                : "Cleared vlog history: #vlogCtr={}"
 
         , _EFwTextID.eFwCallable_ToString_01                : ", methodName={}"
 
@@ -321,7 +313,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLcStateImpl_ToString_02                                : "LcState[{}] :{}"
         , _EFwTextID.eLcStateImpl_ToString_03                                : "LcState :{}"
         , _EFwTextID.eLcStateImpl_ToString_04                                : "\n\tFRC error code    : {}"
-        , _EFwTextID.eLcStateImpl_UpdateLcState_FmtStr_01                    : "Updated LC state"
         , _EFwTextID.eLcStateImpl_UpdateLcState_PreCheckSetRequest_FmtStr_01 : "\n\tcurBM={}  compID={}  bSSF={}  stReq={}  frcErr={}  absTask={}"
 
         , _EFwTextID.eEUTaskXState_ToString_01             : "AtDetachTime"
@@ -373,19 +364,24 @@ def _GetFwTextDefines():
         , _EFwTextID.eFwRteConfig_ToString_02              : "enable-auto-stop"
         , _EFwTextID.eFwRteConfig_ToString_03              : "enable-terminal-mode"
         , _EFwTextID.eFwRteConfig_ToString_04              : "bypass-experimental-free-threading"
-        , _EFwTextID.eFwRteConfig_ToString_05              : "Error message caused by the last conflicting configuration attempt:\n\t{}"
+        , _EFwTextID.eFwRteConfig_ToString_05              : "Error message caused by the first conflicting configuration attempt:\n\t{}"
         , _EFwTextID.eFwRteConfig_ToString_06              : "enable-forced-auto-stop"
         , _EFwTextID.eFwRteConfig_ToString_07              : "(default)"
         , _EFwTextID.eFwRteConfig_ToString_08              : "disable-subsystem-messaging"
         , _EFwTextID.eFwRteConfig_ToString_09              : "disable-subsystem-multiprocessing"
         , _EFwTextID.eFwRteConfig_ToString_10              : "disable-exception-tracking-of-child-processes"
         , _EFwTextID.eFwRteConfig_ToString_11              : "  {:<46s} : {:<s}\n"
+        , _EFwTextID.eFwRteConfig_ToString_12              : "disable-log-redirection-console-sink"
+        , _EFwTextID.eFwRteConfig_ToString_13              : "enable-log-redirection-file-sink"
+        , _EFwTextID.eFwRteConfig_ToString_14              : "enable-log-redirection-tcp-sink"
 
         , _EFwTextID.eXCbCase_XCallback_ToString_001       : "generic - "
         , _EFwTextID.eXCbCase_XCallback_ToString_002       : "\n\t[XCallback] {}{:<10} : {}"
         , _EFwTextID.eXCbCase_ToString_001                 : "[XCbCase] bGeneric={} , {} callback(s):{}"
 
         , _EFwTextID.eFwsDispatcher_ToString_001           : '(#regCards)=({})'
+
+        , _EFwTextID.eFwsLogRD_ToString_001                : '(bHL={})'
 
         , _EFwTextID.eXProcessAgent_ToString_001           : "Process: UID={}  aliasName={}  name={}  PID={}  exitCode={}  done={}"
         , _EFwTextID.eXProcessAgent_ToString_002           : "{} ({})"
@@ -399,7 +395,6 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eLogMsg_Shared_TID_001          : "{} Deteced aborting {} state, will try to set fatal error accordingly as no one was set before."
         , _EFwTextID.eLogMsg_Shared_TID_002          : "{} 3-PhXF callback function (of {}-phase) returned ABORT."
-        , _EFwTextID.eLogMsg_Shared_TID_003          : " of {}[{}:{}] below:\n\t{}"
         , _EFwTextID.eLogMsg_Shared_TID_004          : "Label ID to be passed to must not be a list of labels: {}"
 
         , _EFwTextID.eFwConfig_TID_001               : "_xcofw/_fw/fwssys/fwcore"
@@ -450,7 +445,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_UserTask_TID_006        : "[UTsk] Found violation against singleton of class XMainTask which is created already."
         , _EFwTextID.eLogMsg_UserTask_TID_007        : "[UTsk] Expecting string object as task alias name to construct task instance, got {} instead."
         , _EFwTextID.eLogMsg_UserTask_TID_008        : "[UTsk] Ignoring empty string passed in as task alias name to construct task instance, assuming{} instead."
-        , _EFwTextID.eLogMsg_UserTask_TID_009        : "Alias name '{}' passed in to construct task instance does not represent a valid identifier."
         , _EFwTextID.eLogMsg_UserTask_TID_010        : "Found disabled internal queue acc. to passed in task profile, instance method '{}.{}' will be ignored."
         , _EFwTextID.eLogMsg_UserTask_TID_011        : "Missing mandatory instance method '{}.{}' of passed in object while construction of task instance."
         , _EFwTextID.eLogMsg_UserTask_TID_012        : "Found disabled external queue acc. to passed in task profile, instance method '{}.{}' will be ignored."
@@ -468,6 +462,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_UserTask_TID_026        : "[UTsk] Ignoring request to set current fatal error of task {} which is not current running task."
         , _EFwTextID.eLogMsg_UserTask_TID_027        : "[UTsk] Framework has encountered an LC failure, ignoring attempt to create new task instance."
         , _EFwTextID.eLogMsg_UserTask_TID_028        : "[UTsk] Coordinated shutdown is running, ignoring attempt to create new task instance."
+        , _EFwTextID.eLogMsg_UserTask_TID_029        : "Invalid alias name '{}' passed to construct task instance."
 
         , _EFwTextID.eLogMsg_UserTaskConn_TID_001    : "Framework is not available (yet/anymore), ignoring attempt to start {}."
         , _EFwTextID.eLogMsg_UserTaskConn_TID_002    : "Bad timeout object of type {} passed in for join {}."
@@ -496,8 +491,8 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XTaskPrfBase_TID_007    : "Expecting non-negative int/float value for cyclic run puase timespan of privileged task instances, got {} passed in."
         , _EFwTextID.eLogMsg_XTaskPrfBase_TID_009    : "Permission denied: Frozen task profile cannot be modified."
         , _EFwTextID.eLogMsg_XTaskPrfBase_TID_010    : "Detected configuration mismatch of task profile: runPhaseEnabled={} , externalQueueEnabled={} , blockingExternalQueue={}"
-        , _EFwTextID.eLogMsg_XTaskPrfBase_TID_011    : "Passed in alias name is not a valid Python identifier: {}"
         , _EFwTextID.eLogMsg_XTaskPrfBase_TID_012    : "Blocking external queue is not supported for synchronous tasks."
+        , _EFwTextID.eLogMsg_XTaskPrfBase_TID_013    : "Invalid alias name passed in : '{}'"
 
         , _EFwTextID.eLogMsg_XTaskPrfExt_TID_001     : "Bad/invalid task profile instance: {}"
         , _EFwTextID.eLogMsg_XTaskPrfExt_TID_002     : "Failed to assign by task profile instance: {}"
@@ -552,6 +547,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_FwsMain_TID_005         : "[LC][MRbl] Invalid list of stored FFEs."
         , _EFwTextID.eLogMsg_FwsMain_TID_006         : "[LC][MRbl] Unexpected non-empty list of stored FFEs: size={}"
         , _EFwTextID.eLogMsg_FwsMain_TID_007         : "[LC][MRbl] Finished coordinated shutdown."
+        , _EFwTextID.eLogMsg_FwsMain_TID_008         : "[LC][MRbl] Trying to set LC failure due to received own fatal error..."
 
         , _EFwTextID.eLogMsg_LcManager_TID_001       : "Retrieval of current task instance not possible (anymore) due to limited RTE mode."
         , _EFwTextID.eLogMsg_LcManager_TID_004       : "Done initial (resource) loading, consumed CPU time was: {}"
@@ -568,7 +564,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcManager_TID_020       : "[LC][LcMgr] Failed to create LcPxy."
         , _EFwTextID.eLogMsg_LcManager_TID_021       : "[LC][LcMgr] Failed to set LC state to {}."
         , _EFwTextID.eLogMsg_LcManager_TID_022       : "[LC][LcMgr] Failed to start LcG."
-        , _EFwTextID.eLogMsg_LcManager_TID_027       : "[LC][LcMgr] Unexpected state of RTE configuration."
+        , _EFwTextID.eLogMsg_LcManager_TID_027       : "[LC][LcMgr] Invalid RTE configuration."
         , _EFwTextID.eLogMsg_LcManager_TID_034       : "Expecting valid cmd line args object, got {} instead."
         , _EFwTextID.eLogMsg_LcManager_TID_035       : "Bad target LC scope object: {}."
         , _EFwTextID.eLogMsg_LcManager_TID_036       : "Target LC scope must be of an order higher than {}[={}]."
@@ -581,14 +577,14 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcManager_TID_044       : "{}Waiting for main task {} to terminate execution..."
         , _EFwTextID.eLogMsg_LcManager_TID_045       : "Retrieval of requested task instance {} not possible (anymore)."
         , _EFwTextID.eLogMsg_LcManager_TID_046       : "Requested task instance {} is not available or attached to the framework (anymore)."
-        , _EFwTextID.eLogMsg_LcManager_TID_050       : "Framework's RTE configuration policy 'forced-auto-stop' is enabled, waiting for first stop request to be submitted by the application before entering join phase.\nBelow task instance are still running right now:\n\t:\n\t{}"
+        , _EFwTextID.eLogMsg_LcManager_TID_050       : "Framework's RTE configuration policy 'forced-auto-stop' is enabled.\nWaiting for first stop request to be submitted by the application before entering join phase.\nBelow task instance are still running right now:\n\t:\n\t{}"
         , _EFwTextID.eLogMsg_LcManager_TID_051       : "Applying RTE configuration policy 'auto-stop' to stop framework..."
-        , _EFwTextID.eLogMsg_LcManager_TID_052       : "Framework's RTE configuration policy 'forced-auto-stop' is enabled, waiting for first stop request to be submitted by the application before entering join phase..."
+        , _EFwTextID.eLogMsg_LcManager_TID_052       : "Framework's RTE configuration policy 'forced-auto-stop' is enabled.\nWaiting for first stop request to be submitted by the application before entering join phase..."
         , _EFwTextID.eLogMsg_LcManager_TID_053       : "Framework's RTE configuration policy 'auto-stop' will take place after all tasks are stopped.\nBelow {} task(s) are currently running:\n\t{}"
-        , _EFwTextID.eLogMsg_LcManager_TID_054       : "Framework's RTE configuration policy 'terminal-mode' is enabled, waiting for first stop request to be submitted by the application before entering join phase..."
-        , _EFwTextID.eLogMsg_LcManager_TID_055       : "Framework's RTE configuration policy 'terminal-mode' is enabled, waiting for first stop request to be submitted by the application before entering join phase.\nBelow {} task(s) are currently running:\n\t{}"
+        , _EFwTextID.eLogMsg_LcManager_TID_054       : "Framework's RTE configuration policy 'terminal-mode' is enabled.\nWaiting for first stop request to be submitted by the application before entering join phase..."
+        , _EFwTextID.eLogMsg_LcManager_TID_055       : "Framework's RTE configuration policy 'terminal-mode' is enabled.\nWaiting for first stop request to be submitted by the application before entering join phase.\nBelow {} task(s) are currently running:\n\t{}"
         , _EFwTextID.eLogMsg_LcManager_TID_056       : "Detected no running task anymore, going to apply RTE configuration policy 'auto-stop', elapsed wait time was: {}"
-        , _EFwTextID.eLogMsg_LcManager_TID_057       : "Request to stop the framework has been submitted, stopping RTE configuration policy 'terminal-mode', elapsed wait time was: {}"
+        , _EFwTextID.eLogMsg_LcManager_TID_057       : "Request to stop the framework has been submitted,\nstopping RTE configuration policy 'terminal-mode', elapsed wait time was: {}"
         , _EFwTextID.eLogMsg_LcManager_TID_058       : "Request to stop the framework has been submitted, elapsed wait time was: {}"
         , _EFwTextID.eLogMsg_LcManager_TID_059       : "RTE configuration policy 'forced-auto-stop' is enbaled.\nForcing framework to request all running tasks (if any) to stop immediately..."
         , _EFwTextID.eLogMsg_LcManager_TID_060       : "Applying RTE configuration policy 'auto-stop' (enabled by default) to stop framework..."
@@ -634,6 +630,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcFailure_TID_011        : "[LcF] Permission denied: Cannot overwrite LC runtime failure with setup failure."
         , _EFwTextID.eLogMsg_LcFailure_TID_015        : "[LcF] Encountered mismatch of LC failure state: {} vs. {}"
         , _EFwTextID.eLogMsg_LcFailure_TID_016        : "Resulted LC status : {}"
+        , _EFwTextID.eLogMsg_LcFailure_TID_017        : "\n{}\n{}\n{}\n{}\n"
 
         , _EFwTextID.eFwSOptionsImpl_ArgSpec_Name_FwLogLevel               : "--fw-log-level"
         , _EFwTextID.eFwSOptionsImpl_ArgSpec_Name_UserLogLevel             : "--log-level"
@@ -661,7 +658,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcDepManager_TID_002        : "[LcDM] Failed to load fw config."
         , _EFwTextID.eLogMsg_LcDepManager_TID_003        : "[LcDM] Failed to update LC scope from {} to {}."
         , _EFwTextID.eLogMsg_LcDepManager_TID_004        : "[LcDM] Caught exception below while trying to update LC scope:\n\t{}"
-        , _EFwTextID.eLogMsg_LcDepManager_TID_005        : "[LcDM] {}"
 
         , _EFwTextID.eLogMsg_LcProxy_TID_001             : "Failed to finalize LC setup."
 
@@ -688,6 +684,7 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eLogMsg_LcGuard_TID_001             : "Detected LC monitor aliveness alarm, missing since {}ms."
         , _EFwTextID.eLogMsg_LcGuard_TID_003             : "[LC][LcG] Finished coordinated shutdown."
+        , _EFwTextID.eLogMsg_LcGuard_TID_004             : "LCGRD"
 
         , _EFwTextID.eLogMsg_LcStateImpl_TID_001         : "[LC][LcState] Missing valid component ID."
         , _EFwTextID.eLogMsg_LcStateImpl_TID_002         : "[LC][LcState] Missing valid LC compp ID and/or FE clone:\n\t{} , {}"
@@ -713,7 +710,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcMonitorImpl_TID_001       : "[LcMon] Starting coordinated shutdown..."
         , _EFwTextID.eLogMsg_LcMonitorImpl_TID_002       : "[LcMon] Starting coordinated shutdown due to LC failure below:\n\t{}"
         , _EFwTextID.eLogMsg_LcMonitorImpl_TID_003       : "Maximum wait time for tasks to enter shutdown phase expired, ignoring {} task(s)."
-        , _EFwTextID.eLogMsg_LcMonitorImpl_TID_004       : "[LcMon] Waiting for {} task(s) to enter shutdown phase..."
+        , _EFwTextID.eLogMsg_LcMonitorImpl_TID_004       : "Waiting for {} task(s) to enter shutdown phase..."
 
         , _EFwTextID.eLogMsg_FwMessage_TID_002           : "Expecting valid object of type '{}', got '{}' instead."
 
@@ -855,7 +852,8 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XProcessConn_TID_019   : "Child process failed to write RTE exchange data."
         , _EFwTextID.eLogMsg_XProcessConn_TID_020   : "Child process encountered error below while trying to write RTE exchange data:\n\t{}"
         , _EFwTextID.eLogMsg_XProcessConn_TID_021   : "SIGTERM"
-        , _EFwTextID.eLogMsg_XProcessConn_TID_022   : "[XPC] Caught exception below while processing request to join process {}:\n\t{}"
+        , _EFwTextID.eLogMsg_XProcessConn_TID_022   : "SIGKILL"
+        , _EFwTextID.eLogMsg_XProcessConn_TID_023   : "[XPC] Caught exception below while processing request to join process {}:\n\t{}"
 
         , _EFwTextID.eLogMsg_MPStartPolicy_TID_001       : "[MPSP] Encountered invalid object of type {} passed in as process start method ID, expecting object of type {} instead."
         , _EFwTextID.eLogMsg_MPStartPolicy_TID_007       : "[MPSP] MP process start method (SM) status:\n\tplatform       : {}\n\tinitial     SM : {}\n\tprevious    SM : {}\n\tcurrent     SM : {}\n\tfirst fixed SM : {}"
@@ -874,10 +872,19 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_FwRteConfig_TID_007         : "RTE configuration policies 'auto-stop' and 'forced-auto-stop' are mutually exclusive, enabling both of them is disallowed."
         , _EFwTextID.eLogMsg_FwRteConfig_TID_008         : "Refused to enable RTE configuration policies 'auto-stop' due to 'forced-auto-stop' enabled previously."
         , _EFwTextID.eLogMsg_FwRteConfig_TID_009         : "Refused to enable RTE configuration policies 'forced-auto-stop' due to 'auto-stop' enabled previously."
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_010         : "Refused attempt to re-configure redirection file sink of log output."
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_011         : "Refused attempt to re-configure redirection TCP sink of log output."
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_012         : "XcoRDFileLogger"
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_013         : "%(message)s"
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_014         : "Caught {} exception below while trying to configrue redirection file sink:\n\t{}"
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_015         : "Caught {} exception below while trying to configrue redirection TCP sink for: ip={} , port={}\n\t{}"
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_016         : "Encountered invalid line ending '{}' while trying to configrue redirection TCP sink for: ip={} , port={}"
+
+        , _EFwTextID.eLogMsg_XProcessAgent_001           : "Cannot create child process instances before start of the framework."
 
         , _EFwTextID.eLogMsg_FwRteException_TID_001      : "<UNSPECIFIED-RTE-EXCEPTION-MESSAGE>"
-        , _EFwTextID.eLogMsg_FwRteException_TID_002      : "{} :\n\tcode    : {}\n\tmessage : {}"
-        , _EFwTextID.eLogMsg_FwRteException_TID_003      : "\n\treason type : {}\n\treason      : {}"
+        , _EFwTextID.eLogMsg_FwRteException_TID_002      : "{}\n\t  code        : {}\n\t  message     : {}"
+        , _EFwTextID.eLogMsg_FwRteException_TID_003      : "\n\t  reason type : {}\n\t  reason      : {}"
         , _EFwTextID.eLogMsg_FwRteException_TID_004      : "Supplied data's payload size of {} exceeds token's payload capacity of {}."
         , _EFwTextID.eLogMsg_FwRteException_TID_005      : "Cauhgt exception while trying to serialize token payload."
         , _EFwTextID.eLogMsg_FwRteException_TID_006      : "Unexpected mismatch of expected token header size of {}: {}"

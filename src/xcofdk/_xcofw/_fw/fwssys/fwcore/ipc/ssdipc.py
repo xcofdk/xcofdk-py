@@ -68,25 +68,25 @@ class _SSDeputyIPC(_LcSSysDeputy):
 
             _mem = _SSConfigIPC._EIpcConfigEntityID(_m.value)
 
-            if _m == _SSConfigIPC._EIpcConfigEntityID.eAbsFwService__CleanFwsTable:
-                if dinjCmd_.isDeInject:
-                    _AbsFwService._DepInjection(dinjCmd_, None, None)
-
-            elif _m == _SSConfigIPC._EIpcConfigEntityID.eMessageClusterMap__CleanMap:
+            if _m == _SSConfigIPC._EIpcConfigEntityID.eMessageClusterMap__CleanMap:
                 if dinjCmd_.isDeInject:
                     _MessageClusterMap._DepInjection(dinjCmd_)
 
+            elif _m == _SSConfigIPC._EIpcConfigEntityID.eAbsFwService__CleanFwsTable:
+                if dinjCmd_.isDeInject:
+                    _AbsFwService._DepInjection(dinjCmd_, None, None)
             elif _m == _SSConfigIPC._EIpcConfigEntityID.eAbsFwService__DefineFwsTable:
                 if dinjCmd_.isInject:
                     _AbsFwService._DepInjection(_EDepInjCmd.eDeInject, None, None)
 
                     _lstCID = [ _EFwsID.eFwsMain ]
 
+                    if _ssshare._IsLogRDActiveServiceRequired():
+                        _lstCID.append(_EFwsID.eFwsLogRD)
                     if not _ssshare._IsSubsysMsgDisabled():
                         _lstCID.append(_EFwsID.eFwsDisp)
                     if not _ssshare._IsSubsysMPDisabled():
                         _lstCID.append(_EFwsID.eFwsProcMgr)
-
                     _AbsFwService._DepInjection(dinjCmd_, None, _lstCID)
 
             elif _m == _SSConfigIPC._EIpcConfigEntityID.eSyncResourcesGuard__Singleton:
@@ -159,6 +159,7 @@ class _SSDeputyIPC(_LcSSysDeputy):
             _SSConfigIPC._EIpcConfigEntityID.eFwApi__ConnAccessLock
           , _SSConfigIPC._EIpcConfigEntityID.eFwApiImplShare__AccessLock
           , _SSConfigIPC._EIpcConfigEntityID.eLcFailure__LcResultSilentMode
+
         ]
 
         _SSDeputyIPC.__lstSemi = [
@@ -170,6 +171,7 @@ class _SSDeputyIPC(_LcSSysDeputy):
           , _SSConfigIPC._EIpcConfigEntityID.eStartupThread__Singleton
           , _SSConfigIPC._EIpcConfigEntityID.eAbsFwService__DefineFwsTable
           , _SSConfigIPC._EIpcConfigEntityID.eXTaskConn__PRFC
+
         ]
 
         _SSDeputyIPC.__lstFull = [
@@ -187,6 +189,7 @@ class _SSDeputyIPC(_LcSSysDeputy):
                 res = True
             elif dinjCmd_.isDeInject:
                 res = cfgItem_ != _SSConfigIPC._EIpcConfigEntityID.eFwApiImplShare__AccessLock
+
             elif not dinjCmd_.isInject:
                 res = True
 
@@ -196,10 +199,10 @@ class _SSDeputyIPC(_LcSSysDeputy):
                     res = cfgItem_ != _SSConfigIPC._EIpcConfigEntityID.eXTaskConn__PRFC
                 else:
                     res = True
-            elif dinjCmd_.isInject and not tgtScope_.isSemiIPC:
-                res = True
-            elif dinjCmd_.isDeInject and not tgtScope_.isPreIPC:
-                res = True
+            elif dinjCmd_.isInject:
+                res = not tgtScope_.isSemiIPC
+            elif dinjCmd_.isDeInject:
+                res = not tgtScope_.isPreIPC
 
         elif cfgItem_ in _SSDeputyIPC.__lstFull:
             if _ssshare._IsSubsysMPDisabled() and (cfgItem_ == _SSConfigIPC._EIpcConfigEntityID.eXProcConn__PMI):

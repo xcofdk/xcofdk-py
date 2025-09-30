@@ -7,6 +7,8 @@
 # This software is distributed under the MIT License (http://opensource.org/licenses/MIT).
 # ------------------------------------------------------------------------------
 
+from typing import Union
+
 from xcofdk.fwapi import IPayload
 
 from _fw.fwssys.fwcore.logging           import logif
@@ -52,7 +54,7 @@ class _FwPayload(_AbsSlotsObject, IPayload):
         return self.__d is not None
 
     @IPayload.isMarshalingRequired.getter
-    def isMarshalingRequired(self):
+    def isMarshalingRequired(self) -> bool:
         return self.__bS
 
     @IPayload.isCustomMarshalingRequired.getter
@@ -72,7 +74,7 @@ class _FwPayload(_AbsSlotsObject, IPayload):
         return self.__GetParameter(paramkey_, bRaiseExceptionOnKeyNotFound_=False)
 
     @override
-    def DetachContainer(self) -> dict:
+    def DetachContainer(self) -> Union[dict, None]:
         res = self.__d
         self.__d = None
         return res

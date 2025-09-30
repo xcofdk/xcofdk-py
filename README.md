@@ -297,11 +297,10 @@ wiki pages below:
   in more detail,
 - [3. Architecture](https://github.com/xcofdk/xcofdk-py/wiki/3.-Architecture) for the design and subsystems of the 
   framework,
-- [4. At a Glance](https://github.com/xcofdk/xcofdk-py/wiki/4.-At-a-Glance) for basic features of the framework,
-- [7. Basic Examples](https://github.com/xcofdk/xcofdk-py/wiki/7.-Basic-Examples) for introductory examples of 
+- [4. API Overview](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview) for an overview of the API of the framework,
+- [6. Basic Examples](https://github.com/xcofdk/xcofdk-py/wiki/6.-Basic-Examples) for introductory examples of 
   (real-world) programs using the framework. <br>
   Note that most of the examples are applications developed using GUI framework [tkinter](https://docs.python.org/3/library/tkinter.html).
-
 
 <br>
 
@@ -316,9 +315,9 @@ wiki pages below:
 | Main page            | :      | [XCOFDK on GitHub](https://github.com/xcofdk/xcofdk-py)                                                                                                                                                                                               |
 | -------------------  | -----  |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                           |
 | **Wiki**             | **:**  | [**XCOFDK Wiki**](https://github.com/xcofdk/xcofdk-py/wiki)                                                                                                                                                                                           |
-| **Roadmap**          | **:**  | [**Roadmap of XCOFDK**](https://github.com/xcofdk/xcofdk-py/wiki/1.-Introduction#roadmap-of-xcofdk)                                                                                                                                                   |
-| **API**              | **:**  | [**API documentation**](https://github.com/xcofdk/xcofdk-py/wiki/6.-API-Documentation)                                                                                                                                                                |
+| **API**              | **:**  | [**API Overview**](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview)                                                                                                                                                                          |
 | **Examples**         | **:**  | [**xcofdk-py-examples.tar.gz**](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xcofdk-py-examples.tar.gz) \| [**xcofdk-py-examples.zip**](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xcofdk-py-examples.zip)  |
-| **Changelog**        | **:**  | [**Release highlights & release notes**](https://github.com/xcofdk/xcofdk-py/blob/master/doc/release_notes.md#release-highlights-v30)                                                                                                                 |
+| **Changelog**        | **:**  | [**Release highlights & release notes**](https://github.com/xcofdk/xcofdk-py/blob/master/doc/release_notes.md#release-highlights-v31)                                                                                                                 |
+| **Roadmap**          | **:**  | [**Roadmap of XCOFDK**](https://github.com/xcofdk/xcofdk-py/wiki/1.-Introduction#12-roadmap-of-xcofdk)                                                                                                                                                |
 | **License file**     | **:**  | [**MIT License**](https://github.com/xcofdk/xcofdk-py/blob/master/LICENSE.txt)                                                                                                                                                                        |
 | **Error reporting**  | **:**  | **error-xpy@xcofdk.de**                                                                                                                                                                                                                               |

@@ -104,12 +104,12 @@ class _SSConfigLogging(_FwSSysConfigBase):
         _bCS = self.fwStartupConfig._isLogCallstackEnabled
         _bTS = self.fwStartupConfig._isLogTimestampEnabled
 
-        _fwLHdrFmt = _LogHeaderFormat.CreateFwLogHeaderFormat(self._myPPass, True, _bRM)
+        _fwLHdrFmt = _LogHeaderFormat.CreateLogHeaderFormat(self._myPPass, True, _bRM)
         if _fwLHdrFmt is None:
             return False
         _fwLHdrFmt._Update(timestamp_=_bTS, callstack_=_bCS)
 
-        _userLHdrFmt = _LogHeaderFormat.CreateFwLogHeaderFormat(self._myPPass, False, _bRM)
+        _userLHdrFmt = _LogHeaderFormat.CreateLogHeaderFormat(self._myPPass, False, _bRM)
         if _userLHdrFmt is None:
             return False
         _userLHdrFmt._Update(timestamp_=_bTS, callstack_=_bCS)

@@ -58,8 +58,8 @@ class ITask:
         """
         See:
         -----
-            - class XTask
             - class RCTask
+            - class XTask
         """
         pass
 
@@ -234,7 +234,7 @@ class ITask:
             - Requests to stop tasks which are in a transitional state of
               termination (i.e. stopping, canceling or aborting) already are
               ignored by the framework.
-            - A request to stop a task is always a non-blocking, instruction to
+            - A request to stop a task is always a non-blocking instruction to
               stop the task. It simply notifies the task about the stop request
               and returns.
             - Detaching a task from the framework causes that task to be stopped
@@ -269,15 +269,15 @@ class ITask:
 
         Note:
         ------
-            - Canceling a task is an API function reserved for user by
+            - Canceling a task is an API function reserved for use by
               applications only, the framework never makes any use of it.
             - Its major purpose is to provide applications with their own
               logical and/or functional attribution of the execution result of
               a task which is terminated, but not failed, i.e. having caused
               any LC failure. Such an attribution might look like below:
-                  - DONE     : finished or stopped the job as expected,
-                    or
-                  - CANCELED : broken for whatever application-specific reason
+                  - DONE     : finished or stopped the job as expected, or
+                  - CANCELED : not failed, but broken for whatever
+                               application-specific reason
             - Requests to cancel tasks which are in a transitional state of
               termination (i.e. stopping, canceling or aborting) already are
               ignored by the framework.
@@ -343,21 +343,22 @@ class ITask:
         Note:
         ------
             - The main purpose of detaching a task from the framework is to
-              release application or system resources used for that task.
+              release the application or system resources used for that task.
             - Detaching is always done automatically by the framework upon
               termination of tasks.
             - Detaching a task from the framework by intention and before its
               termination, is much like requesting the framework to stop the
               task (if applicable).
-            - As soon as a task is detached from the framework, it won't be
-              able to use the full set of its reqular API anymore. Its task
-              state will be set in accordance to the state right after the
+            - As soon as a task is detached from the framework, it won't be able
+              to use the full set of its reqular API anymore. Its task state
+              will be set in accordance to the task state right after the
               internal handling of the request is completed, e.g. 'stopping',
               and not updated anymore.
 
         See:
         -----
             >>> ITask.Stop()
+            >>> ITask.isDetachedFromFW
         """
         pass
     # ------------------------------------------------------------------------------
@@ -500,7 +501,7 @@ class ITask:
               transitional state 'terminating', especially when leaving its
               (cyclic) run phase.
             - Thus, tasks are particularly not in the state of 'running' anymore
-              whenever they enter their teadown-phase (if configured).
+              whenever they enter their teadown phase (if configured).
             - Also, as soon as a (submitted) fatal error becomes qualified, the
               affected task instance leaves its 'runnig' state, too.
 
@@ -598,15 +599,24 @@ class ITask:
               execution of its 3-PhXF causes a qualified fatal error, i.e. an
               LC failure, or if it intentially requests the framework to abort
               the execution.
+            - In other words, as soon as this instance leaves its 'running' (or
+              'stopping' or 'canceling') state due to a qualified fatal error
+              caused by this instance (or intentially by returning
+              EExecutionCmdID.ABORT out of its 3-PhXF), it is considered failed.
+            - Whenever a task reaches this state, it will immediately be
+              auto-detached from the framework.
+            - Also note, that the state property 'isAboring' is deprecated now.
 
         See:
         -----
             >>> ITask.isDone
             >>> ITask.isCanceled
             >>> ITask.isTerminated
+            >>> ITask.isDetachedFromFW
             >>> ITask.Start()
             >>> ITask.Stop()
             >>> ITask.Cancel()
+            >>> ITask.DetachFromFW()
             >>> EExecutionCmdID.ABORT
         """
         pass
@@ -669,7 +679,9 @@ class ITask:
         Returns:
         ----------
             True as soon as this instance leaves its 'running' state without
-            having caused any fatal eroor, False otherwise.
+            having caused any fatal error (or intentially by returning either
+            one of EExecutionCmdID.STOP or EExecutionCmdID.CANCEL out of its
+            3-PhXF), False otherwise.
 
         Note:
         ------
@@ -695,7 +707,8 @@ class ITask:
         Returns:
         ----------
             True as soon as this instance leaves its 'running' state due to a
-            'cancel' request, False otherwise.
+            'cancel' request (or intentially by returning EExecutionCmdID.CANCEL
+            out of its 3-PhXF), False otherwise.
 
         Note:
         ------
@@ -716,24 +729,13 @@ class ITask:
     @property
     def isAborting(self) -> bool:
         """
-        Getter property for task's state of being 'aborting'.
-
-        Returns:
-        ----------
-            True as soon as this instance leaves its 'running' or 'stopping'
-            state due to a qualified fatal eroor caused by this instance,
-            False otherwise.
-
-        See:
-        -----
-            >>> ITask.isRunning
-            >>> ITask.isStopping
-            >>> ITask.isCanceling
-            >>> EExecutionCmdID.STOP
-            >>> EExecutionCmdID.CANCEL
-            >>> EExecutionCmdID.ABORT
+        [DEPRECATED]
+          - This task state property is still present for backward compatibily
+            reason only.
+          - It is planned to be removed by the next change of the major
+            release number from 3.x to 4.x (if ever).
         """
-        pass
+        return False
     # ------------------------------------------------------------------------------
     #END 4) task state
     # ------------------------------------------------------------------------------
@@ -836,26 +838,28 @@ class ITask:
         Note:
         ------
             - The alias name of a task is specified in either ways below:
-                  a) via respective parameter passed to the constructor of
-                    either class RCTask, or a user-defined class subclassing
-                    one of the abstract classes XTask or XMainTask, or
-                  b) auto-generated by the framework as shown below:
-                      Tsk_   : for instances of class RCTask without external
-                               queue support
-                      CTsk_  : for instances of class RCTask with external
-                               queue support
-                      XTsk_  : for instances of class XTask without external
-                               queue support
-                      CXTsk_ : for instances of class XTask with external
-                               queue support
-
-                     Here, 'C' stands for capable of full Communication,
-                     something available to a task only if created with support
-                     for external queue requested for.
-
-            - Also, for an alias name with a trailing '_' the auto-generated,
-              unique instance number of the task instance to be created will be
-              appended to.
+                  a) if supplied, via respective parameter passed to the
+                     constructor of either class RCTask, or a user-defined
+                     class subclassing one of the abstract classes XTask or
+                     XMainTask, or
+                  b) if not supplied, auto-generated by the framework as shown
+                     below:
+                       Tsk_<INST_NO>   : for instances of class RCTask without
+                                         external queue support
+                       CTsk_<INST_NO>  : for instances of class RCTask with
+                                         external queue support
+                       XTsk_<INST_NO>  : for instances of class XTask without
+                                         external queue support
+                       CXTsk_<INST_NO> : for instances of class XTask with
+                                         external queue support
+                     with:
+                       - 'INST_NO' is the unique instance number (see
+                         'taskCompoundUID').
+                       - 'C' stands for 'capable of full Communication',
+                         something available to a task only if created with
+                         support for external queue requested for.
+            - Note that for a supplied alias name with a trailing '_' the
+              above-mentioned 'INST_NO' will be appended to.
             - The alias name is always available for successfully constructed
               task instances.
 
@@ -878,7 +882,7 @@ class ITask:
             An auto-generated namedtuple object with below immutable fields:
                 - uid    : unique ID of the task
                 - instNo : unique, positive integer value representing
-                           the instance number assigned to this task
+                           the instance number auto-assigned to this task
 
         Note:
         ------
@@ -1033,7 +1037,7 @@ class ITask:
 
         Returns:
         ----------
-            True if currently no fatal eroor is associated with this instance,
+            True if currently no fatal error is associated with this instance,
             False otherwise.
 
         See:

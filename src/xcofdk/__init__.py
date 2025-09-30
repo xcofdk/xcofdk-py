@@ -36,7 +36,7 @@ capable of:
 Public API:
 ------------
 The public API of XCOFDK is given through its subpackages, also called
-subsystems, which applications can use for interfacing. For an introductary
+subsystems, which applications can use for interfacing. For an introductory
 walkthrough of both the architecture and the subsystems of XCOFDK below wiki
 page is highly recommended.
     https://github.com/xcofdk/xcofdk-py/wiki/3.-Architecture
@@ -64,7 +64,7 @@ Currently available subpackages (or subsystems) are as follows:
             providing the subsystem of messaging,
             
           - xcofdk.fwapi.xmp
-            providing the subsystem of multiprocessing,
+            providing the subsystem of multiprocessing.
 
 
 Examples:
@@ -76,7 +76,7 @@ Detailed information can be found in class description blow:
 
 Documentation:
 ----------------
-The source code documentation, also refered to as 'this documentation', of the
+The source code documentation, also referred to as 'this documentation', of the
 public API of XCOFDK frequently refers to the terms and basic concepts explained
 in the above-mentioned wiki page. For better readability this documentation has
 chosen to not repeat those explanations, their knowledge will be assumed
@@ -89,8 +89,8 @@ leading '>>>' for both:
        display them as expected,
     b) cross referencing to existing documentation provided at some other place,
        e.g. to the respective API documentation of the parent class.
-       Modern IDE editors are able to generate and display the corresponding
-       hyperlink, too.
+       Again, modern IDE editors are able to generate and display the 
+       corresponding hyperlink, too.
 
 By no means, however, such 'doctest' lines are designed for any kind of
 interactive example or (regression) testing, as otherwise commonly intended

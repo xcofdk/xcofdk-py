@@ -16,7 +16,6 @@ from _fw.fwssys.fwcore.base.util           import _Util
 from _fw.fwssys.fwcore.ipc.sync.mutex      import _Mutex
 from _fw.fwssys.fwcore.ipc.tsk.taskbadge   import _TaskBadge
 from _fw.fwssys.fwcore.ipc.tsk.fwtaskerror import _FwTaskError
-from _fw.fwssys.fwcore.lc.lcdefines        import _LcConfig
 from _fw.fwssys.fwcore.lc.lcproxyclient    import _LcProxyClient
 from _fw.fwssys.fwcore.types.commontypes   import _FwIntEnum
 from _fw.fwssys.fwcore.types.commontypes   import _EExecutionCmdID
@@ -125,13 +124,11 @@ class _PcErrHandler(_LcProxyClient):
             if not res:
                 if _opr.isErrBinOpResultDuplicateInsertionError:
                     res = True
-
         except KeyboardInterrupt:
             res = False
             _midPart = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_PcErrHandler_TID_002).format(euEEntry_.uniqueID, euEEntry_.shortMessage)
             _msg     = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_KeyboardInterrupt).format(self.__myTaskBadge.dtaskName, _midPart)
             _ssshare._BookKBI(_msg)
-
         except BaseException as _xcp:
             res = False
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00968)
@@ -188,7 +185,6 @@ class _PcErrHandler(_LcProxyClient):
 
                     _callbackID = _EPcErrHandlerCBID.eAbortTaskDueToFatalError
                     return self._ProcErrorHandlerCallback(_callbackID, curFE_=_curOwnErr)
-
                 self.__b.ClearCurError()
 
                 return _EExecutionCmdID.MapExecState2ExecCmdID(self)
@@ -258,7 +254,6 @@ class _PcErrHandler(_LcProxyClient):
 
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00497)
             return False
-
         logif._LogUnhandledXcoBaseXcpEC(_EFwErrorCode.FE_00018, _myXcoXcp)
         return True
 
@@ -379,6 +374,7 @@ class _PcErrHandler(_LcProxyClient):
         _bEmptyEeBin = True if self.__b is None else self.__b.currentError is None
         _numPending  = None if _pendingFErrList is None else len(_pendingFErrList)
         _bAllEmpty   = _bEmptyEeBin and ((_numPending is None) or (_numPending == 0))
+
         return _bAllEmpty, _bEmptyEeBin, _pendingFErrList
 
     def __ProcForeignErrors(self, pendingFErrList_ : list) -> _EExecutionCmdID:
@@ -392,7 +388,6 @@ class _PcErrHandler(_LcProxyClient):
         if _lstNew is None:
             if _numStored > 0:
                 _lstStoredFFEs.clear()
-
                 _callbackID = _EPcErrHandlerCBID.eProcessObservedForeignFatalErrors
                 res = self._ProcErrorHandlerCallback(_callbackID, lstFFE_=None)
             else:
@@ -402,7 +397,6 @@ class _PcErrHandler(_LcProxyClient):
         if _numStored > 0:
             if len(_lstNew) != _numStored:
                 _bSameList = False
-
             else:
                 _bSameList = True
                 for _ee in _lstStoredFFEs:
@@ -411,11 +405,9 @@ class _PcErrHandler(_LcProxyClient):
                         break
 
                     _hit = [ ee2 for ee2 in _lstNew if ee2.uniqueID==_ee.uniqueID ]
-
                     if len(_hit) == 0:
                         _bSameList = False
                         break
-
             if not _bSameList:
                 _lstStoredFFEs.clear()
             else:

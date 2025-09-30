@@ -202,7 +202,6 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
             return
 
         _TaskManager._theTMgrImpl = None
-
         self.__StopAllTasks(bCleanupStoppedTasks_=False, lstSkipTaskIDs_=None, bSkipStartupThrd_=False)
 
         for _vv in self.__tt.values():
@@ -255,11 +254,11 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
                    , tskOpPCheck_    : _ATaskOpPreCheck =None ) -> Union[int, None]:
         res = None
         if not self.__isApiNotAvailable:
-            ept = enclHThrd_
-            if (ept is None) and (tpAttrs_ is not None):
+            _ept = enclHThrd_
+            if (_ept is None) and (tpAttrs_ is not None):
                 if _AbsFwProfile._ATTR_KEY_ENCLOSED_PYTHREAD in tpAttrs_:
-                    ept = tpAttrs_[_AbsFwProfile._ATTR_KEY_ENCLOSED_PYTHREAD]
-            if not self.__PrecheckExecutableRequest(tskID_=None, aprofile_=fwtPrf_, enclPyThrd_=ept):
+                    _ept = tpAttrs_[_AbsFwProfile._ATTR_KEY_ENCLOSED_PYTHREAD]
+            if not self.__PrecheckExecutableRequest(tskID_=None, aprofile_=fwtPrf_, enclPyThrd_=_ept):
                 return None
 
             _tp = self.__CheckCreateTaskRequest( fwtPrf_=fwtPrf_
@@ -294,11 +293,11 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
                      , tskOpPCheck_ : _ATaskOpPreCheck =None ) -> Union[int, None]:
         res = None
         if not self.__isApiNotAvailable:
-            ept = enclHThrd_
-            if (ept is None) and (tpAttrs_ is not None):
+            _ept = enclHThrd_
+            if (_ept is None) and (tpAttrs_ is not None):
                 if _AbsFwProfile._ATTR_KEY_ENCLOSED_PYTHREAD in tpAttrs_:
-                    ept = tpAttrs_[_AbsFwProfile._ATTR_KEY_ENCLOSED_PYTHREAD]
-            if not self.__PrecheckExecutableRequest(tskID_=None, aprofile_=fwthrdPrf_, enclPyThrd_=ept):
+                    _ept = tpAttrs_[_AbsFwProfile._ATTR_KEY_ENCLOSED_PYTHREAD]
+            if not self.__PrecheckExecutableRequest(tskID_=None, aprofile_=fwthrdPrf_, enclPyThrd_=_ept):
                 return None
 
             res = self.__CreateStartThread( fwthrdPrf_=fwthrdPrf_
@@ -668,7 +667,6 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
             return None
 
         self.__ma.Take()
-
         if taskInst_.isEnclosingPyThread:
             if bRemoveAutoEnclTE_:
                 _te = self.__GetTableEntry(hthrd_=taskInst_.dHThrd, bDoWarn_=False)
@@ -696,7 +694,6 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
            return
 
        self.__ma.Take()
-
        _te = self.__GetTableEntry(hthrd_=taskInst_.dHThrd, bDoWarn_=False)
        if _te is None:
            pass
@@ -782,14 +779,9 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
         if not _trm.hasXTaskTaskRight:
             _trm = _ETaskRightFlag.AddXTaskTaskRight(_trm)
 
+        res  = None
         _xtp = utConn_._taskProfile
-        if _xtp.isUnitTest:
-            if not _trm.hasUnitTestTaskRight:
-                _trm = _ETaskRightFlag.AddUnitTestTaskRight(_trm)
-
         profileAttrs_[_TRM_KEY] = _trm
-
-        res = None
 
         try:
             if _xtp.isInternalQueueEnabled or _xtp.isExternalQueueEnabled:
@@ -935,6 +927,7 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
                                 self._PcNotifyLcFailure(_ELcCompID.eTMgr, _myFE)
                         else:
                             _te = self.__GetTableEntry(taskID_=_fthrd.dtaskUID)
+
         res    = None
         _tinst = None
         if (_te is None) or (_te.teTaskBadge is None):
@@ -989,12 +982,9 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
                                 _sid = _tb.fwSID
                                 if _sid is None:
                                     continue
-                                if not (_sid.isFwsMain or _sid.isFwsTmrMgr):
+                                if not _sid.isFwsMain:
                                     continue
                                 if _sid.isFwsMain and taskID_.isPFwMain:
-                                    res = _te
-                                    break
-                                if _sid.isFwsTmrMgr and taskID_.isPTimerManager:
                                     res = _te
                                     break
                                 continue
@@ -1027,9 +1017,7 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
             self.__tu[_tuid] = _te
 
             _tname = taskInst_.dtaskName
-            if _tname in self.__tn:
-                _teOther = self.__tn[_tname]
-            else:
+            if _tname not in self.__tn:
                 self.__tn[_tname] = _te
 
             if self._PcIsLcProxyModeNormal():
@@ -1166,6 +1154,7 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
             if self.__CheckForReraiseXcoException(_xcp):
                 if _oppc.isASynchronous:
                     self.__ma.Give()
+
                 raise _xcp
 
         except BaseException as _xcp:
@@ -1215,7 +1204,6 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
         if _tinst.isAutoEnclosed:
             if not _tinst.dtaskStateID.isDone:
                 _AbsFwTask._SetGetTaskState(_tinst, _TaskState._EState.eDone)
-
             if removeTask_:
                 self.__RemoveFromTable(_tinst)
                 self.__CleanUpTaskInstance(_tinst)
@@ -1289,8 +1277,6 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
             if lstSkipTaskIDs_ is not None:
                 _lstSkip = [ _tid for _tid in lstSkipTaskIDs_ if _tid in self.__tt ]
 
-            _numTaskToBeStopped = _tblSize if _lstSkip is None else (_tblSize-len(_lstSkip))
-
             for _kk in self.__tt.keys():
                 _te = self.__tt[_kk]
 
@@ -1310,16 +1296,11 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
 
                 _lstStopTIDs.append(_te.teTaskID)
 
-        _numStopped = 0
-        _numRemoved = 0
-
         if len(_lstStopTIDs) > 0:
             for _tid in _lstStopTIDs:
                 _tid = self.__StopTaskByID(_tid, removeTask_=False)
                 if _tid is not None:
-                    _numStopped += 1
-                    if bCleanupStoppedTasks_:
-                        _lstRemoveTIDs.append(_tid)
+                    if bCleanupStoppedTasks_: _lstRemoveTIDs.append(_tid)
 
         if len(_lstRemoveTIDs) > 0:
             with self.__ma:
@@ -1330,7 +1311,6 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
                         _ti = _te.teTaskInst
                         _ttn, _tn, _tid = type(_ti).__name__, _ti.dtaskName, _ti.dtaskUID
                         self.__RemoveFromTable(_ti)
-                        _numRemoved += 1
 
                         if not _ti.taskBadge.isFwMain:
                             if not self.__CleanUpTaskInstance(_ti, bIgnoreCeaseMode_=True):
@@ -1453,11 +1433,9 @@ class _TaskMgrImpl(_TaskManager, _LcProxyClient, _ITMgrImpl, _ITTMgr):
                 res = False
             else:
                 enclPyThrd_ = _enclPyThrdPrf
-
         elif enclPyThrd_ is not None:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00294)
             res = False
-
         else:
             res = True
 

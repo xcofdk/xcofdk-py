@@ -21,6 +21,7 @@ from .ifmsgheader   import IMessageHeader
 from .ifmessage     import IMessage
 from .iftaskerror   import ITaskError
 from .ifpayload     import IPayload
+from .iftask        import EExecutionCmdID
 from .iftask        import ITask
 from .ifrctask      import IRCTask
 from .ifrctask      import IRCCommTask

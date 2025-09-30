@@ -534,9 +534,9 @@ class _ARblApiGuide(_AbsSlotsObject):
                 continue
             if not _EBitMask.IsEnumBitFlagSet(rblApiMask_, _m):
                 continue
-            _myTxt += _CommonDefines._CHAR_SIGN_TAB + _m.functionName + _CommonDefines._CHAR_SIGN_NEWLINE
+            _myTxt += _CommonDefines._CHAR_SIGN_TAB + _m.functionName + _CommonDefines._CHAR_SIGN_LF
 
         if len(_myTxt) > 0:
             _myTxt = _myTxt.rstrip()
-            res   += _CommonDefines._CHAR_SIGN_NEWLINE + _myTxt
+            res   += _CommonDefines._CHAR_SIGN_LF + _myTxt
         return res

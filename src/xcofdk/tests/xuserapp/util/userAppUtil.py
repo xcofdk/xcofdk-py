@@ -103,8 +103,8 @@ class UserAppUtil:
 
     @staticmethod
     def GetTimestamp() -> str:
-        _dt = datetime.now()
-        return _dt.strftime("%H:%M:%S.") + "{:>03d}".format(_dt.microsecond // 1000)
+        tstamp_ = datetime.now().isoformat(timespec='milliseconds')
+        return tstamp_[tstamp_.index('T')+1:]
 
     @staticmethod
     def DeltaTime2Str(dtime_ : Union[timedelta, datetime], bIncludeHours_ =False, bIncludeUSec_ =False, bLeftStripUnsetFields_ =False) -> Union[str, None]:

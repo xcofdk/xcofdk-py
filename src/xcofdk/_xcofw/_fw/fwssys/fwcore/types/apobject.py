@@ -15,17 +15,25 @@ from _fw.fwssys.fwerrh.fwerrorcodes  import _EFwErrorCode
 
 class _ProtAbsObject(_AbsObject):
     def __init__(self, ppass_ : int):
-        if getattr(self, _AbsObject._AO_INIT_MEMBEER_VAR, None) is None:
-            self.__p = None
+        if getattr(self, _AbsObject._AO_INIT_MEMBEER_VAR, None) is not None:
+            pass
+        else:
+            self.__p   = None
+            self.__bBC = None
             super().__init__()
             if not isinstance(ppass_, int):
                 _AbsObject.CleanUp(self)
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00485)
             else:
-                self.__p = ppass_
+                self.__p   = ppass_
+                self.__bBC = True
 
     def CleanUp(self):
-        if getattr(self, _AOCommon._CLEANUP_METHOD_STD, None) is not None:
+        if self.__bBC:
+            pass
+        elif getattr(self, _AOCommon._CLEANUP_METHOD_STD, None) is None:
+            pass
+        else:
             _AOCommon.CleanUp(self_=self)
 
     def CleanUpByOwnerRequest(self, ppass_ : int):
@@ -35,27 +43,36 @@ class _ProtAbsObject(_AbsObject):
             pass
         else:
             _AOCommon.CleanUp(self_=self, cleanupMethodName_=_AOCommon._CLEANUP_METHOD_PROTECTED)
-            self.__p = None
+            self.__p   = None
+            self.__bBC = None
 
     @property
     def _myPPass(self):
         return self.__p
 
 class _ProtAbsSlotsObject(_AbsSlotsObject):
-    __slots__ = [ '__p' ]
+    __slots__ = [ '__p' , '__bBC' ]
 
     def __init__(self, ppass_ : int):
-        if getattr(self, _AbsObject._AO_INIT_MEMBEER_VAR, None) is None:
-            self.__p = None
+        if getattr(self, _AbsObject._AO_INIT_MEMBEER_VAR, None) is not None:
+            pass
+        else:
+            self.__p   = None
+            self.__bBC = None
             super().__init__()
             if not isinstance(ppass_, int):
                 _AbsSlotsObject.CleanUp(self)
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00486)
             else:
-                self.__p = ppass_
+                self.__p   = ppass_
+                self.__bBC = True
 
     def CleanUp(self):
-        if getattr(self, _AOCommon._CLEANUP_METHOD_STD, None) is not None:
+        if self.__bBC:
+            pass
+        elif getattr(self, _AOCommon._CLEANUP_METHOD_STD, None) is None:
+            pass
+        else:
             _AOCommon.CleanUp(self_=self)
 
     def CleanUpByOwnerRequest(self, ppass_ : int):
@@ -65,7 +82,8 @@ class _ProtAbsSlotsObject(_AbsSlotsObject):
             pass
         else:
             _AOCommon.CleanUp(self_=self, cleanupMethodName_=_AOCommon._CLEANUP_METHOD_PROTECTED)
-            self.__p = None
+            self.__p   = None
+            self.__bBC = None
 
     @property
     def _myPPass(self):

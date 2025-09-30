@@ -8,7 +8,7 @@
 # ------------------------------------------------------------------------------
 
 class _FwVersion:
-    __VERSION_INFO_MIT = (3, 0, None, None, None)
+    __VERSION_INFO_MIT = (3, 1, None, None, None)
 
     @staticmethod
     def _GetVersionInfo(bShort_ =False, bSkipPrefix_ =False) -> str:

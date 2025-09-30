@@ -15,9 +15,11 @@ from typing import List
 from typing import Union
 
 from xcofdk.fwcom.fwdefs            import ERtePolicyID
+from xcofdk.fwcom.fwdefs            import ELineEnding
 from xcofdk.fwapi.apiif.ifrteconfig import IRteConfig
 
-from _fwa.fwrteconfig import _FwRteConfig
+from _fw.fwssys.fwcore.types.commontypes import _CommonDefines
+from _fwa.fwrtecfg.fwrteconfig           import _FwRteConfig
 
  
 # ------------------------------------------------------------------------------
@@ -43,7 +45,10 @@ class RteConfig(IRteConfig):
         >>> RtePolicyConfigure()
         >>> RtePolicyEnableAutoStop()
         >>> RtePolicyEnableTerminalMode()
+        >>> RtePolicyEnableLogRDTcpSink()
+        >>> RtePolicyEnableLogRDFileSink()
         >>> RtePolicyEnableForcedAutoStop()
+        >>> RtePolicyDisableLogRDConsoleSink()
         >>> RtePolicyDisableSubSystemMessaging()
         >>> RtePolicyDisableSubSystemMultiProcessing()
         >>> RtePolicyBypassExperimentalFreeThreadingGuard()
@@ -85,7 +90,7 @@ class RteConfig(IRteConfig):
         -----
             >>> IRteConfig.isValid
         """
-        return self.__i.isValid
+        return self.__i._isValid
 
 
     @IRteConfig.isAutoStopEnabled.getter
@@ -94,8 +99,9 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isAutoStopEnabled
+            >>> RtePolicyEnableAutoStop()
         """
-        return self.__i.isAutoStopEnabled
+        return self.__i._isAutoStopEnabled
 
 
     @IRteConfig.isForcedAutoStopEnabled.getter
@@ -104,8 +110,9 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isForcedAutoStopEnabled
+            >>> RtePolicyEnableForcedAutoStop()
         """
-        return self.__i.isForcedAutoStopEnabled
+        return self.__i._isForcedAutoStopEnabled
 
 
     @IRteConfig.isTerminalModeEnabled.getter
@@ -114,8 +121,9 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isTerminalModeEnabled
+            >>> RtePolicyEnableTerminalMode()
         """
-        return self.__i.isTerminalModeEnabled
+        return self.__i._isTerminalModeEnabled
 
 
     @IRteConfig.isExperimentalFreeThreadingBypassed.getter
@@ -124,8 +132,9 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isExperimentalFreeThreadingBypassed
+            >>> RtePolicyBypassExperimentalFreeThreadingGuard()
         """
-        return self.__i.isExperimentalFreeThreadingBypassed
+        return self.__i._isExperimentalFreeThreadingBypassed
 
 
     @IRteConfig.isSubSystemMessagingDisabled.getter
@@ -134,8 +143,9 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isSubSystemMessagingDisabled
+            >>> RtePolicyDisableSubSystemMessaging()
         """
-        return self.__i.isSubSystemMessagingDisabled
+        return self.__i._isSubSystemMessagingDisabled
 
 
     @IRteConfig.isSubSystemMultiProcessingDisabled.getter
@@ -144,8 +154,9 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isSubSystemMultiProcessingDisabled
+            >>> RtePolicyDisableSubSystemMultiProcessing()
         """
-        return self.__i.isSubSystemMultiProcessingDisabled
+        return self.__i._isSubSystemMultiProcessingDisabled
 
 
     @IRteConfig.isExceptionTrackingOfChildProcessesDisabled.getter
@@ -154,8 +165,42 @@ class RteConfig(IRteConfig):
         See:
         -----
             >>> IRteConfig.isExceptionTrackingOfChildProcessesDisabled
+            >>> RtePolicyDisableExceptionTrackingOfChildProcesses()
         """
-        return self.__i.isExceptionTrackingOfChildProcessesDisabled
+        return self.__i._isExceptionTrackingOfChildProcessesDisabled
+
+
+    @IRteConfig.isLogRDConsoleSinkDisabled.getter
+    def isLogRDConsoleSinkDisabled(self) -> bool:
+        """
+        See:
+        -----
+            >>> IRteConfig.isLogRDConsoleSinkDisabled
+            >>> RtePolicyDisableLogRDConsoleSink()
+        """
+        return self.__i._isLogRDConsoleSinkDisabled
+
+
+    @IRteConfig.isLogRDFileSinkEnabled.getter
+    def isLogRDFileSinkEnabled(self) -> bool:
+        """
+        See:
+        -----
+            >>> IRteConfig.isLogRDFileSinkEnabled
+            >>> RtePolicyEnableLogRDFileSink()
+        """
+        return self.__i._isLogRDFileSinkEnabled
+
+
+    @IRteConfig.isLogRDTcpSinkEnabled.getter
+    def isLogRDTcpSinkEnabled(self) -> bool:
+        """
+        See:
+        -----
+            >>> IRteConfig.isLogRDTcpSinkEnabled
+            >>> RtePolicyEnableLogRDTcpSink()
+        """
+        return self.__i._isLogRDTcpSinkEnabled
     # ------------------------------------------------------------------------------
     #END API
     # ------------------------------------------------------------------------------
@@ -201,7 +246,7 @@ def RtePolicyEnableAutoStop() -> IRteConfig:
         >>> RtePolicyEnableTerminalMode()
         >>> RtePolicyEnableForcedAutoStop()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eEnableAutoStop)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eEnableAutoStop)
     return RteConfig()
 
 
@@ -229,7 +274,7 @@ def RtePolicyEnableForcedAutoStop() -> IRteConfig:
         >>> RtePolicyEnableAutoStop()
         >>> RtePolicyEnableTerminalMode()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eEnableForcedAutoStop)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eEnableForcedAutoStop)
     return RteConfig()
 
 
@@ -257,7 +302,7 @@ def RtePolicyEnableTerminalMode() -> IRteConfig:
         >>> RtePolicyEnableAutoStop()
         >>> RtePolicyEnableForcedAutoStop()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eEnableTerminalMode)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eEnableTerminalMode)
     return RteConfig()
 
 
@@ -275,7 +320,7 @@ def RtePolicyDisableSubSystemMessaging() -> IRteConfig:
         >>> ERtePolicyID.eDisableSubSystemMessaging
         >>> RtePolicyConfigure()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eDisableSubSystemMessaging)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eDisableSubSystemMessaging)
     return RteConfig()
 
 
@@ -293,7 +338,7 @@ def RtePolicyDisableSubSystemMultiProcessing() -> IRteConfig:
         >>> ERtePolicyID.eDisableSubSystemMultiProcessing
         >>> RtePolicyConfigure()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eDisableSubSystemMultiProcessing)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eDisableSubSystemMultiProcessing)
     return RteConfig()
 
 
@@ -316,7 +361,7 @@ def RtePolicyDisableExceptionTrackingOfChildProcesses() -> IRteConfig:
         >>> ERtePolicyID.eDisableExceptionTrackingOfChildProcesses
         >>> RtePolicyConfigure()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eDisableExceptionTrackingOfChildProcesses)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eDisableExceptionTrackingOfChildProcesses)
     return RteConfig()
 
 
@@ -336,11 +381,124 @@ def RtePolicyBypassExperimentalFreeThreadingGuard() -> IRteConfig:
         >>> ERtePolicyID.eBypassExperimentalFTGuard
         >>> RtePolicyConfigure()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=ERtePolicyID.eBypassExperimentalFTGuard)
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eBypassExperimentalFTGuard)
     return RteConfig()
 
 
-def RtePolicyConfigure(fwRtePolicy_ : Union[ERtePolicyID, List[ERtePolicyID]]) -> IRteConfig:
+def RtePolicyDisableLogRDConsoleSink() -> IRteConfig:
+    """
+    Request to disable console output.
+
+    Returns:
+    ----------
+        RTE configuration after the requested policy change.
+
+    See:
+    -----
+        >>> IRteConfig.isValid
+        >>> ERtePolicyID.eDisableLogRDConsoleSink
+        >>> RtePolicyConfigure()
+    """
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eDisableLogRDConsoleSink)
+    return RteConfig()
+
+
+def RtePolicyEnableLogRDFileSink(filePath_ : Union[str, None] =None, bFileModeAppend_ =False, fileEncoding_ : Union[str, None] =_CommonDefines._STR_ENCODING_UTF8) -> IRteConfig:
+    """
+    Request to enable log output to the specified file sink.
+
+    Parameters:
+    -------------
+        - filePath_ :
+          pathname (absolute or relative to the current working directory) of
+          the file to be used for log output to:
+              - if None, then the path to the current working directory will
+                be assumed as specified,
+              - if the path specifies an existing directory, then an
+                auto-generated file name (in that directory) will be used,
+                for example:
+                    'xcofdk_log__14_23_38_418.txt'
+                The format used for the auto-generated file name is:
+                    'xcofdk_log__'<HH>_<MM>_<SS>_<MS>'.txt'
+                    HH : hours
+                    MM : minutes
+                    SS : seconds
+                    MS : milliseconds
+              - the pathname as is otherwise.
+        - bFileModeAppend_ :
+          if True then the specified file will be opened with file open mode
+          'a' (for appending if exists), otherwise it will be opened with 'w'
+          (for writing).
+        - fileEncoding_ :
+          the encoding to be used for the specified file:
+              - if None, then system or platform default will be used,
+              - the specified encoding otherwise.
+          It defaults to 'utf-8'.
+
+    Returns:
+    ----------
+        RTE configuration after the requested policy change.
+
+    See:
+    -----
+        >>> IRteConfig.isValid
+        >>> ERtePolicyID.eEnableLogRDFileSink
+        >>> RtePolicyConfigure()
+    """
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eEnableLogRDFileSink, rdFileSinkPath_=filePath_, rdFileSinkEncoding_=fileEncoding_, rdFileSinkAppend_=bFileModeAppend_)
+    return RteConfig()
+
+
+def RtePolicyEnableLogRDTcpSink(ipv4Addr_ : str, port_ : int, lineEnding_ : ELineEnding =ELineEnding.NOLE) -> IRteConfig:
+    """
+    Request to enable log output to the specified TCP connection sink.
+
+    Parameters:
+    -------------
+        - ipv4Addr_ :
+          the IPv4 address (specified in dotted decimal notation) of the host
+          machine the application is running on,
+        - port_ :
+          the port number of the host machine to be used for the connection,
+        - lineEnding_ :
+          the line ending to be used for sending string objects via the
+          specified TCP connection, it defaults to NOLE, i.e. no line ending.
+
+    Returns:
+    ----------
+        RTE configuration after the requested policy change.
+
+    Note:
+    ------
+        - The RTE configuration API for redirection to TCP sinks is designed and
+          provided 'for development purposes only'
+          (in a development/local/private environment).
+        - Especially, the underlying implementation does not incorporate any
+          kind of precautions in terms of secure connections.
+        - Hence, this API function shall not be used in a production code or
+          whenever seccure network requirements are of concern.
+        - A new, separate API function for redirection via secure connections
+          is part of framework's PM-backlog for future featucres and will be
+          announced accordingly as soon as available.
+
+    See:
+    -----
+        >>> ELineEnding
+        >>> IRteConfig.isValid
+        >>> ERtePolicyID.eEnableLogRDTcpSink
+        >>> RtePolicyConfigure()
+    """
+    _FwRteConfig._ConfigureRtePolicy(ERtePolicyID.eEnableLogRDTcpSink, rdTcpSinkIpAddr_=ipv4Addr_, rdTcpSinkPort_=port_, rdTcpSinkLineEnding_=lineEnding_)
+    return RteConfig()
+
+
+def RtePolicyConfigure( fwRtePolicy_         : Union[ERtePolicyID, List[ERtePolicyID]]
+                      , rdFileSinkPath_      : Union[str, None] =None
+                      , rdFileSinkEncoding_  : Union[str, None] =_CommonDefines._STR_ENCODING_UTF8
+                      , rdFileSinkAppend_    : bool             =False
+                      , rdTcpSinkIpAddr_     : str              =None
+                      , rdTcpSinkPort_       : int              =None
+                      , rdTcpSinkLineEnding_ : ELineEnding      =ELineEnding.NOLE ) -> IRteConfig:
     """
     Request to change current RTE configuration prior to start of the framework.
 
@@ -352,6 +510,18 @@ def RtePolicyConfigure(fwRtePolicy_ : Union[ERtePolicyID, List[ERtePolicyID]]) -
     -------------
         - fwRtePolicy_ :
           A single or a list of RTE policy IDs
+        - rdFileSinkPath_ :
+          same as 'filePath_' in RtePolicyEnableLogRDFileSink() above,
+        - rdFileSinkEncoding_ :
+          same as 'fileEncoding_' in RtePolicyEnableLogRDFileSink() above,
+        - rdFileSinkAppend_ :
+          same as 'bFileModeAppend_' in RtePolicyEnableLogRDFileSink() above,
+        - rdTcpSinkIpAddr_ :
+          same as 'ipv4Addr_' in RtePolicyEnableLogRDTcpSink() above,
+        - rdTcpSinkPort_ :
+          same as 'port_' in RtePolicyEnableLogRDTcpSink() above,
+        - rdTcpSinkLineEnding_ :
+          same as 'lineEnding_' in RtePolicyEnableLogRDTcpSink() above,
 
     Returns:
     ----------
@@ -371,12 +541,22 @@ def RtePolicyConfigure(fwRtePolicy_ : Union[ERtePolicyID, List[ERtePolicyID]]) -
               - ForcedAutoStop
               - TerminalMode
         - The RTE policy AutoStop is enabled by default.
+        - Current implementation uses a 'non-secure' connection for the TCP
+          redirection sink.
 
     See:
     -----
         >>> IRteConfig.isValid
         >>> ERtePolicyID
         >>> RtePolicyGetConfig()
+        >>> RtePolicyEnableLogRDFileSink()
+        >>> RtePolicyEnableLogRDTcpSink()
     """
-    _FwRteConfig._ConfigureRtePolicy(rtePolicy_=fwRtePolicy_)
+    _FwRteConfig._ConfigureRtePolicy( fwRtePolicy_
+                                    , rdFileSinkPath_=rdFileSinkPath_
+                                    , rdFileSinkEncoding_=rdFileSinkEncoding_
+                                    , rdFileSinkAppend_=rdFileSinkAppend_
+                                    , rdTcpSinkIpAddr_=rdTcpSinkIpAddr_
+                                    , rdTcpSinkPort_=rdTcpSinkPort_
+                                    , rdTcpSinkLineEnding_=rdTcpSinkLineEnding_)
     return RteConfig()

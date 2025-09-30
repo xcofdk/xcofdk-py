@@ -260,7 +260,6 @@ class _DispatchRegCard(_AbsSlotsObject):
                 return False
             if not (_myf.channelID == msgHdr_.channelID or _myf.isDontCareChanel):
                 return False
-
         if not (_myf.senderID == msgHdr_.senderID or _myf.isDontCareSender):
             return False
 
@@ -281,7 +280,6 @@ class _DispatchRegCard(_AbsSlotsObject):
         if (not _bDontCareMsgGrp) and not _bDontCareFilterLbl:
             if not _MessageClusterMap.IsClusterMember(msgHdr_.clusterID, _myf.labelID):
                 return False
-
         if msgHdr_.isBroadcastMsg:
             return self.__IsMatchingBMsg(msgHdr_)
 
@@ -292,7 +290,6 @@ class _DispatchRegCard(_AbsSlotsObject):
         if _bDontCareMsgRcv:
             if not _DispatchRegCard.__bANONY_ADDR_ENABLED:
                 return False
-
         return True
 
     def _CleanUp(self):
@@ -324,13 +321,10 @@ class _DispatchRegCard(_AbsSlotsObject):
 
         if _bGlobalBroadcastMsg:
             res = True
-
         elif _bFwBroadcastMsg:
             res = _agent._isFwAgent
-
         else:
             res = _agent._isXTaskAgent
-
         if res and (_agent._agentTaskID == msgHdr_.senderID):
             res = _DispatchRegCard.__bSELF_BROADCASTING_ENABLED
         return res
@@ -481,9 +475,7 @@ class _DispatchRegistry(_AbsSlotsObject):
                 drc_.CleanUp()
                 drc_ = None
 
-            if drc_ is None:
-                pass
-            else:
+            if drc_ is not None:
                 self.__t[_hval] = drc_
                 if _FwSubsysCoding.IsAutoCreateClusterEnabled():
                     _MessageClusterMap.UpdateCluster(drc_.dispatchFilter.clusterID, drc_.dispatchFilter.labelID, bAllowAsListOfLabels_=False, bIgnoreDontCare_=True)
@@ -499,7 +491,6 @@ class _DispatchRegistry(_AbsSlotsObject):
                 return False
 
             _drc = self.__t.pop(_hval)
-
             if len(self.__t) < 1:
                 self.__t = None
             _drc.CleanUp()

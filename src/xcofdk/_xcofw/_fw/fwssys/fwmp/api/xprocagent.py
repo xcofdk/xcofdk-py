@@ -16,6 +16,7 @@ from xcofdk.fwapi.xmp.xprocessxcp import PTWrappedException
 
 from _fw.fwssys.assys                    import fwsubsysshare as _ssshare
 from _fw.fwssys.assys.ifs                import _IXProcAgent
+from _fw.fwssys.fwcore.logging           import logif
 from _fw.fwssys.fwcore.types.commontypes import override
 from _fw.fwssys.fwcore.types.commontypes import _CommonDefines
 from _fw.fwssys.fwmp.fwrte.fwrtedefs     import _ERteTXErrorID
@@ -43,6 +44,9 @@ class _XProcessAgent(_IXProcAgent):
         self.__pxcp = None
 
         if _ssshare._WarnOnDisabledSubsysMP(annexID_=_EFwTextID.eMisc_Shared_Disabled_Subsys_MP):
+            return
+        if not _ssshare._IsRteStarted():
+            logif._LogUrgentWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessAgent_001))
             return
         if not _XProcessConn._IsAvailable():
             return

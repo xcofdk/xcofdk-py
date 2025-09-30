@@ -12,14 +12,17 @@ from   typing import List
 from   typing import Tuple
 from   typing import Union
 
-from _fw.fwssys.fwcore.logging       import logif
-from _fw.fwssys.fwcore.base.timeutil import _TimeUtil
-from _fw.fwssys.fwcore.lc.lcmgr      import _LcManager
-from _fw.fwssys.fwcore.swpfm.sysinfo import _SystemInfo
-from _fw.fwssys.fwctrl.fwapiconnap   import _FwApiConnectorAP
-from _fw.fwssys.fwerrh.fwerrorcodes  import _EFwErrorCode
-from _fwa.fwrteconfig                import _FwRteConfig
-from _fwa.fwversion                  import _FwVersion
+from xcofdk.fwcom import LcFailure
+
+from _fw.fwssys.fwcore.logging          import logif
+from _fw.fwssys.fwcore.logging          import vlogif
+from _fw.fwssys.fwcore.base.timeutil    import _TimeUtil
+from _fw.fwssys.fwcore.lc.lcmgr         import _LcManager
+from _fw.fwssys.fwcore.swpfm.sysinfo    import _SystemInfo
+from _fw.fwssys.fwctrl.fwapiconnap      import _FwApiConnectorAP
+from _fw.fwssys.fwerrh.fwerrorcodes     import _EFwErrorCode
+from _fwa.fwrtecfg.fwrteconfig          import _FwRteConfig
+from _fwa.fwversion                     import _FwVersion
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
@@ -39,6 +42,10 @@ class _FwApiBase:
     @staticmethod
     def FwApiIsXTaskRunning(xtUID_ : int) -> bool:
         return _FwApiConnectorAP._APIsXTaskRunning(xtUID_)
+
+    @staticmethod
+    def FwApiGetLcFailure() -> Union[LcFailure, None]:
+        return _FwApiConnectorAP._APGetLcFailure()
 
     @staticmethod
     def FwApiGetXcofdkVer() -> str:
@@ -65,12 +72,12 @@ class _FwApiBase:
             return False
 
         _rteCfg = _FwRteConfig._GetInstance(bFreeze_=True)
-        if not _rteCfg.isValid:
+        if not _rteCfg._isValid:
             logif._XLogErrorEC(_EFwErrorCode.UE_00210, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_016).format(str(_rteCfg)))
             return False
 
         if _SystemInfo._IsGilDisabled():
-            if not _rteCfg.isExperimentalFreeThreadingBypassed:
+            if not _rteCfg._isExperimentalFreeThreadingBypassed:
                 logif._XLogErrorEC(_EFwErrorCode.UE_00161, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_017).format(_SystemInfo._GetPythonVer(), _fwVer))
                 return False
             _midPart = _FwTDbEngine.GetText(_EFwTextID.eFwRteConfig_ToString_04)

@@ -15,6 +15,7 @@ from _fw.fwssys.fwcore.config.fwcfgdefines import _ESubSysID
 from _fw.fwssys.fwcore.types.commontypes   import _CommonDefines
 from _fw.fwssys.fwcore.types.commontypes   import _EDepInjCmd
 from _fw.fwssys.fwerrh.fwerrorcodes        import _EFwErrorCode
+from _fwa.fwrtecfg.fwrteconfig             import _FwRteConfig
 from _fwa.fwsubsyscoding                   import _FwSubsysCoding
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
@@ -136,6 +137,20 @@ class _FwSubsysShare:
         if _bLck:
             _FwSubsysShare.__theLck.release()
         return _FwSubsysShare.__numKBI
+
+def _IsRteStarted() -> bool:
+    return _FwRteConfig._GetInstance()._isRteStarted
+def _IsLogRDConsoleSinkEnabled() -> bool:
+    return not _FwRteConfig._GetInstance()._isLogRDConsoleSinkDisabled
+def _IsLogRDActiveServiceRequired() -> bool:
+    return _FwRteConfig._GetInstance()._isLogRDActiveServiceRequired
+def _GetRteConfig() -> _FwRteConfig:
+    return _FwRteConfig._GetInstance()
+
+def _IsSubsysDisabled(eSSysID_ : _ESubSysID):
+    return _FwSubsysShare._IsSubsysDisabled(eSSysID_)
+def _WarnOnDisabledSubsys(eSSysID_ : _ESubSysID, bForce_ =False, annexID_ : _EFwTextID =None):
+    return _FwSubsysShare._WarnOnDisabledSubsys(eSSysID_, bForce_=bForce_, annexID_=annexID_)
 
 def _IsSubsysMPDisabled():
     return _FwSubsysShare._IsSubsysDisabled(_ESubSysID.eMP)

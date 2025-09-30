@@ -8,12 +8,12 @@
   <tr>
      <td>Version</td>
      <td>:</td>
-     <td>1.6</td>
+     <td>1.8</td>
   </tr>
   <tr>
      <td>Date</td>
      <td>:</td>
-     <td>12.06.2025</td>
+     <td>30.09.2025</td>
   </tr>
   <tr>
      <td>&copy<c>Copyright</c></td>
@@ -39,9 +39,11 @@
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 - [Table of Contents](#table-of-contents)
   - [Release Highlights](#release-highlights)
+    - [Release Highlights v3.1](#release-highlights-v31)
     - [Release Highlights v3.0](#release-highlights-v30)
     - [Release Highlights v2.1](#release-highlights-v21)
   - [Release Notes](#release-notes)
+    - [Release Notes v3.1 - 30.09.2025](#release-notes-v31---30092025)
     - [Release Notes v3.0 - 12.06.2025](#release-notes-v30---12062025)
     - [Release Notes v2.1 - 04.02.2025](#release-notes-v21---04022025)
     - [Release Notes v2.0.1 - 19.11.2024](#release-notes-v201---19112024)
@@ -51,6 +53,26 @@
 <br>
 
 ## Release Highlights
+
+### Release Highlights v3.1
+
+- Introduction of public api function <tt>fwutil.GetLcFailure()</tt>.
+- Introduction of RTE configuration policy for disabling console output:
+  - <tt>rtecfg.RtePolicyDisableLogRDConsoleSink()</tt>
+- Introduction of RTE configuration policy for redirection of logging output to file sink:
+  - <tt>rtecfg.RtePolicyEnableLogRDFileSink()</tt>
+- Introduction of RTE configuration policy for redirection of logging output to TCP sink:
+  - <tt>rtecfg.RtePolicyEnableLogRDTcpSink()</tt>
+- Task/process alias name is now allowed to be a printable. non-empty string literal without spaces.
+- [DEPRECATED] Task state property <tt>ITask.isAborting</tt> is deprecated now:
+  - with <tt>False</tt> is always returned,
+  - <tt>ITask.isFailed</tt> shall be used instead.
+
+[TOC](#table-of-contents)
+______
+
+<br>
+
 
 ### Release Highlights v3.0
 
@@ -135,6 +157,26 @@ ______
 
 
 ## Release Notes
+
+### Release Notes v3.1 - 30.09.2025
+
+- XPY-366 – Update readme and release notes
+- XPY-359 – Introduce public api function <tt>GetLcFailure()</tt>
+- XPY-358 – Deprecated: Task state property <tt>isAborting</tt> is deprecated now
+- XPY-357 – Allow task/process alias name to be a printable. non-empty string literal without spaces
+- XPY-350 – Introduce RTE policy for redirection of logging output to TCP sink
+- XPY-349 – Introduce RTE policy for redirection of logging output to file sink
+- XPY-347 – Introduce RTE policy for disabling console output
+- XPY-345 – Bugfix: Sporadically exception raised while determining current running task
+- XPY-341 – Bugfix: <tt>isFailed</tt> returns wrong value upon failure (especially for async. tasks)
+- XPY-328 – Bugfix: Creating a child process before start of the framework ends up with an exception
+- XPY-316 – Bugfix: Sporadically wrong exit code of child process
+
+[TOC](#table-of-contents)
+______
+
+<br>
+
 
 ### Release Notes v3.0 - 12.06.2025
 

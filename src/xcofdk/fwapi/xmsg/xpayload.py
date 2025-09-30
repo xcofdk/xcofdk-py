@@ -123,7 +123,7 @@ class XPayload(IPayload):
 
 
     @IPayload.isMarshalingRequired.getter
-    def isMarshalingRequired(self):
+    def isMarshalingRequired(self) -> bool:
         """
         See:
         -----

@@ -11,28 +11,31 @@ import inspect
 import os
 import sys
 from   datetime import datetime as _Datetime
+from   typing import Union
 
 from _fw.fwssys.fwcore.logging            import vlogif
 from _fw.fwssys.fwcore.logging.logdefines import _GetCurThread
 from _fw.fwssys.fwcore.logging.logdefines import _ELogType
 from _fw.fwssys.fwcore.logging.logdefines import _LogUtil
+from _fw.fwssys.fwcore.logrd.logrecord    import _EColorCode
+from _fw.fwssys.fwcore.logrd.logrecord    import _LogRecord
+from _fw.fwssys.fwcore.logrd.logrecord    import _IRDLogRP
 from _fw.fwssys.fwcore.ipc.tsk.taskutil   import _ETaskXPhaseID
 from _fw.fwssys.fwcore.types.aobject      import _AbsSlotsObject
 from _fw.fwssys.fwcore.types.commontypes  import _CommonDefines
 from _fw.fwssys.fwcore.types.commontypes  import _EDepInjCmd
-from _fw.fwssys.fwcore.types.commontypes  import _EColorCode
-from _fw.fwssys.fwcore.types.commontypes  import _TextStyle
+from _fw.fwssys.fwcore.types.commontypes  import override
 
 from _fw.fwssys.fwerrh.fwerrorcodes import _EFwErrorCode
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
 
-class _LogEntry(_AbsSlotsObject):
-    __slots__ = [ '__t' , '__fp' , '__bF' , '__fn' , '__no' , '__uid' , '__ml' , '__ms' , '__tst' , '__tn' , '__tid' , '__xrn' , '__xph' ]
+class _LogEntry(_AbsSlotsObject, _IRDLogRP):
+    __slots__ = [ '__t' , '__fp' , '__fn' , '__no' , '__uid' , '__ml' , '__ms' , '__tst' , '__tn' , '__tid' , '__xrn' , '__xph' , '__lr' ]
 
-    __bLHE  = True  
-    __bCOFE = True  
+    __bLHE  = True
+    __bCOFE = True
 
     __fmttagInclUniqueID      = True
     __fmttagInclTimestamp     = True
@@ -63,21 +66,22 @@ class _LogEntry(_AbsSlotsObject):
     def __init__( self, logType_, taskName_ : str =None, taskID_ : int =None
                 , shortMsg_ : str =None, longMsg_ : str =None
                 , cloneby_ =None, doSkipSetup_ =False, xrn_ =None, bXTaskTask_ =None):
-        super().__init__()
+        _AbsSlotsObject.__init__(self)
+        _IRDLogRP.__init__(self)
 
         self.__t   = None
-        self.__xrn = None
-        self.__no  = None
-        self.__tst = None
-        self.__tid = None
-        self.__ml  = None
-        self.__bF  = None
-        self.__ms  = None
         self.__fp  = None
         self.__fn  = None
+        self.__lr  = None
+        self.__ml  = None
+        self.__ms  = None
+        self.__no  = None
         self.__tn  = None
+        self.__tid = None
+        self.__tst = None
         self.__uid = None
         self.__xph = None
+        self.__xrn = None
 
         if doSkipSetup_:
             pass
@@ -89,12 +93,12 @@ class _LogEntry(_AbsSlotsObject):
                 pass
             else:
                 self.__t   = cloneby_.__t
-                self.__no  = cloneby_.__no
-                self.__ml  = cloneby_.__ml
-                self.__bF  = cloneby_.__bF
-                self.__ms  = cloneby_.__ms
                 self.__fp  = cloneby_.__fp
                 self.__fn  = cloneby_.__fn
+                self.__lr  = cloneby_.__lr
+                self.__ml  = cloneby_.__ml
+                self.__ms  = cloneby_.__ms
+                self.__no  = cloneby_.__no
                 self.__tn  = cloneby_.__tn
                 self.__tid = cloneby_.__tid
                 self.__tst = cloneby_.__tst
@@ -103,29 +107,6 @@ class _LogEntry(_AbsSlotsObject):
                 self.__xrn = cloneby_.__xrn
         else:
             self.__SetupEntry(logType_, taskName_=taskName_, taskID_=taskID_, shortMsg_=shortMsg_, longMsg_=longMsg_, xrn_=xrn_, bXTaskTask_=bXTaskTask_)
-
-    def __eq__(self, other_):
-        res = isinstance(other_, _LogEntry)
-        if not res:
-            pass
-        elif id(self) == id(other_):
-            pass
-        elif not self.uniqueID is None and self.uniqueID == other_.uniqueID:
-            pass
-        else:
-            res  = self.__t   == other_.__t
-            res &= self.__no  == other_.__no
-            res &= self.__ml  == other_.__ml
-            res &= self.__ms  == other_.__ms
-            res &= self.__fp  == other_.__fp
-            res &= self.__fn  == other_.__fn
-            res &= self.__tn  == other_.__tn
-            res &= self.__tid == other_.__tid
-            res &= self.__tst == other_.__tst
-            res &= self.__uid == other_.__uid
-            res &= self.__xph == other_.__xph
-            res &= self.__xrn == other_.__xrn
-        return res
 
     @property
     def isValid(self) -> bool:
@@ -141,32 +122,28 @@ class _LogEntry(_AbsSlotsObject):
 
     @property
     def isError(self):
-        _gid = self.__typeGroupID
+        _gid = self._logTypeGrpID
         return False if _gid is None else _gid.isError
 
     @property
     def isUserError(self):
-        return self.__typeGroupID == _ELogType.ERR
+        return self._logTypeGrpID == _ELogType.ERR
 
     @property
     def isFatalError(self):
-        return self.__typeGroupID == _ELogType.FTL
+        return self._logTypeGrpID == _ELogType.FTL
 
     @property
     def isKPI(self):
-        return self.__typeGroupID == _ELogType.KPI
+        return self._logTypeGrpID == _ELogType.KPI
 
     @property
     def isWarning(self):
-        return self.__typeGroupID == _ELogType.WNG
+        return self._logTypeGrpID == _ELogType.WNG
 
     @property
     def isFreeLog(self):
-        return self.__typeGroupID == _ELogType.FREE
-
-    @property
-    def isFlushed(self):
-        return self.__bF == True
+        return self._logTypeGrpID == _ELogType.FREE
 
     @property
     def isClone(self):
@@ -247,16 +224,8 @@ class _LogEntry(_AbsSlotsObject):
         return self.__fn
 
     @property
-    def timestamp(self):
-        return self.timestampMS
-
-    @property
     def timestampMS(self):
-        return _LogUtil.GetLogTimestamp(self.__tst, microsec_=False)
-
-    @property
-    def timestampToDatetime(self) -> _Datetime:
-        return None if self.__tst is None else _Datetime.fromisoformat(self.__tst.isoformat())
+        return _LogUtil.GetLogTimestamp(self.__tst)
 
     @property
     def errorCode(self) -> int:
@@ -283,53 +252,21 @@ class _LogEntry(_AbsSlotsObject):
     def Clone(self):
         return self._Clone()
 
+    @_IRDLogRP._recStr.getter
+    def _recStr(self) -> str:
+        return self.ToString()
+
+    @_IRDLogRP._logRecord.getter
+    def _logRecord(self):
+        return self.__lr
+
+    @override
+    def _CleanUpLE(self):
+        self.CleanUp()
+
     @staticmethod
     def _IsCompactOutputFormatEnabled() -> bool:
         return _LogEntry.__bCOFE
-
-    @staticmethod
-    def _IsLogHighlightingEnabled() -> bool:
-        return _LogEntry.__bLHE
-
-    @staticmethod
-    def _GetFwFormatTags():
-        return  ( _LogEntry.__fmttagInclUniqueID
-                , _LogEntry.__fmttagInclTimestamp
-                , _LogEntry.__fmttagInclTaskName
-                , _LogEntry.__fmttagInclTaskID
-                , _LogEntry.__fmttagInclFuncName
-                , _LogEntry.__fmttagInclFileName
-                , _LogEntry.__fmttagInclLineNo
-                , _LogEntry.__fmttagInclCallstack
-                , _LogEntry.__fmttagInclRaisedByInfo
-                , _LogEntry.__fmttagInclEuNum
-                , _LogEntry.__fmttagInclErrorImpact
-                , _LogEntry.__fmttagInclTExecPhase )
-
-    @staticmethod
-    def _GetFwCompatFormatTags():
-        return  ( _LogEntry.__fmttagInclTimestamp
-                , _LogEntry.__fmttagInclTaskName )
-
-    @staticmethod
-    def _GetUserFormatTags():
-        return  ( _LogEntry.__ufmttagInclUniqueID
-                , _LogEntry.__ufmttagInclTimestamp
-                , _LogEntry.__ufmttagInclTaskName
-                , _LogEntry.__ufmttagInclTaskID
-                , _LogEntry.__ufmttagInclFuncName
-                , _LogEntry.__ufmttagInclFileName
-                , _LogEntry.__ufmttagInclLineNo
-                , _LogEntry.__ufmttagInclCallstack
-                , _LogEntry.__ufmttagInclRaisedByInfo
-                , _LogEntry.__ufmttagInclEuNum
-                , _LogEntry.__ufmttagInclErrorImpact
-                , _LogEntry.__ufmttagInclTExecPhase )
-
-    @staticmethod
-    def _GetUserCompatFormatTags():
-        return  ( _LogEntry.__ufmttagInclTimestamp
-                , _LogEntry.__ufmttagInclTaskName )
 
     @staticmethod
     def _ClsDepInjection( dinjCmd_             : _EDepInjCmd
@@ -407,6 +344,10 @@ class _LogEntry(_AbsSlotsObject):
         return False
 
     @property
+    def _logTypeGrpID(self):
+        return _LogUtil.GetLogTypeGroup(self.__t)
+
+    @property
     def _xrNumber(self) -> int:
         return self.__xrn
 
@@ -440,7 +381,7 @@ class _LogEntry(_AbsSlotsObject):
     def _ForceCleanUp(self):
         self.CleanUp()
 
-    def _Adapt( self, logType_ : _ELogType =None, shortMsg_ : str =None, uniqueID_ : int =None, bFlushed_ : bool =None
+    def _Adapt( self, logType_ : _ELogType =None, shortMsg_ : str =None, uniqueID_ : int =None
               , bCleanupPermitted_ : bool =None, eTaskExecPhaseID_ : _ETaskXPhaseID =None, taskName_ : str =None, taskID_ : int =None):
         if logType_ is not None:
             self.__t = logType_
@@ -448,8 +389,6 @@ class _LogEntry(_AbsSlotsObject):
             self.__ms = shortMsg_
         if uniqueID_ is not None:
             self.__uid = uniqueID_
-        if bFlushed_ is not None:
-            self.__bF = bFlushed_
         if bCleanupPermitted_ is not None:
             self._SetCleanUpPermission(bCleanupPermitted_)
         if eTaskExecPhaseID_ is not None:
@@ -463,7 +402,7 @@ class _LogEntry(_AbsSlotsObject):
         _hdr = self.__GetHeader(bHighlight_=False)
         res  = _CommonDefines._STR_EMPTY if _hdr is None else _hdr
 
-        if self.shortMessage is None or self.longMessage is None:
+        if (self.shortMessage is None) or (self.longMessage is None):
             if self.shortMessage is not None:
                 res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_016).format(self.shortMessage)
             elif self.longMessage is not None:
@@ -478,37 +417,54 @@ class _LogEntry(_AbsSlotsObject):
         if self.isFatalError:
             _bUserLog = self.logType.isFwApiLogType
 
-            _bInclCallstack    = _LogEntry.__ufmttagInclCallstack    if _bUserLog else _LogEntry.__fmttagInclCallstack
-            _bInclRaisedByInfo = _LogEntry.__ufmttagInclRaisedByInfo if _bUserLog else _LogEntry.__fmttagInclRaisedByInfo
+            _cs = self.__FmtCallstack()
+            if _cs is not None:
+                res += _cs
 
-            if _bInclCallstack and (self.callstack is not None):
-                res += _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_01).format(self.callstack.rstrip())
-            if _bInclRaisedByInfo and self._causedBySystemException is not None:
-                _rbxInfo = str(self._causedBySystemException)
-                _rbxInfo = _rbxInfo.split(_CommonDefines._CHAR_SIGN_NEWLINE)
-                _rbxInfo = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}'.join(_rbxInfo)
-                _rbxInfo = _CommonDefines._CHAR_SIGN_TAB + _rbxInfo
-                _rbxInfo = _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_02).format(_rbxInfo.rstrip())
-                _rbxInfo = self.__HighlightText(_rbxInfo, _EColorCode.RED)
-                res += _rbxInfo
+            _rbi = self.__FmtTraceback()
+            if _rbi is not None:
+                res += _rbi
+
             if self._nestedLogException is not None:
                 _nxcp = str(self._nestedLogException)
-                _nxcp = _nxcp.split(_CommonDefines._CHAR_SIGN_NEWLINE)
-                _nxcp = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}'.join(_nxcp)
+                _nxcp = _nxcp.split(_CommonDefines._CHAR_SIGN_LF)
+                _nxcp = f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_TAB}'.join(_nxcp)
                 _nxcp = _CommonDefines._CHAR_SIGN_TAB + _nxcp
-                res += _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_03).format(_nxcp.rstrip())
-
-        res = self.__HighlightText(res)
+                res  += _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_03).format(_nxcp.rstrip())
         return res
+
+    def __FmtCallstack(self) -> Union[str, None]:
+        if self.isInvalid or (not self.isFatalError) or (self.callstack is None):
+            return None
+
+        _bInclCS = _LogEntry.__ufmttagInclCallstack if self.logType.isFwApiLogType else _LogEntry.__fmttagInclCallstack
+        if not _bInclCS:
+            return None
+
+        return _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_01).format(self.callstack.rstrip())
+
+    def __FmtTraceback(self) -> Union[str, None]:
+        if self.isInvalid or (not self.isFatalError) or (self._causedBySystemException is None):
+            return None
+
+        _bInclRBI = _LogEntry.__ufmttagInclRaisedByInfo if self.logType.isFwApiLogType else _LogEntry.__fmttagInclRaisedByInfo
+        if not _bInclRBI:
+            return None
+
+        res = str(self._causedBySystemException)
+        res = res.split(_CommonDefines._CHAR_SIGN_LF)
+        res = f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_TAB}'.join(res)
+        res = _CommonDefines._CHAR_SIGN_TAB + res
+        return _FwTDbEngine.GetText(_EFwTextID.eLogEntry_ToString_02).format(res.rstrip())
 
     def _CleanUp(self):
         self.__t   = None
-        self.__no  = None
-        self.__ml  = None
-        self.__bF  = None
-        self.__ms  = None
         self.__fp  = None
         self.__fn  = None
+        self.__lr  = None
+        self.__ml  = None
+        self.__ms  = None
+        self.__no  = None
         self.__tn  = None
         self.__tid = None
         self.__tst = None
@@ -516,30 +472,59 @@ class _LogEntry(_AbsSlotsObject):
         self.__xph = None
         self.__xrn = None
 
-    @property
-    def __typeGroupID(self):
-        return _LogUtil.GetLogTypeGroup(self.__t)
+    @staticmethod
+    def __GetFwFormatTags():
+        return  ( _LogEntry.__fmttagInclUniqueID
+                , _LogEntry.__fmttagInclTimestamp
+                , _LogEntry.__fmttagInclTaskName
+                , _LogEntry.__fmttagInclTaskID
+                , _LogEntry.__fmttagInclFuncName
+                , _LogEntry.__fmttagInclFileName
+                , _LogEntry.__fmttagInclLineNo
+                , _LogEntry.__fmttagInclCallstack
+                , _LogEntry.__fmttagInclRaisedByInfo
+                , _LogEntry.__fmttagInclEuNum
+                , _LogEntry.__fmttagInclErrorImpact
+                , _LogEntry.__fmttagInclTExecPhase )
 
-    def __HighlightText(self, txt_ : str, colorCode_ : _EColorCode =_EColorCode.NONE):
-        if not _LogEntry._IsLogHighlightingEnabled():
-            return txt_
+    @staticmethod
+    def __GetFwCompatFormatTags():
+        return  ( _LogEntry.__fmttagInclTimestamp
+                , _LogEntry.__fmttagInclTaskName )
 
-        _cc = colorCode_
-        if not _cc.isColor:
-            if self.isError:
-                _cc = _EColorCode.RED
-            elif self.isKPI:
-                _cc = _EColorCode.BLUE
-            elif self.isWarning:
-                _cc = _EColorCode.RED if self.__t.isUrgentWarning else _EColorCode.YELLOW
+    @staticmethod
+    def __GetUserFormatTags():
+        return  ( _LogEntry.__ufmttagInclUniqueID
+                , _LogEntry.__ufmttagInclTimestamp
+                , _LogEntry.__ufmttagInclTaskName
+                , _LogEntry.__ufmttagInclTaskID
+                , _LogEntry.__ufmttagInclFuncName
+                , _LogEntry.__ufmttagInclFileName
+                , _LogEntry.__ufmttagInclLineNo
+                , _LogEntry.__ufmttagInclCallstack
+                , _LogEntry.__ufmttagInclRaisedByInfo
+                , _LogEntry.__ufmttagInclEuNum
+                , _LogEntry.__ufmttagInclErrorImpact
+                , _LogEntry.__ufmttagInclTExecPhase )
 
-        res = txt_
-        if _cc.isColor:
-            res = _TextStyle.ColorText(txt_, _cc)
+    @staticmethod
+    def __GetUserCompatFormatTags():
+        return  ( _LogEntry.__ufmttagInclTimestamp
+                , _LogEntry.__ufmttagInclTaskName )
+
+    def __GetColorCode(self) -> _EColorCode:
+        if self.isError:
+            res = _EColorCode.RED
+        elif self.isKPI:
+            res = _EColorCode.BLUE
+        elif self.isWarning:
+            res = _EColorCode.RED if self.__t.isUrgentWarning else _EColorCode.YELLOW
+        else:
+            res = _EColorCode.NONE
         return res
 
     def __TypeAsStr(self, bHighlight_ =False):
-        _grpID = self.__typeGroupID
+        _grpID = self._logTypeGrpID
         if (_grpID is None) or (_grpID==_ELogType.FREE):
             res = None
         else:
@@ -551,9 +536,6 @@ class _LogEntry(_AbsSlotsObject):
                 res = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_011).format(_grpTypeName, '{0:03X}'.format(self.errorImpact.value))
             else:
                 res = _grpTypeName
-
-            if bHighlight_:
-                res = self.__HighlightText(res)
         return res
 
     def __GetHeader(self, bHighlight_ =False):
@@ -563,9 +545,6 @@ class _LogEntry(_AbsSlotsObject):
             res = self.__GetVerboseHeader(bHighlightLogType_=False)
         else:
             res = self.__GetCompactHeader(bHighlightLogType_=False)
-
-        if bHighlight_:
-            res = self.__HighlightText(res)
         return res
 
     def __GetVerboseHeader(self, bHighlightLogType_ =False):
@@ -591,10 +570,10 @@ class _LogEntry(_AbsSlotsObject):
             _bUserLog = (self.taskXPhase is not None) and not (self.taskXPhase.isRunnableExecution or self.taskXPhase.isFwHandling)
         if _bUserLog:
             _incUniqueID, _incTimestamp, _incTaskName, _incTaskID, _incFuncName, _incFileName, _incLineNo, \
-                _incCallstack, _incRaisedByInfo, _includeEuNum, _includeErrImp, _includeExecPhase = _LogEntry._GetUserFormatTags()
+                _incCallstack, _incRaisedByInfo, _includeEuNum, _includeErrImp, _includeExecPhase = _LogEntry.__GetUserFormatTags()
         else:
             _incUniqueID, _incTimestamp, _incTaskName, _incTaskID, _incFuncName, _incFileName, _incLineNo, \
-                _incCallstack, _incRaisedByInfo, _includeEuNum, _includeErrImp, _includeExecPhase = _LogEntry._GetFwFormatTags()
+                _incCallstack, _incRaisedByInfo, _includeEuNum, _includeErrImp, _includeExecPhase = _LogEntry.__GetFwFormatTags()
 
         if self.dtaskUID is None:
             _incTaskID = False
@@ -660,13 +639,13 @@ class _LogEntry(_AbsSlotsObject):
             return None
 
         if self.__t.isFwApiLogType:
-            _incTimestamp, _incTaskName = _LogEntry._GetUserCompatFormatTags()
+            _incTimestamp, _incTaskName = _LogEntry.__GetUserCompatFormatTags()
         else:
-            _incTimestamp, _incTaskName = _LogEntry._GetFwCompatFormatTags()
+            _incTimestamp, _incTaskName = _LogEntry.__GetFwCompatFormatTags()
 
         if _incTaskName:
             if self.__tn is None:
-                _incTaskName = False
+                self.__tn = _GetCurThread().name
 
         if not _incTimestamp:
             if not _incTaskName:
@@ -714,30 +693,25 @@ class _LogEntry(_AbsSlotsObject):
                 taskName_ = None
 
         if shortMsg_ is not None:
-            if not isinstance(shortMsg_, str):
-                shortMsg_ = None
+            if logType_.isFree or not isinstance(shortMsg_, str):
+                pass
             else:
                 shortMsg_ = shortMsg_.strip()
                 if len(shortMsg_) == 0:
                     shortMsg_ = None
-            self.__ms = shortMsg_
-        if longMsg_ is not None:
-            if not isinstance(longMsg_, str):
-                longMsg_ = None
-            else:
-                longMsg_ = longMsg_.strip()
-                if len(longMsg_) == 0:
-                    longMsg_ = None
-            self.__ml = longMsg_
+        if shortMsg_ is None:
+            shortMsg_ = _CommonDefines._STR_EMPTY
 
         if taskID_ is not None:
             if not isinstance(taskID_, int):
                 taskID_ = None
 
         self.__t   = logType_
-        self.__bF  = False
+        self.__ms  = shortMsg_
         self.__tn  = taskName_
         self.__tid = taskID_
-        self.__tst = None if _FwTDbEngine.GetText(_EFwTextID.eMisc_PyModuleName_DateTime) not in sys.modules else _Datetime.now()
+        self.__tst = None if _Datetime.__name__ not in sys.modules else _Datetime.now()
         self.__uid = _LogUtil.GetInvalidUniqueID()
         self.__xrn = xrn_
+        self.__lr  = _LogRecord(self, color_=self.__GetColorCode(), logType_=self.__t._toLRLogType)
+

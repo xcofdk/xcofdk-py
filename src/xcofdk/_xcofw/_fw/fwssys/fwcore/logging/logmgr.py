@@ -21,6 +21,7 @@ from _fw.fwssys.fwcore.logging.logdefines     import _LogErrorCode
 from _fw.fwssys.fwcore.logging.logentry       import _LogEntry
 from _fw.fwssys.fwcore.logging.alogmgr        import _AbsLogMgr
 from _fw.fwssys.fwcore.logging.logmgrdata     import _LogMgrData
+from _fw.fwssys.fwcore.logrd.logrecord        import _EColorCode
 from _fw.fwssys.fwcore.base.timeutil          import _KpiLogBook
 from _fw.fwssys.fwcore.config.fwstartupconfig import _FwStartupConfig
 from _fw.fwssys.fwcore.lc.lcxstate            import _ELcKpiID
@@ -122,12 +123,12 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
         if logifOpOption_.isPrintXcpOnly:
             _ts = _LogUtil.GetLogTimestamp()
             msg = _FwTDbEngine.GetText(_EFwTextID.eLogMgr_AddLog_FmtStr_01).format(_ts, _GetCurThread().name, str(msg_))
-            self.__d.Flush(msg)
+            self.__d.LMPrint(msg, color_=_EColorCode.RED)
             return None
 
         if _ltGrp.isNonError and self.__d.isCompactOutputFormatEnabled:
             _le = self.__CreateCompactLog(_ltGrp, logType_, shortMsg_=msg_, longMsg_=None)
-            self.__d.Flush(_le)
+            self.__d.LMPrint(_le)
             return None
 
         _bProcCurThrd   = _AutoEnclosedThreadsBag.IsProcessingCurPyThread()
@@ -147,9 +148,9 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
             if not _bCLOnly:
                 if self.__d.pendingTaskID is not None:
                     self.__d.SetPendingTaskID(None)
-
                 vlogif._VPrint(logType_, msg_, errCode_)
                 return None
+
         self.__d.UpdateMaxLogTime(bRestart_=True)
 
         _curPxyInfo, _le = self.__CheckLogRequest( _curPxyInfo, _ltGrp, logType_, msg_=msg_
@@ -164,6 +165,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
                 self.__d.firstFatalLog = None
 
         if _le.isFatalError:
+            _le._Adapt(bCleanupPermitted_=False)
             if self.__d.firstFatalLog is None:
                 self.__d.firstFatalLog = _le.Clone()
 
@@ -171,7 +173,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
             if _le.isFatalError:
                 self.__d.subSeqXcp = _le._enclosedByLogException
             else:
-                self.__d.Flush(_le)
+                self.__d.LMPrint(_le)
             _curPxyInfo.CleanUp()
             self.__d.UnlockApi()
 
@@ -190,13 +192,10 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
             _bIN = True
         elif _curPxyInfo.curTaskInfo.isInLcCeaseMode:
             _bIN = True
-
         if _bIN:
             _bErrImp = _le.hasErrorImpact or (_le.errorImpact is None)
-
             if _le.isFatalError and _bErrImp:
                 _lcCID = _ti.GetLcCompID()
-
                 if _lcCID is None:
                     vlogif._LogOEC(True, _EFwErrorCode.VFE_00444)
                 elif self._PcHasLcCompAnyFailureState(_lcCID, atask_=_ti):
@@ -208,7 +207,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
                     _le._SetErrorImpact(_errImp)
                     self._PcNotifyLcFailure(_ti.GetLcCompID(), _le, atask_=_ti)
             else:
-                self.__d.Flush(_le)
+                self.__d.LMPrint(_le)
 
             _curPxyInfo.CleanUp()
             self.__d.subSeqXcp = None
@@ -315,7 +314,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
     def isUserExceptionModeEnabled(self) -> bool:
         return self.isValid and self.__d.logConf.isExceptionModeEnabled
 
-    def _PrintSummary(self, bPrintFFL_ =True, bLcCall_ =False):
+    def _PrintSummary(self, bLcCall_ =False):
         if self.__d is None:
             return
 
@@ -330,39 +329,38 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
             if not self.__d.firstFatalLog.isValid:
                 self.__d.firstFatalLog = None
 
-        _bRelMode = self.isReleaseModeEnabled
-
-        if (self.__d.firstFatalLog is None) or _bRelMode:
-            bPrintFFL_ = False
+        _color     = _EColorCode.NONE if (self.__d.firstFatalLog is None) else _EColorCode.RED
+        _bRelMode  = self.isReleaseModeEnabled
+        _bPrintFFL = not (_bRelMode or (self.__d.firstFatalLog is None))
 
         _statMsg  = _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_01) + str(self.__d.counter[_ELogType.FTL.value])
         _statMsg += _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_02) + str(self.__d.counter[_ELogType.ERR.value])
         _statMsg += _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_03) + str(self.__d.counter[_ELogType.WNG.value])
         _statMsg += _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_04) + str(self.__d.counter[_ELogType.INF.value])
-        _statMsg += f'{_CommonDefines._CHAR_SIGN_RIGHT_PARANTHESIS}{_CommonDefines._CHAR_SIGN_NEWLINE}'
+        _statMsg += f'{_CommonDefines._CHAR_SIGN_RIGHT_PARANTHESIS}{_CommonDefines._CHAR_SIGN_LF}'
 
         if not _bRelMode:
-            _fmtStr = 2*_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006)
-            _statMsg += _fmtStr.format(vlogif._PrintVSummary(bPrint_=False), _CommonDefines._CHAR_SIGN_NEWLINE)
+            _fmtStr    = 2*_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006)
+            _statMsg  += _fmtStr.format(vlogif._PrintVSummary(bPrint_=False), _CommonDefines._CHAR_SIGN_LF)
 
         _psMsg = ''
         if bLcCall_:
             if not _bRelMode:
-                _psMsg  = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_LONG}'
+                _psMsg  = f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_LF}{_LARGER_THAN_LONG}'
                 _psMsg += _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_05)
-                _psMsg += f'{_LESS_THAN_LONG}{_CommonDefines._CHAR_SIGN_NEWLINE}'
+                _psMsg += f'{_LESS_THAN_LONG}{_CommonDefines._CHAR_SIGN_LF}'
             else:
-                _psMsg = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._DASH_LINE_LONG}{_CommonDefines._CHAR_SIGN_NEWLINE}'
+                _psMsg = f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._DASH_LINE_LONG}{_CommonDefines._CHAR_SIGN_LF}'
 
         _psMsg += _statMsg
 
-        if bPrintFFL_:
+        if _bPrintFFL:
             _tmp  = _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_06).format(self.__d.firstFatalLog)
             _tmp += _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_07)
-            _tmp  = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT} '.join(_tmp.split(_CommonDefines._CHAR_SIGN_NEWLINE))
+            _tmp  = f'{_CommonDefines._CHAR_SIGN_LF}{_LARGER_THAN_SHORT} '.join(_tmp.split(_CommonDefines._CHAR_SIGN_LF))
 
-            _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT}\n{_LARGER_THAN_SHORT} {_tmp}{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_SHORT}'
-            _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_statMsg}'
+            _psMsg += f'{_CommonDefines._CHAR_SIGN_LF}{_LARGER_THAN_SHORT}\n{_LARGER_THAN_SHORT} {_tmp}{_CommonDefines._CHAR_SIGN_LF}{_LARGER_THAN_SHORT}'
+            _psMsg += f'{_CommonDefines._CHAR_SIGN_LF}{_statMsg}'
 
         _myMsg  = None
         _supKpi = _KpiLogBook._GetStartupKPI()
@@ -373,21 +371,22 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
 
         if not _bRelMode:
             _fmtStr = 4*_FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_006)
-            _psMsg += _fmtStr.format(_FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_08), self.__d.maxLogTime, _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_09), self.__d.maxErrorLogTime)
+            _psMsg += _fmtStr.format(_FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_08)
+                                    , self.__d.maxLogTime, _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_09), self.__d.maxErrorLogTime)
             _psMsg += f'{_CommonDefines._CHAR_SIGN_RIGHT_PARANTHESIS}{_CommonDefines._CHAR_SIGN_DOT}'
             if _myMsg is not None:
-                _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_myMsg}'
+                _psMsg += f'{_CommonDefines._CHAR_SIGN_LF}{_myMsg}'
 
         if bLcCall_:
             if not _bRelMode:
-                _psMsg += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_LARGER_THAN_LONG}'
+                _psMsg += f'{_CommonDefines._CHAR_SIGN_LF}{_LARGER_THAN_LONG}'
                 _psMsg += _FwTDbEngine.GetText(_EFwTextID.eLogMgr_PrintSummary_FmtStr_10)
-                _psMsg += f'{_LESS_THAN_LONG}{_CommonDefines._CHAR_SIGN_NEWLINE}'
+                _psMsg += f'{_LESS_THAN_LONG}{_CommonDefines._CHAR_SIGN_LF}'
             else:
                 if _myMsg is not None:
-                    _psMsg += f'{_myMsg}{_CommonDefines._CHAR_SIGN_NEWLINE}'
-                _psMsg += f'{_CommonDefines._DASH_LINE_LONG}{_CommonDefines._CHAR_SIGN_NEWLINE}'
-        self.__d.Flush(_psMsg)
+                    _psMsg += f'{_myMsg}{_CommonDefines._CHAR_SIGN_LF}'
+                _psMsg += f'{_CommonDefines._DASH_LINE_LONG}{_CommonDefines._CHAR_SIGN_LF}'
+        self.__d.LMPrint(_psMsg, color_=_color)
 
     @staticmethod
     def _GetInstance(lcpxy_ : _ILcProxy =None, startupCfg_ : _FwStartupConfig =None):
@@ -426,7 +425,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
             self._AddLog(_ELogType.KPI, msg_=_myMsg)
             _kpiTD.CleanUp()
 
-            self._PrintSummary(bPrintFFL_=True, bLcCall_=True)
+            self._PrintSummary(bLcCall_=True)
         self.__DoCleanUp()
 
         _FwErrhRP._CleanUp(self)
@@ -543,6 +542,9 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
             if _le.isFatalError:
                 if _bCLOnly:
                     _le._SetErrorImpact(_EErrorImpact.eImpactByFatalErrorDueToXCmd if logifOpOption_.isCreateLogOnlyDueToExecCmdAbort else _EErrorImpact.eImpactByFatalError)
+
+                if _curTskInfo is not None:
+                    _le._Adapt(bCleanupPermitted_=False)
                 if self.__d.firstFatalLog is None:
                     self.__d.firstFatalLog = _le.Clone()
 
@@ -570,7 +572,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
 
             elif self.__d.subSeqXcp is not None:
                 curPxyInfo_.CleanUp()
-                self.__d.Flush(_le)
+                self.__d.LMPrint(_le)
                 if _bLockApi: self.__d.UnlockApi()
                 return None, None
 
@@ -600,7 +602,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
 
                     curPxyInfo_.CleanUp()
 
-                    self.__d.Flush(_buf)
+                    self.__d.LMPrint(_buf, color_=_EColorCode.RED)
                     if _bLockApi: self.__d.UnlockApi()
                     return None, None
 
@@ -622,7 +624,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
 
                             curPxyInfo_.CleanUp()
 
-                            self.__d.Flush(_shortMsg)
+                            self.__d.LMPrint(_shortMsg, color_=_EColorCode.RED)
                             if _bLockApi: self.__d.UnlockApi()
                             return None, None
         else:
@@ -631,7 +633,7 @@ class _LogMgr(_FwErrhRP, _AbsLogMgr):
                 if _bLockApi: self.__d.UnlockApi()
                 vlogif._LogOEC(True, _EFwErrorCode.VFE_00452)
             else:
-                self.__d.Flush(_le)
+                self.__d.LMPrint(_le)
                 if _bLockApi: self.__d.UnlockApi()
             return None, None
 

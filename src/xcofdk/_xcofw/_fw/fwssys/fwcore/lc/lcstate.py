@@ -414,7 +414,6 @@ class _FrcRecord(_LcFrcView):
 
         if not self.isReportedByPyThread:
             return
-
         if self.hostThreadID != id(atask_.dHThrd):
             return
 
@@ -758,7 +757,7 @@ class _LcState(_ILcState):
             if not bCompact_:
                 _myTxt = self.__rm.ToString()
                 if _myTxt is not None:
-                    res += f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}{_myTxt}'
+                    res += f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_TAB}{_myTxt}'
             return res
 
     def _CleanUpByOwnerRequest(self):

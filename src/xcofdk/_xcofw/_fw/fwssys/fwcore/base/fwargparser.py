@@ -71,20 +71,6 @@ class _FwArgParser(_PyArgumentParser):
                             , allow_abbrev=bAllowAbbrev_
                             , exit_on_error=bExitOnError_)
 
-    @staticmethod
-    def PrintNamespace(ns_):
-        _maxLen = _ListUtil.GetMaxLen(ns_.__dict__)
-        _maxLen = max(4, _maxLen)
-
-        _fmtstr  = str(_maxLen)
-        _fmtstr  = '{:>' + _fmtstr + 's} : {}'
-        _keys = list(ns_.__dict__.keys())
-        _keys.sort()
-
-        print('Parsed namespace:')
-        for _kk in _keys:
-            print(_fmtstr.format(_kk, str(ns_.__dict__[_kk])))
-
     @property
     def isErrorFree(self):
         return self.__c < 1

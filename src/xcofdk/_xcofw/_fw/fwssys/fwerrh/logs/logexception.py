@@ -99,10 +99,6 @@ class _LogException(_XcoException):
         return (not self._enclosedFatalEntry is None) and self._enclosedFatalEntry.logType==_ELogType.FTL_NERR
 
     @property
-    def isFlushed(self):
-        return True if self._enclosedFatalEntry is None else self.__f.isFlushed
-
-    @property
     def errorCode(self):
         return None if self._enclosedFatalEntry is None else self.__f.errorCode
 

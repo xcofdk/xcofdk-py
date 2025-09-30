@@ -264,10 +264,9 @@ class _FwsDispatcher(_AbsFwService):
         if _FwsDispatcher.__sgltn is not None:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00061)
 
-        _cyclCeaseTimespanMS   = 20
-        _runPhaseFrequencyMS   = 20
-        _runPhaseMaxProcTimeMS = None
-        _xp = _TaskXCard(runPhaseFreqMS_=_runPhaseFrequencyMS, runPhaseMPTMS_=_runPhaseMaxProcTimeMS, cceaseFreqMS_=_cyclCeaseTimespanMS)
+        _FreqMS  = 20
+        _CeaseMS = 20
+        _xp = _TaskXCard(runPhaseFreqMS_=_FreqMS, cceaseFreqMS_=_CeaseMS)
 
         super().__init__(_ERblType.eFwDsprRbl, txCard_=_xp)
         _xp.CleanUp()
@@ -392,12 +391,11 @@ class _FwsDispatcher(_AbsFwService):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00064)
             return False
 
-        _pldOrig       = msg_.payload
-        _bNonSerDes    = (_pldOrig is not None) and not _pldOrig.isMarshalingRequired
-        _bSerDesErr    = False
-        _bCustomSerDes = False
-
-        _pldDump = None
+        _pldOrig    = msg_.payload
+        _pldDump    = None
+        _bCSerDes   = False  
+        _bNonSerDes = (_pldOrig is not None) and not _pldOrig.isMarshalingRequired
+        _bSerDesErr = False
 
         _customSerCallback = None
         _customDesCallback = None
@@ -411,7 +409,7 @@ class _FwsDispatcher(_AbsFwService):
                 if not _FwSubsysCoding.IsCustomPayloadSerDesEnabled():
                     return False
 
-                _bCustomSerDes = True
+                _bCSerDes = True
 
                 try:
                     _customSerCallback = _pldOrig.__class__.SerializePayload
@@ -439,21 +437,23 @@ class _FwsDispatcher(_AbsFwService):
         else:
             _dump = SerDes.SerializeObject(msg_, bTreatAsUserError_=True)
 
+        _bABack = _bNonSerDes or _bCSerDes
+
         if _dump is None:
-            if _bNonSerDes or _bCustomSerDes:
+            if _bABack:
                 msg_.AttachPayload(_pldOrig)
             return False
 
-        _allTgt     = None
-        _retryMap   = dict()
-        _lstPending = []
+        _lstP     = []
+        _allTgt   = None
+        _retryMap = dict()
 
         with self.__ma:
             _allTgt = self.__tr._GetAllDispatchTargets(msg_.header)
 
             if _allTgt is None:
                 del _dump
-                if _bNonSerDes or _bCustomSerDes:
+                if _bABack:
                     msg_.AttachPayload(_pldOrig)
                 logif._LogErrorEC(_EFwErrorCode.UE_00061, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwsDispatcher_TID_001).format(msg_.header))
                 return False
@@ -465,7 +465,7 @@ class _FwsDispatcher(_AbsFwService):
             for _dt in _allTgt:
                 if not self.isRunning:
                     del _dump
-                    if _bNonSerDes or _bCustomSerDes:
+                    if _bABack:
                         msg_.AttachPayload(_pldOrig)
                     return False
 
@@ -481,14 +481,14 @@ class _FwsDispatcher(_AbsFwService):
                     continue
 
                 if _atid in self.__p:
-                    _lstPending.append(_dt)
+                    _lstP.append(_dt)
                     _retryMap[_atid] = 2 if self.__iam.IsThresholdReached(_atid) else 0
                     continue
 
                 if _bNonSerDes:
                     _pldTgt = _pldOrig
                     _bCustomPL = False
-                elif _bCustomSerDes:
+                elif _bCSerDes:
                     _pldTgt = bytes(_pldDump) if _bMultiTgt else _pldDump
                     _bCustomPL = True
                 else:
@@ -508,7 +508,7 @@ class _FwsDispatcher(_AbsFwService):
 
                     if _bMultiTgt:
                         del _dumpTgt
-                        if _bCustomSerDes:
+                        if _bCSerDes:
                             del _pldTgt
                     continue
 
@@ -519,11 +519,11 @@ class _FwsDispatcher(_AbsFwService):
 
                         if _bMultiTgt:
                             del _dumpTgt
-                            if _bCustomSerDes:
+                            if _bCSerDes:
                                 del _pldTgt
 
                     elif not self.__iam.UpdateMap(_atid):
-                        _lstPending.append(_dt)
+                        _lstP.append(_dt)
                         _retryMap[_atid] = 1
                     continue
 
@@ -533,26 +533,26 @@ class _FwsDispatcher(_AbsFwService):
             _bPushedAny  = _numPushed > 0
             _bBackLogged = False
 
-            if len(_lstPending) > 0:
+            if len(_lstP) > 0:
                 if _bNonSerDes:
                     _pldTgt    = _pldOrig
                     _bCustomPL = False
-                elif _bCustomSerDes:
+                elif _bCSerDes:
                     _pldTgt    = _pldDump
                     _bCustomPL = True
                 else:
                     _pldTgt    = None
                     _bCustomPL = None
 
-                _bl = _FwsDispatcher._DispBackLogEntry(msg_.isXcoMsg, msg_.uniqueID, _dump, _lstPending, _retryMap, pldDump_=_pldTgt, bCustomPL_=_bCustomPL, customDesCB_=_customDesCallback)
+                _bl = _FwsDispatcher._DispBackLogEntry(msg_.isXcoMsg, msg_.uniqueID, _dump, _lstP, _retryMap, pldDump_=_pldTgt, bCustomPL_=_bCustomPL, customDesCB_=_customDesCallback)
 
                 if not self.__iq.PushNowait(_bl):
                     _bl.CleanUp()
-                    _myTxt = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_027).join([str(_ee._dispatchAgent._agentTaskID) for _ee in _lstPending])
+                    _myTxt = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_027).join([str(_ee._dispatchAgent._agentTaskID) for _ee in _lstP])
                     logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwsDispatcher_TID_003).format(self.__iq.qsize, _myTxt, msg_.header))
                 else:
                     _bBackLogged = True
-                    for _dt in _lstPending:
+                    for _dt in _lstP:
                         _dagt = _dt._dispatchAgent
                         if _dagt._agentTaskID not in self.__p:
                             self.__p.append(_dagt._agentTaskID)
@@ -562,7 +562,7 @@ class _FwsDispatcher(_AbsFwService):
                     del _dump
                     if _pldDump is not None:
                         del _pldDump
-            if _bNonSerDes or _bCustomSerDes:
+            if _bABack:
                 msg_.AttachPayload(_pldOrig)
 
             return _bPushedAny or _bBackLogged
@@ -650,7 +650,7 @@ class _FwsDispatcher(_AbsFwService):
                 if _msg is None:
                     continue
 
-                _lstPending = []
+                _lstP = []
 
                 _dt        = None
                 _bMultiTgt = len(_bl._dispatchTargets) > 0
@@ -690,29 +690,29 @@ class _FwsDispatcher(_AbsFwService):
                             self.__iam.UpdateMap(_atid)
 
                         elif not self.__iam.UpdateMap(_atid):
-                            _lstPending.append(_dt)
+                            _lstP.append(_dt)
 
                     else:
                         self.__iam.RemoveTask(_atid)
 
-                if len(_lstPending) > 0:
-                    _lstMaxRetryReached =_bl._UpdateDispTargetList(_lstPending)
-                    _lstPending = _bl._dispatchTargets
+                if len(_lstP) > 0:
+                    _lstMaxRetryReached =_bl._UpdateDispTargetList(_lstP)
+                    _lstP = _bl._dispatchTargets
 
                     if _lstMaxRetryReached is not None:
                         _myTxt = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_027).join([str(_ee._dispatchAgent._agentTaskID) for _ee in _lstMaxRetryReached])
                         logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwsDispatcher_TID_004).format(_FwsDispatcher._DispBackLogEntry._MAX_RETRY_COUNT, _myTxt, _msg.uniqueID, _msg.header))
-                    if _lstPending is None:
+                    if _lstP is None:
                         _bl.CleanUp()
                         break
 
                     if not self.__iq.PushNowait(_bl):
-                        _myTxt = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_027).join([str(_ee._dispatchAgent._agentTaskID) for _ee in _lstPending])
+                        _myTxt = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_027).join([str(_ee._dispatchAgent._agentTaskID) for _ee in _lstP])
                         logif._LogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwsDispatcher_TID_003).format(self.__iq.qsize, _myTxt, _msg.header))
                         _bl.CleanUp()
 
                     else:
-                        for _dt in _lstPending:
+                        for _dt in _lstP:
                             _atid = _dt._dispatchAgent._agentTaskID
                             if _atid not in _lstPendingAgents:
                                 _lstPendingAgents.append(_atid)

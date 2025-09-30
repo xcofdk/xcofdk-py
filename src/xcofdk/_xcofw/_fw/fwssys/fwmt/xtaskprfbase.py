@@ -13,10 +13,11 @@ from typing import Union
 
 from xcofdk.fwapi.xmt import ITaskProfile
 
-from _fw.fwssys.assys                 import fwsubsysshare as _ssshare
-from _fw.fwssys.fwcore.logging        import logif
-from _fw.fwssys.fwcore.types.ebitmask import _EBitMask
-from _fw.fwssys.fwerrh.fwerrorcodes   import _EFwErrorCode
+from _fw.fwssys.assys                    import fwsubsysshare as _ssshare
+from _fw.fwssys.fwcore.logging           import logif
+from _fw.fwssys.fwcore.ipc.tsk.taskutil  import _TaskUtil
+from _fw.fwssys.fwcore.types.ebitmask    import _EBitMask
+from _fw.fwssys.fwerrh.fwerrorcodes      import _EFwErrorCode
 
 from _fw.fwtdb.fwtdbengine import _EFwTextID
 from _fw.fwtdb.fwtdbengine import _FwTDbEngine
@@ -124,8 +125,8 @@ class _XTaskPrfBase:
     def _aliasName(self, aliasName_ : str):
         if not self._CheckFreezeState():
             return
-        if not (isinstance(aliasName_, str) and aliasName_.isidentifier()):
-            logif._XLogErrorEC(_EFwErrorCode.UE_00180, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskPrfBase_TID_011).format(str(aliasName_)))
+        if not _TaskUtil.IsValidAliasName(aliasName_):
+            logif._XLogErrorEC(_EFwErrorCode.UE_00267, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XTaskPrfBase_TID_013).format(str(aliasName_)))
             self._CleanUp()
             return
         self.__an = str(aliasName_)

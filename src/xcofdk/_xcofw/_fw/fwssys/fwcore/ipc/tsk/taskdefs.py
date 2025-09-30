@@ -29,6 +29,7 @@ from _fw.fwtdb.fwtdbengine import _FwTDbEngine
 @unique
 class _EFwsID(_FwIntEnum):
     eFwsMain    = 3750
+    eFwsLogRD   = auto()
     eFwsDisp    = auto()
     eFwsProcMgr = auto()
     eFwsTmrMgr  = auto()
@@ -46,6 +47,10 @@ class _EFwsID(_FwIntEnum):
         return self == _EFwsID.eFwsProcMgr
 
     @property
+    def isFwsLogRD(self):
+        return self == _EFwsID.eFwsLogRD
+
+    @property
     def isFwsTmrMgr(self):
         return self == _EFwsID.eFwsTmrMgr
 
@@ -59,6 +64,7 @@ class _ERblType(_FwIntEnum):
     eFwMainRbl    = _EFwsID.eFwsMain.value
     eFwDsprRbl    = _EFwsID.eFwsDisp.value
     eFwProcMgrRbl = _EFwsID.eFwsProcMgr.value
+    eFwLogRDRbl   = _EFwsID.eFwsLogRD.value
     eFwTmrMgrRbl  = _EFwsID.eFwsTmrMgr.value
 
     @property
@@ -94,6 +100,10 @@ class _ERblType(_FwIntEnum):
         return self == _ERblType.eFwProcMgrRbl
 
     @property
+    def isFwLogRDRunnable(self):
+        return self == _ERblType.eFwLogRDRbl
+
+    @property
     def isFwTimerMgrRunnable(self):
         return self == _ERblType.eFwTmrMgrRbl
 
@@ -114,6 +124,8 @@ class _ERblType(_FwIntEnum):
             res = _ELcCompID.eFwDspr
         elif self.isFwProcessMgrRunnable:
             res = _ELcCompID.eProcMgr
+        elif self.isFwLogRDRunnable:
+            res = _ELcCompID.eFwLogRD
         elif self.isFwTimerMgrRunnable:
             res = _ELcCompID.eTmrMgr
         elif self.isFwRunnable:
@@ -276,19 +288,16 @@ class _UTaskApiGuide(_AbsSlotsObject):
                 self.setUpXTask = _apiFunc
             elif _m == _EUTaskApiFuncTag.eXFTTearDownXTask:
                 self.tearDownXTask = _apiFunc
-
             else:
                 self.__m = None
                 break
 
         if self.runXTask is None:
             self.__m = None
-
         if self.__m is None:
             self.__ht = None
             self.__xm = None
             self.CleanUp()
-
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00249)
 
     @property
@@ -388,9 +397,9 @@ class _UTaskApiGuide(_AbsSlotsObject):
                 continue
             if not _EBitMask.IsEnumBitFlagSet(xuApiMask_, _m):
                 continue
-            _myTxt += _CommonDefines._CHAR_SIGN_TAB + _m.functionName + _CommonDefines._CHAR_SIGN_NEWLINE
+            _myTxt += _CommonDefines._CHAR_SIGN_TAB + _m.functionName + _CommonDefines._CHAR_SIGN_LF
 
         if len(_myTxt) > 0:
             _myTxt = _myTxt.rstrip()
-            res   += _CommonDefines._CHAR_SIGN_NEWLINE + _myTxt
+            res   += _CommonDefines._CHAR_SIGN_LF + _myTxt
         return res

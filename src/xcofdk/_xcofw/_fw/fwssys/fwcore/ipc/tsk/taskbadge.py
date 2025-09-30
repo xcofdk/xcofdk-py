@@ -252,10 +252,6 @@ class _TaskBadge(_AbsSlotsObject):
         return self.isValid and self.__rm.hasXTaskTaskRight
 
     @property
-    def hasUnitTestTaskRight(self):
-        return self.isValid and self.__rm.hasUnitTestTaskRight
-
-    @property
     def hasErrorObserverTaskRight(self):
         return self.isValid and self.__rm.hasErrorObserverTaskRight
 

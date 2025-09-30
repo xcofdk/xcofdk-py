@@ -75,11 +75,9 @@ class _FwsMain(_FwsMainBase):
 
         if not eShutdownAction_.isShutdown:
             self.__EnableCoordinatedShutdown()
-
             if eFailedCompID_ is None:
                 self._ProcErrors(bCheckForFEOnly_=True)
                 self.__ProcFFErrors(bIgnoreFeasibility_=True)
-
         _bAborting = _EExecutionCmdID.MapExecState2ExecCmdID(self).isAbort
 
         if not self._isInLcCeaseMode:
@@ -186,10 +184,8 @@ class _FwsMain(_FwsMainBase):
         if not res.isContinue:
             return res
 
-        _errPart = None if curFE_ is None else ': [{}] - {}'.format(curFE_.uniqueID, curFE_.shortMessage)
-        _tailPart = '.' if _errPart is None else _errPart
-
         if not cbID_.isProcessObservedForeignFatalErrors:
+            _wmsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwsMain_TID_008)
             self.__NotifyLcFailure(_ELcCompID.eFwMain, curFE_, self._rblTask)
             res = _EExecutionCmdID.MapExecState2ExecCmdID(self)
         else:
@@ -203,9 +199,8 @@ class _FwsMain(_FwsMainBase):
         if not self._isInLcCeaseMode:
             return
 
-        if self.__mi.isLcShutdownEnabled or self.__mi._isCoordinatedShutdownManagedByMR:
+        if self.__mi.isLcShutdownEnabled and self.__mi._isCoordinatedShutdownManagedByMR:
             self.__ExecuteShutdownSequence()
-
         _AbsRunnable._ExecuteTeardown(self)
 
         if self._lcCeaseTLB is not None:
@@ -230,7 +225,6 @@ class _FwsMain(_FwsMainBase):
         with self._md:
             if self.__mi.isLcShutdownEnabled:
                 pass
-
             elif self.__bM:
                 self.__bM = False
 
@@ -249,6 +243,7 @@ class _FwsMain(_FwsMainBase):
             _bByMR = True
 
         self.__mi._EnableCoordinatedShutdown(bManagedByMR_=_bByMR)
+
         if not self.__mi._isCoordinatedShutdownManagedByMR:
             if self.__isCoordinatingShutdown:
                 with self._md:
@@ -279,13 +274,6 @@ class _FwsMain(_FwsMainBase):
                 self.__NotifyLcFailure(_ELcCompID.eFwMain, _frc, self._rblTask)
                 return _EExecutionCmdID.MapExecState2ExecCmdID(self)
 
-        if _bFE:
-            _errPart = _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_023).format(curFE_.uniqueID, curFE_.shortMessage)
-            _tailPart = _errPart
-        else:
-            _errPart = None
-            _tailPart = _CommonDefines._CHAR_SIGN_DOT
-
         _ePF = self._GetProcessingFeasibility(errLog_=curFE_)
         if not _ePF.isFeasible:
             res = _EExecutionCmdID.MapExecState2ExecCmdID(self)
@@ -296,11 +284,9 @@ class _FwsMain(_FwsMainBase):
 
         if _bHasLcAnyFailureState:
             _frcv = self._PcGetLcFrcView()
-            _frcPart = str(None) if _frcv is None else _frcv.asCompactString
-
+            _frcPart = _CommonDefines._STR_NONE if _frcv is None else _frcv.asCompactString
             if _frcv is not None:
                 _frcv.CleanUp()
-
         elif not self.__mi.isLcMonitorAlive:
             _bStopInstantly = True
 
@@ -316,10 +302,7 @@ class _FwsMain(_FwsMainBase):
         return res
 
     def __ProcFFErrors(self, lstFFErrors_ : list =None, bOnErrHdlrCallback_ =False, bIgnoreFeasibility_ =False) -> _EExecutionCmdID:
-        if bOnErrHdlrCallback_:
-           pass
-
-        elif not bIgnoreFeasibility_:
+        if not bIgnoreFeasibility_:
             res = self.__CheckProcessingFeasiblity()
             if not res.isContinue:
                 return _EExecutionCmdID.MapExecState2ExecCmdID(self)
@@ -370,9 +353,9 @@ class _FwsMain(_FwsMainBase):
         return _EExecutionCmdID.MapExecState2ExecCmdID(self)
 
     def __CheckStoredFFEsOnLcFailureCandidacy(self) -> list:
-        _lstPFFE         = self.__p
-        _lstCleanup      = []
-        _bDimModeEnabled = logif._IsFwDieModeEnabled()
+        _bDM        = logif._IsFwDieModeEnabled()
+        _lstPFFE    = self.__p
+        _lstCleanup = []
 
         res  = []
 
@@ -398,16 +381,15 @@ class _FwsMain(_FwsMainBase):
                 if _myMtx is not None: _myMtx.Give()
                 continue
 
-            if _bDimModeEnabled:
-                if not _ti.taskBadge.hasUnitTestTaskRight:
-                    _fec = _myFE.Clone()
-                    if _fec is not None:
-                        res.append(_fec)
+            if _bDM:
+                _fec = _myFE.Clone()
+                if _fec is not None:
+                    res.append(_fec)
 
-                    _lstPFFE[_ii] = None
-                    _lstCleanup.append(_myFE)
-                    if _myMtx is not None: _myMtx.Give()
-                    continue
+                _lstPFFE[_ii] = None
+                _lstCleanup.append(_myFE)
+                if _myMtx is not None: _myMtx.Give()
+                continue
 
             _bTaskMissedToResolveFE = _ti.taskXPhase != _myFE.taskXPhase  
             if not _bTaskMissedToResolveFE:
@@ -443,7 +425,6 @@ class _FwsMain(_FwsMainBase):
 
         if len(res) == 0:
             res = None
-
         return res
 
     def __CleanUpPFFEList(self):
@@ -464,10 +445,8 @@ class _FwsMain(_FwsMainBase):
 
         if self.__mi.isCoordinatedShutdownRunning:
             _sdCoord._ExecuteCoordinatedPreShutdownGate()
-
         if self.__mi.isCoordinatedShutdownRunning:
             _sdCoord._ExecuteCoordinatedShutdownGate()
-
         if self.__mi is not None:
             self.__mi._StopCoordinatedShutdown()
         logif._LogKPI(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwsMain_TID_007))

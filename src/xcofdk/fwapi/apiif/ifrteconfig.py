@@ -135,6 +135,39 @@ class IRteConfig:
            disabled, False otherwise.
         """
         pass
+
+
+    @property
+    def isLogRDConsoleSinkDisabled(self) -> bool:
+        """
+        Returns:
+        ----------
+           True if the RTE policy to disable console output is set, False
+           otherwise.
+        """
+        pass
+
+
+    @property
+    def isLogRDFileSinkEnabled(self) -> bool:
+        """
+        Returns:
+        ----------
+           True if the RTE policy to enable log output to a file sink is
+           enabled, False otherwise.
+        """
+        pass
+
+
+    @property
+    def isLogRDTcpSinkEnabled(self) -> bool:
+        """
+        Returns:
+        ----------
+           True if the RTE policy to enable log output to a TCP connection
+           sink is enabled, False otherwise.
+        """
+        pass
     # ------------------------------------------------------------------------------
     #END API
     # ------------------------------------------------------------------------------

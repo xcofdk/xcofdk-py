@@ -25,8 +25,8 @@ sys.path.extend(((_xua := os.path.normpath(os.path.join(os.path.dirname(__file__
 # Import libs / modules
 # ------------------------------------------------------------------------------
 from os        import getpid          # for demonstration purposes only
-from threading import current_thread  # dito
-from time      import sleep           # dito
+from threading import current_thread  # ditto
+from time      import sleep           # ditto
 
 from xcofdk       import fwapi
 from xcofdk.fwcom import EExecutionCmdID
@@ -93,6 +93,9 @@ def MainTaskTgt() -> EExecutionCmdID:
 
 
 def Main(cmdLineOpts_ : CLOptions):
+    # optional: disable subsystem xmsg
+    rtecfg.RtePolicyDisableSubSystemMessaging()
+
     # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()

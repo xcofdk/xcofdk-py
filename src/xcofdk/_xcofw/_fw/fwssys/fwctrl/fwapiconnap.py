@@ -12,6 +12,7 @@ from typing    import List
 from typing    import Tuple
 from typing    import Union
 
+from xcofdk.fwcom               import LcFailure
 from xcofdk.fwapi               import IRCTask
 from xcofdk.fwapi               import IRCCommTask
 from xcofdk.fwapi.apiif.ifxtask import IXTask
@@ -46,6 +47,10 @@ class _FwApiConnectorAP:
     @staticmethod
     def _APIsXTaskRunning(xtUID_ : int) -> bool:
         return False if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN._FwCNIsXTaskRunning(xtUID_)
+
+    @staticmethod
+    def _APGetLcFailure() -> Union[LcFailure, None]:
+        return _LcFailure._GetLcFailure() if _FwApiConnectorAP.__IsFwApiDisconnected() else _FwApiConnectorAP.__theFwCN._FwCNGetLcFailure()
 
     @staticmethod
     def _APGetXTask(xtUID_ : int =0):

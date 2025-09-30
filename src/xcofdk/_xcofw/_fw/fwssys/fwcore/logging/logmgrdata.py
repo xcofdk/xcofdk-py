@@ -17,17 +17,17 @@ from _fw.fwssys.fwcore.logging.logdefines     import _ELogType
 from _fw.fwssys.fwcore.logging.logdefines     import _LogUniqueID
 from _fw.fwssys.fwcore.logging.logdefines     import _LogConfig
 from _fw.fwssys.fwcore.logging.logentry       import _LogEntry
+from _fw.fwssys.fwerrh.logs.logexception      import _LogException
 from _fw.fwssys.fwcore.base.timeutil          import _StopWatch
 from _fw.fwssys.fwcore.config.fwstartupconfig import _FwStartupConfig
+from _fw.fwssys.fwcore.logrd.logrecord        import _EColorCode
+from _fw.fwssys.fwcore.logrd.logrdagent       import _LogRDAgent
 from _fw.fwssys.fwcore.types.aobject          import _AbsSlotsObject
-from _fw.fwssys.fwcore.types.commontypes      import SyncPrint
+from _fw.fwssys.fwcore.types.commontypes      import _CommonDefines
 from _fw.fwssys.fwerrh.fwerrorcodes           import _EFwErrorCode
-from _fw.fwssys.fwerrh.logs.logexception      import _LogException
 
 class _LogMgrData(_AbsSlotsObject):
-    __slots__ = [ '__f' , '__s' , '__lc', '__c', '__p', '__l' , '__nl', '__al', '__sw' , '__m' , '__me' , '__cfg' ]
-
-    __SEE = True
+    __slots__ = [ '__f' , '__s' , '__lc', '__c', '__p', '__l' , '__nl', '__al', '__sw' , '__m' , '__me' , '__cfg' , '__rda']
 
     def __init__(self, startupCfg_ : _FwStartupConfig):
         super().__init__()
@@ -44,6 +44,7 @@ class _LogMgrData(_AbsSlotsObject):
         self.__nl  = 0
         self.__sw  = _StopWatch()
         self.__cfg = None
+        self.__rda = _LogRDAgent._GetInstance()
 
         for _n, _m in _ELogType.__members__.items():
             self.__c[_m._absValue] = 0
@@ -126,38 +127,22 @@ class _LogMgrData(_AbsSlotsObject):
     def AddLogEntry(self, le_ : _LogEntry, doAddOnly_ =False):
         if (le_ is None) or ( not le_.isValid):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00466)
-        else:
-            _bIA = le_.logType.isNonError and _LogMgrData.__SEE
-            if not _bIA:
-                if not (le_.isFreeLog or doAddOnly_):
-                    le_._Adapt(uniqueID_=_LogUniqueID._GetNextUniqueID())
-                self.__al.append(le_)
+        elif not le_.logType.isNonError:
+            if not (le_.isFreeLog or doAddOnly_):
+                le_._Adapt(uniqueID_=_LogUniqueID._GetNextUniqueID())
+            self.__al.append(le_)
 
-    def Flush(self, buf_, endLine_=None):
-        if (self.logConf is not None) and self.logConf.isOutputRedirectionEnabled:
-            vlogif._LogOEC(True, _EFwErrorCode.VFE_00467)
+    def LMPrint(self, buf_, color_ : _EColorCode =None):
+        if self.__rda is None:
             return
 
-        _le = buf_
         if isinstance(buf_, _LogException):
-            _le = buf_._enclosedFatalEntry
-        elif not isinstance(buf_, _LogEntry):
-            _le = None
-            buf_ = str(buf_)
-
-        _bAC = (_le is not None) and _le.logType.isNonError and _LogMgrData.__SEE
-
-        if _le is None:
-            pass
+            buf_ = buf_._enclosedFatalEntry
+        if not isinstance(buf_, _LogEntry):
+            buf_ = _CommonDefines._STR_EMPTY if buf_ is None else str(buf_)
         else:
-            _le._Adapt(bFlushed_=True)
-            if endLine_ is None:
-                if _le.logType == _ELogType.FREE:
-                    endLine_ = ''
-
-        SyncPrint.Print(buf_, endLine_=endLine_)
-        if _bAC:
-            _le.CleanUp()
+            buf_ = buf_._logRecord
+        self.__rda._PutLR(buf_, color_=color_)
 
     def UpdateMaxLogTime(self, bErrorLogTime_ =False, bRestart_ =False) -> int:
         if self.__sw is None:
@@ -180,18 +165,6 @@ class _LogMgrData(_AbsSlotsObject):
             else:
                 res = None
         return res
-
-    @staticmethod
-    def _IsStoreErrorEntriesOnlyEnabled() -> bool:
-        return _LogMgrData.__SEE
-
-    @staticmethod
-    def _EnableStoreErrorEntriesOnly():
-        _LogMgrData.__SEE = True
-
-    @staticmethod
-    def _DisableStoreErrorEntriesOnly():
-        _LogMgrData.__SEE = False
 
     def _ToString(self):
         return None
@@ -232,6 +205,7 @@ class _LogMgrData(_AbsSlotsObject):
         self.__nl  = None
         self.__sw  = None
         self.__cfg = None
+        self.__rda = None
 
     def _ClearLogHistory(self):
         if self.__al is None:
@@ -280,6 +254,7 @@ class _LogMgrData(_AbsSlotsObject):
         _bMatch = _bMatch and vlogif._IsFwExceptionModeEnabled() == _logCfg.isExceptionModeEnabled
 
         if not _bMatch:
+            _logCfg.CleanUp()
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00465)
             return False
         self.__cfg = _logCfg

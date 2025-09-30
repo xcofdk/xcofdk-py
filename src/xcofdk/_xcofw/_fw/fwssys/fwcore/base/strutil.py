@@ -176,7 +176,7 @@ class _StrUtil:
 
         _tmp  = None
         _tabs = None
-        res, _tabs, _tmp = _CommonDefines._STR_EMPTY, _CommonDefines._STR_EMPTY, str_.split(_CommonDefines._CHAR_SIGN_NEWLINE)
+        res, _tabs, _tmp = _CommonDefines._STR_EMPTY, _CommonDefines._STR_EMPTY, str_.split(_CommonDefines._CHAR_SIGN_LF)
 
         if (not isinstance(times_, int)) or (times_ < 1):
             times_ = 1
@@ -184,5 +184,5 @@ class _StrUtil:
             _tabs += '\t'
             times_ -= 1
         for _ee in _tmp:
-            res += _tabs + _ee + _CommonDefines._CHAR_SIGN_NEWLINE
+            res += _tabs + _ee + _CommonDefines._CHAR_SIGN_LF
         return res.rstrip()

@@ -18,7 +18,7 @@ class _IXProcConn(_LcProxyClient):
         super().__init__()
 
     @property
-    def _xprocessImplInst(self) -> _IXProcAgent:
+    def _xprocessAgent(self) -> _IXProcAgent:
         pass
 
     def _ConfirmPUID(self):

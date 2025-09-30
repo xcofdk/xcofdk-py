@@ -97,22 +97,23 @@ class XProcess:
         Parameters:
         -------------
             - target_ :
-              callable object to be invoked when this instance is started.
+              callable object to be executed by the associated host process
+              when this instance is started.
 
               Its signature may optionally carry postional and/or keywork
               arguments, with the general form depicted below:
                   >>> def MyProcessCBTgt(*args, **kwargs):
                   >>>     #...
             - aliasName_ :
-              if specified a non-empty string representing a valid identifier
-              name, optionally with a trailing '_',
-              'Prc_' otherwise.
+              if specified an arbitrary, non-empty and printable string literal
+              without spaces which optionally may have a trailing '_',
+              otherwise 'Prc_' will be auto-assigned.
 
               Finally, if the alias name has a trailing '_', the framework will
               turn it to a unique alias name by appending the unique instance
               number of the instance to be created.
             - name_ :
-              name of the process to be created.
+              name of the host process to be created and associated with.
               If not supplied, that is set to None, it will be auto-generated,
               see:
                   https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Process.name
@@ -129,6 +130,9 @@ class XProcess:
 
         Note:
         ------
+            - An attempt to create an instance of this class before the
+              framework is started will be ignored with a user error is
+              submitted accordingly.
             - Unless requested to do so, the framework never terminates a
               running child process.
             - Instances of this class represent ordinary child processes allowed
@@ -261,7 +265,7 @@ class XProcess:
 
         Returns:
         ----------
-            - None if not started or terminated yet,
+            - None if not started or not terminated yet,
             - 0 upon successful termination,
             - an integer value otherwise.
 
@@ -294,7 +298,7 @@ class XProcess:
         """
         Returns:
         ----------
-            The exit code of this child process as a string object if available,
+            The exit code (if available) of this child process as a string object,
             None otherwise.
 
         See:
@@ -450,7 +454,7 @@ class XProcess:
               modes.
             - Unless requested to do so, the framework never terminates child
               processes.
-            - Requests to join a child process which is detached from the
+            - Requests to terminate a child process which is detached from the
               framework or not started yet or terminated already will be ignored.
 
         See:
@@ -571,7 +575,7 @@ class XProcess:
         """
         Returns:
         ----------
-            True if this instance has finished its execution upon anormal
+            True if this instance has finished its execution upon abnormal
             termination indicated by an exit code other than 0, False otherwise.
 
         See:

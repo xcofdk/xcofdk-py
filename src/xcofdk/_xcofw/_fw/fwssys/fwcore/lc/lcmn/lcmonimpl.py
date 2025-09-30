@@ -222,11 +222,6 @@ class _LcMonitorImpl(_LcXStateDriver):
             return _EBitMask.IsEnumBitFlagSet(eLcMonBitMask_, _eLcMonBitFlag)
 
         @staticmethod
-        def IsCoordinatedCeasingGate(eLcMonBitMask_: _FwIntFlag):
-            _eLcMonBitFlag = _LcMonitorImpl._ELcMonStateFlag.ebfCeasingGate
-            return _EBitMask.IsEnumBitFlagSet(eLcMonBitMask_, _eLcMonBitFlag)
-
-        @staticmethod
         def IsCoordinatedPreShutdownGate(eLcMonBitMask_: _FwIntFlag):
             _eLcMonBitFlag = _LcMonitorImpl._ELcMonStateFlag.ebfPreShutdownGate
             return _EBitMask.IsEnumBitFlagSet(eLcMonBitMask_, _eLcMonBitFlag)
@@ -351,12 +346,6 @@ class _LcMonitorImpl(_LcXStateDriver):
             return _LcMonitorImpl._ELcMonStateFlag.IsCoordinatedShutdownRunning(self.__m)
 
     @property
-    def isCoordinatedCeasingGateOpened(self) -> bool:
-        if self.__isInvalid: return False
-        with self.__ma:
-            return _LcMonitorImpl._ELcMonStateFlag.IsCoordinatedCeasingGate(self.__m)
-
-    @property
     def isCoordinatedPreShutdownGateOpened(self) -> bool:
         if self.__isInvalid: return False
         with self.__ma:
@@ -439,7 +428,7 @@ class _LcMonitorImpl(_LcXStateDriver):
         if not isinstance(bfLcMonState_, _LcMonitorImpl._ELcMonStateFlag):
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00416)
             return
-        if bfLcMonState_.value < _LcMonitorImpl._ELcMonStateFlag.ebfCeasingGate:
+        if bfLcMonState_.value < _LcMonitorImpl._ELcMonStateFlag.ebfCeasingGate.value:
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00417)
             return
         with self.__ma:
@@ -591,7 +580,6 @@ class _LcMonitorImpl(_LcXStateDriver):
                     _tname = _tlb.lcStaticTLB.taskBadge.dtaskName
                     if (_tid in _tidFW) or (_tid in _tidXT) or (_tid in _tidIgnore):
                         continue
-
                     if (_ctlb is None) or (not _ctlb.isValid) or _ctlb.isDeceased or _ctlb.isEndingCease:
                         if _ctlb is not None:
                             _tidIgnore.append(_tid)
@@ -602,14 +590,11 @@ class _LcMonitorImpl(_LcXStateDriver):
                             _tunWaiting.append(_tname)
                             _tidWaiting.append(_tid)
                         continue
-
                     if _tname in _tunWaiting:
                         _tunWaiting.remove(_tname)
                         _tidWaiting.remove(_tid)
-
                     if _ctlb.ceaseState != cstate_:
                         continue
-
                     if _tlb.lcStaticTLB.isXTaskTLB:
                         _tidXT.append(_tid)
                     else:
@@ -630,7 +615,8 @@ class _LcMonitorImpl(_LcXStateDriver):
 
                 if ((_numWait * _SINGLE_WAIT_TIMESPAN_MS) % _WAIT_WNG_TIMESPAN_MS) == 0:
                     _wngMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcMonitorImpl_TID_004).format(len(_tunWaiting))
-                    _LogWarning(_wngMsg)
+                    if vlogif._IsReleaseModeEnabled():
+                        _LogWarning(_wngMsg)
 
                 if _bByMR:
                     self._mainTLB.lcCeaseTLB.IncrementCeaseAliveCounter()
@@ -638,7 +624,6 @@ class _LcMonitorImpl(_LcXStateDriver):
 
                 _numWait += 1
                 continue
-
             break
 
         _lstFwCTLBs = None

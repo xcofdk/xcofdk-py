@@ -168,7 +168,7 @@ class _CallableSignature(_PySignature):
         return res
 
     @staticmethod
-    def __IsParamOtional(param_ : _PyParameter):
+    def __IsParamOptional(param_ : _PyParameter):
         return (param_.kind == _PyParameter.VAR_POSITIONAL) or (param_.kind == _PyParameter.VAR_KEYWORD) or (param_.default != _PyParameter.empty)
 
     @staticmethod
@@ -235,7 +235,7 @@ class _CallableSignature(_PySignature):
         if not (self.callableID.isSetupExecutable or self.callableID.isRunExecutable or self.callableID.isXProcessTarget):
             for _ii in range(_REQ_PARAMS_COUNT, _numParams):
                 _pp = self.__GetParameter(_ii)
-                if not _CallableSignature.__IsParamOtional(_pp):
+                if not _CallableSignature.__IsParamOptional(_pp):
                     res = False
                 break
         return res
@@ -254,7 +254,7 @@ class _CallableSignature(_PySignature):
         elif not (bIgnoreTail_ or (_numParams == minPosParamsCount_)):
             for _ii in range(minPosParamsCount_, _numParams):
                 _pp = self.__GetParameter(_ii)
-                if not _CallableSignature.__IsParamOtional(_pp):
+                if not _CallableSignature.__IsParamOptional(_pp):
                     res = False
                 break
         return res

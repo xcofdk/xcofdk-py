@@ -12,16 +12,19 @@ from enum      import unique
 from threading import RLock as _PyRLock
 from typing    import Union
 
+from xcofdk.fwcom import LcFailure
+
 from _fw.fwssys.fwcore.logging            import vlogif
+from _fw.fwssys.fwcore.logging.vlogif     import _ELRType
+from _fw.fwssys.fwcore.logging.vlogif     import _EColorCode
+from _fw.fwssys.fwcore.logging.vlogif     import _PutLR
 from _fw.fwssys.fwcore.logging.logdefines import _LogErrorCode
-from _fw.fwssys.fwcore.lc.lcdefines       import _LcConfig
+from _fw.fwssys.fwcore.base.strutil       import _StrUtil
 from _fw.fwssys.fwcore.types.ebitmask     import _EBitMask
 from _fw.fwssys.fwcore.types.commontypes  import _FwEnum
 from _fw.fwssys.fwcore.types.commontypes  import _EDepInjCmd
 from _fw.fwssys.fwcore.types.commontypes  import _FwIntFlag
 from _fw.fwssys.fwcore.types.commontypes  import _CommonDefines
-from _fw.fwssys.fwcore.types.commontypes  import _EColorCode
-from _fw.fwssys.fwcore.types.commontypes  import _TextStyle
 from _fw.fwssys.fwcore.types.apobject     import _ProtAbsSlotsObject
 from _fw.fwssys.fwerrh.fwerrorcodes       import _EFwErrorCode
 from _fw.fwssys.fwerrh.lcfrcview          import _LcFrcView
@@ -419,6 +422,14 @@ class _LcSetupFailure:
     def isValid(self) -> bool:
         return self.__c is not None
 
+    @property
+    def errorMessage(self) -> str:
+        return self.__m
+
+    @property
+    def errorCode(self) -> int:
+        return self.__c
+
     def ToString(self):
         if not self.isValid:
             return None
@@ -433,7 +444,6 @@ class _LcSetupFailure:
         if _errMsg is None:
             _errMsg = _CommonDefines._CHAR_SIGN_DASH
         res += _FwTDbEngine.GetText(_EFwTextID.eMisc_Shared_FmtStr_016).format(self.__m)
-        res = _TextStyle.ColorText(res, _EColorCode.RED)
         return res
 
     def _Update(self, errCode_ : Union[_EFwErrorCode, int], errMsg_ : str =None):
@@ -474,7 +484,7 @@ class _LcFailure:
     __theLcXStateHist  = None
     __bLcResultPrinted = False
 
-    def __init__(self, lcFailure_ : Union[int, _LcSetupFailure]):
+    def __init__(self, lcFailure_ : Union[int, _LcSetupFailure], bIgnoreHist_ =False):
         self.__l   = None
         self.__sf  = None
         self.__nrf = 0
@@ -484,7 +494,7 @@ class _LcFailure:
             vlogif._XLogFatalEC(_EFwErrorCode.VFE_00332, _errMsg)
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00332)
             return
-        if _LcFailure.__theLcXStateHist is None:
+        if (_LcFailure.__theLcXStateHist is None) and not bIgnoreHist_:
             _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcXStateHistory_TID_002)
             vlogif._XLogFatalEC(_EFwErrorCode.VFE_00333, _errMsg)
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00333)
@@ -518,7 +528,11 @@ class _LcFailure:
 
     @staticmethod
     def IsLcErrorFree():
-        return True if _LcFailure.__theLcXStateHist is None else _LcFailure.__theLcXStateHist.isFailureFree
+        if _LcFailure.__theLcXStateHist is None:
+            res = _LcFailure.__theLcFailure is None
+        else:
+            res = _LcFailure.__theLcXStateHist.isFailureFree
+        return res
 
     @staticmethod
     def IsLcNotErrorFree():
@@ -535,7 +549,7 @@ class _LcFailure:
     @staticmethod
     def AsStr():
         _lcFailure = _LcFailure.__theLcFailure
-        return _CommonDefines._STR_EMPTY if _lcFailure is None else str(_lcFailure)
+        return _CommonDefines._STR_EMPTY if (_lcFailure is None) else str(_lcFailure)
 
     @staticmethod
     def CheckSetLcSetupFailure(errCode_ : Union[_EFwErrorCode, int], errMsg_ : Union[str, _EFwTextID] =None, bForce_ =False):
@@ -570,7 +584,7 @@ class _LcFailure:
 
             _lcSF = _LcSetupFailure(errCode_, errMsg_=errMsg_)
             if _lcSF.isValid:
-                _LcFailure(_lcSF)
+                _LcFailure(_lcSF, bIgnoreHist_=_xstHist is None)
 
                 _lcFailure = _LcFailure.__GetInstance()
                 if (_lcFailure is None) or not _lcFailure.__isLcSetupFailure:
@@ -583,6 +597,15 @@ class _LcFailure:
         return self.__l is not None
 
     @staticmethod
+    def _GetLcFailure() -> Union[LcFailure, None]:
+        res  = None
+        _lcf = _LcFailure.__theLcFailure
+        if _lcf is not None:
+            _ff = _lcf.__sf if _lcf.__isLcSetupFailure else _LcFailure.__theLcFRC
+            res = LcFailure(str(_LcFailure.__theLcState), _ff.errorMessage, _ff.errorCode)
+        return res
+
+    @staticmethod
     def _PrintLcResult(bForcePrint_ =False):
         if _LcFailure.__bLcResultPrinted:
             if not bForcePrint_:
@@ -592,7 +615,7 @@ class _LcFailure:
         _bErrorFree = _LcFailure.IsLcErrorFree()
 
         if (_lcFailure is None) != _bErrorFree:
-            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TID_015).format(str((_lcFailure is None), str(_bErrorFree)))
+            _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TID_015).format(_StrUtil.ToBool(_lcFailure is None), _StrUtil.ToBool(_bErrorFree))
             vlogif._XLogFatalEC(_EFwErrorCode.VFE_00976, _errMsg)
             vlogif._LogOEC(True, _EFwErrorCode.VFE_00976)
             _bErrorFree = _lcFailure is None
@@ -604,36 +627,33 @@ class _LcFailure:
         _LcFailure.__bLcResultPrinted = True
 
         _cc = _EColorCode.GREEN if _bErrorFree else _EColorCode.RED
+        _lt = _ELRType.LR_FREE if _bErrorFree else _ELRType.LR_FTL
 
         if not _bErrorFree:
             if not _FwTDbEngine.GetCreateStatus().isTDBCreated:
                 if _lcFailure.__isLcSetupFailure:
-                    _myTxt = _TextStyle.ColorText(str(_lcFailure), _cc)
-                    print(_myTxt)
+                    _PutLR(str(_lcFailure), color_=_cc, logType_=_lt)
                 return
+
+        _dLL = _CommonDefines._DASH_LINE_LONG
+        _dLS = _CommonDefines._DASH_LINE_SHORT
 
         _resStr = _EFwTextID.eMisc_LcResultSuccess if _bErrorFree else _EFwTextID.eMisc_LcResultFailed
         _resStr = _FwTDbEngine.GetText(_resStr)
         _resStr = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TID_016).format(_resStr)
 
         _curLcSt = _LcFailure._GetCurrentLcState()
-        if _curLcSt is not None:
-            _myTxt   = f'{_CommonDefines._CHAR_SIGN_NEWLINE}{_CommonDefines._CHAR_SIGN_TAB}{_curLcSt}'
-            _myTxt   = f'\n{_CommonDefines._DASH_LINE_SHORT} '.join(_myTxt.split(_CommonDefines._CHAR_SIGN_NEWLINE))
+        if _curLcSt is None:
+            if _lcFailure is not None:
+                _myTxt   = str(_lcFailure)
+                _resStr += f'{_CommonDefines._CHAR_SIGN_LF}{_dLS} {_CommonDefines._CHAR_SIGN_TAB}{_myTxt}'
+        else:
+            _myTxt   = f'{_CommonDefines._CHAR_SIGN_LF}{_CommonDefines._CHAR_SIGN_TAB}{_curLcSt}'
+            _myTxt   = f'{_CommonDefines._CHAR_SIGN_LF}{_dLS} '.join(_myTxt.split(_CommonDefines._CHAR_SIGN_LF))
             _resStr += _myTxt
 
-        _resStr = _TextStyle.ColorText(_resStr, _cc)
-
-        _ccDLL = _TextStyle.ColorText(_CommonDefines._DASH_LINE_LONG, _cc)
-        _ccDLS = _TextStyle.ColorText(_CommonDefines._DASH_LINE_SHORT, _cc)
-
-        print()
-        print(_ccDLL)
-        print(_resStr)
-        print(_ccDLS)
-
-        print(_ccDLL)
-        print()
+        _resStr = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcFailure_TID_017).format(_dLL, _resStr, _dLS, _dLL)
+        _PutLR(_resStr, color_=_cc, logType_=_lt)
 
     @staticmethod
     def _ClearInstance():

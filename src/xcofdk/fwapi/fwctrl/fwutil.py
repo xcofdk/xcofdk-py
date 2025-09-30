@@ -14,8 +14,10 @@
 from typing import Union
 
 from xcofdk.fwcom import EXmsgPredefinedID
+from xcofdk.fwcom import LcFailure
 from xcofdk.fwapi import ITask
 from xcofdk.fwapi import ITaskError
+
 from _fw.fwssys.fwctrl.fwapibase import _FwApiBase
 
 
@@ -44,8 +46,8 @@ def IsLcFailureFree() -> bool:
 
     Returns:
     ----------
-        True if the RTE of XCOFDK has encountered an LC failure, i.e. a qualified
-        fatal error, False otherwise.
+        False if the RTE of XCOFDK has encountered an LC failure, i.e. a qualified
+        fatal error, True otherwise.
 
     See:
     -----
@@ -80,6 +82,21 @@ def IsTaskRunning(taskUID_ : Union[int, EXmsgPredefinedID]) -> bool:
     return _FwApiBase.FwApiIsXTaskRunning(taskUID_)
 
 
+def GetLcFailure() -> Union[LcFailure, None]:
+    """
+    Returns:
+    ----------
+        An instance of class LcFailure if the RTE of XCOFDK has encountered an
+        LC failure, None otherwise.
+
+    See:
+    -----
+        >>> LcFailure
+        >>> IsLcFailureFree()
+    """
+    return _FwApiBase.FwApiGetLcFailure()
+
+
 def GetXcofdkVersion() -> str:
     """
     Getter for the version of XCOFDK installed.
@@ -97,8 +114,7 @@ def GetPythonVersion() -> str:
 
     Returns:
     ----------
-        Running Python interpreter's version if the framework is available,
-        None otherwise.
+        Running Python interpreter's version.
     """
     return _FwApiBase.FwApiGetPythonVer()
 

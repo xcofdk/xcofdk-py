@@ -11,6 +11,7 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
+from .apiif  import EExecutionCmdID
 from .apiif  import IMessageHeader
 from .apiif  import IMessage
 from .apiif  import IPayload
@@ -19,6 +20,9 @@ from .apiif  import ITask
 from .apiif  import IRCTask
 from .apiif  import IRCCommTask
 
+from .fwctrl import IsFwAvailable
+from .fwctrl import IsLcFailureFree
+from .fwctrl import GetLcFailure
 from .fwctrl import StartXcoFW
 from .fwctrl import StopXcoFW
 from .fwctrl import JoinXcoFW

@@ -97,9 +97,6 @@ class _RCTAgentBase:
     def _RcIsCanceling(self) -> bool:
         return False if self.__isInvalid else self.__asXTask.isCanceling
 
-    def _RcIsAborting(self) -> bool:
-        return False if self.__isInvalid else self.__asXTask.isAborting
-
     def _RcIsErrorFree(self) -> bool:
         return False if self.__isInvalid else self.__asXTask.isErrorFree
 

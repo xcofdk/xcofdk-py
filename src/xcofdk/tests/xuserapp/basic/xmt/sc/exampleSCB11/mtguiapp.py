@@ -77,6 +77,10 @@ def Main(cmdLineOpts_ : CLOptions):
         - xcofdk.tests.xuserapp.st.welcome.stguiappwelcome.STGuiAppWelcome
     """
 
+    # optional: disable both subsystems xmsg and xmp
+    rtecfg.RtePolicyDisableSubSystemMessaging()
+    rtecfg.RtePolicyDisableSubSystemMultiProcessing()
+
     # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()

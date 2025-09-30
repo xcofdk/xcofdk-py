@@ -85,7 +85,6 @@ class XTask(IXTask):
         >>>     return self.currentRunPhaseIterationNo
     """
 
-
     # --------------------------------------------------------------------------
     # 1) c-tor / built-in
     # --------------------------------------------------------------------------
@@ -561,16 +560,6 @@ class XTask(IXTask):
             >>> ITask.isCanceling
         """
         return self.__a.isCanceling
-
-
-    @ITask.isAborting.getter
-    def isAborting(self) -> bool:
-        """
-        See:
-        -----
-            >>> ITask.isAborting
-        """
-        return self.__a.isAborting
     # ------------------------------------------------------------------------------
     #END 4) task state
     # ------------------------------------------------------------------------------

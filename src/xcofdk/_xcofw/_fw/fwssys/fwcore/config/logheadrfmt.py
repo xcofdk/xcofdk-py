@@ -30,8 +30,8 @@ class _LogHeaderFormat(_ProtAbsSlotsObject):
         self.__xrn = bFW_ and _bDbgMode
 
     @staticmethod
-    def CreateFwLogHeaderFormat(ppass_ : int, bFW_ : bool, bRelMode_ : bool):
-        return _LogHeaderFormat.__CreateFwLogHeaderFormat(ppass_, bFW_, bRelMode_)
+    def CreateLogHeaderFormat(ppass_ : int, bFW_ : bool, bRelMode_ : bool):
+        return _LogHeaderFormat.__CreateLogHeaderFormat(ppass_, bFW_, bRelMode_)
 
     @property
     def isUniqueIDEnabled(self):
@@ -123,7 +123,7 @@ class _LogHeaderFormat(_ProtAbsSlotsObject):
         self.__xrn = None
 
     @staticmethod
-    def __CreateFwLogHeaderFormat(ppass_, bFW_ : bool, bRelMode_ : bool):
+    def __CreateLogHeaderFormat(ppass_, bFW_ : bool, bRelMode_ : bool):
         res = _LogHeaderFormat(ppass_, bFW_, bRelMode_ )
         if not res._isValid:
             res = None
