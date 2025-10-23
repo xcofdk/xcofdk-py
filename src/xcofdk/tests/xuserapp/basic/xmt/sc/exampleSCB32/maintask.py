@@ -67,16 +67,6 @@ class MainTaskGIL2(XMainTask, UserAppControllerIF):
 
     __MAX_NUM_ASYNC_SERVICE_TASKS = 12
 
-    __GIL_SPEC_TABLE = {
-        19 : ServiceTaskGilSpec(fiboInput_=19, fiboCpuTimeMS_=1.463, runPhaseFreqMS_=25, deficientRunPhaseFreqMS_=15)     # 11x  1.463  = 16.903 [ms]
-      , 20 : ServiceTaskGilSpec(fiboInput_=20, fiboCpuTimeMS_=2.343, runPhaseFreqMS_=40, deficientRunPhaseFreqMS_=25)     # 11x  2.343  = 25.773 [ms]
-      , 21 : ServiceTaskGilSpec(fiboInput_=21, fiboCpuTimeMS_=4.584, runPhaseFreqMS_=65, deficientRunPhaseFreqMS_=45)     # 11x  4.584  = 50.424 [ms]
-      , 22 : ServiceTaskGilSpec(fiboInput_=22, fiboCpuTimeMS_=7.889, runPhaseFreqMS_=100, deficientRunPhaseFreqMS_=75)    # 11x  7.889  = 86.779 [ms]
-      , 23 : ServiceTaskGilSpec(fiboInput_=23, fiboCpuTimeMS_=11.393, runPhaseFreqMS_=140, deficientRunPhaseFreqMS_=120)  # 11x 11.393  =125.323 [ms]
-      , 24 : ServiceTaskGilSpec(fiboInput_=24, fiboCpuTimeMS_=16.964, runPhaseFreqMS_=210, deficientRunPhaseFreqMS_=180)  # 11x 16.964  =186.604 [ms]
-    }
-
-
     def __init__ ( self, cmdLineOpts_ : CLOptions, taskProfile_ : XTaskProfile =None, guiTitle_ : str =None):
         self.__gui            = None
         self.__mdl            = None
@@ -359,7 +349,7 @@ class MainTaskGIL2(XMainTask, UserAppControllerIF):
         self.__dictLastRcvUID = dict()
 
         # get gil spec for the base fibonacci input
-        _baseFiboInputGilSpec = MainTaskGIL2.__GIL_SPEC_TABLE[MainTaskGIL2.__FIBO_BASE_INPUT]
+        _baseFiboInputGilSpec = ServiceTaskGilSpec.GetGilSpecTable()[MainTaskGIL2.__FIBO_BASE_INPUT]
 
         for ii in range(self.__srvTaskCount):
             # just to make sure we continue in an error-free state
@@ -466,7 +456,7 @@ class MainTaskGIL2(XMainTask, UserAppControllerIF):
         items[EModelItemID.ePythonVersion] = UserAppUtil.GetPythonVersion()
 
         # get gil spec for the base fibonacci input
-        _baseFiboInputGilSpec = MainTaskGIL2.__GIL_SPEC_TABLE[MainTaskGIL2.__FIBO_BASE_INPUT]
+        _baseFiboInputGilSpec = ServiceTaskGilSpec.GetGilSpecTable()[MainTaskGIL2.__FIBO_BASE_INPUT]
 
         # set gil spec associated with the base fibonacci input
         items[EModelItemID.eServiceTaskGilSpec] = _baseFiboInputGilSpec

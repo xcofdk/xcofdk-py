@@ -245,6 +245,7 @@ class IRCTask(ITask):
         """
         pass
 
+
     @property
     def runPhaseFrequencyMS(self) -> int:
         """

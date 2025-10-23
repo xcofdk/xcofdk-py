@@ -140,7 +140,6 @@ class _FwMain(_FwTask, _IFwMain):
     def ProcessShutdownAction(self, eShutdownAction_: _ELcSDRequest, eFailedCompID_: _ELcCompID =None, frcError_: _FatalLog =None, atask_: _AbsFwTask =None):
         if (self.__mr is None) or (self.__mr._rblType is None):
             return
-
         self.__mr.ProcessShutdownAction(eShutdownAction_, eFailedCompID_=eFailedCompID_, frcError_=frcError_, atask_=atask_)
 
     def _CleanUp(self):

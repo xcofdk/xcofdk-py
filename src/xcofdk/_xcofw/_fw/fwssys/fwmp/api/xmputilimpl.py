@@ -74,13 +74,7 @@ class _XMPUtilImpl:
             return None
 
         _curSM = _MPStartPolicy._GetCurrentStartMethodID()
-        if _curSM is None:
-            return _CommonDefines._CHAR_SIGN_DASH
-
-        res = _curSM.compactName
-        if _curSM.isSystemDefault:
-            res += _FwTDbEngine.GetText(_EFwTextID.eXMPUtilImpl_ToString_01).format(_XMPUtilImpl._MPGetSystemDefaultStartMethodID().name.lower())
-        return res
+        return _CommonDefines._CHAR_SIGN_DASH if _curSM is None else _curSM.compactName
 
     @staticmethod
     def _MPMapStartMethodToID(smName_ : str) -> EProcessStartMethodID:

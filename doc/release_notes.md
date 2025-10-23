@@ -8,12 +8,12 @@
   <tr>
      <td>Version</td>
      <td>:</td>
-     <td>1.8</td>
+     <td>1.9</td>
   </tr>
   <tr>
      <td>Date</td>
      <td>:</td>
-     <td>30.09.2025</td>
+     <td>24.10.2025</td>
   </tr>
   <tr>
      <td>&copy<c>Copyright</c></td>
@@ -39,10 +39,12 @@
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 - [Table of Contents](#table-of-contents)
   - [Release Highlights](#release-highlights)
+    - [Release Highlights v3.2](#release-highlights-v32)
     - [Release Highlights v3.1](#release-highlights-v31)
     - [Release Highlights v3.0](#release-highlights-v30)
     - [Release Highlights v2.1](#release-highlights-v21)
   - [Release Notes](#release-notes)
+    - [Release Notes v3.2 - 24.10.2025](#release-notes-v32---24102025)
     - [Release Notes v3.1 - 30.09.2025](#release-notes-v31---30092025)
     - [Release Notes v3.0 - 12.06.2025](#release-notes-v30---12062025)
     - [Release Notes v2.1 - 04.02.2025](#release-notes-v21---04022025)
@@ -53,6 +55,26 @@
 <br>
 
 ## Release Highlights
+
+### Release Highlights v3.2
+
+- The framework now officially supports free-threaded (FT) Python:
+  - The framework considers the stable version <tt>3.14.0</tt> the first Python version officially supporting 
+    *free-threaded (FT)*.
+  - Also, the framework now considers Python versions <tt>3.13</tt> and pre-releases of the stable version 
+    <tt>3.14.0</tt> supporting *experimental free-threaded*. <br> 
+    If built with the build configuration for disabling <tt>GIL</tt>, for these interpreter versions use of the RTE 
+    configuration policy via the API function below still remains mandatory: <br>
+    <tt>rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()</tt>
+  - See also new API functions below: 
+    - <tt>fwutil.IsFTPythonVersion()</tt>
+    - <tt>fwutil.IsExperimentalFTPythonVersion()</tt>
+
+[TOC](#table-of-contents)
+______
+
+<br>
+
 
 ### Release Highlights v3.1
 
@@ -157,6 +179,17 @@ ______
 
 
 ## Release Notes
+
+### Release Notes v3.2 - 24.10.2025
+
+- XPY-369 – Update doc: source code, readme and release notes
+- XPY-368 – Enable official support of free-threaded Python
+
+[TOC](#table-of-contents)
+______
+
+<br>
+
 
 ### Release Notes v3.1 - 30.09.2025
 

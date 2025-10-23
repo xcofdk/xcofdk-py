@@ -44,6 +44,14 @@ class _FwApiBase:
         return _FwApiConnectorAP._APIsXTaskRunning(xtUID_)
 
     @staticmethod
+    def FwApiIsFTPythonVersion() -> bool:
+        return _SystemInfo._IsPyVersionSupportedOfficialFTPython()
+
+    @staticmethod
+    def FwApiIsExperimentalFTPythonVersion() -> bool:
+        return _SystemInfo._IsPyVersionSupportedExperimentalFTPython()
+
+    @staticmethod
     def FwApiGetLcFailure() -> Union[LcFailure, None]:
         return _FwApiConnectorAP._APGetLcFailure()
 
@@ -77,11 +85,12 @@ class _FwApiBase:
             return False
 
         if _SystemInfo._IsGilDisabled():
-            if not _rteCfg._isExperimentalFreeThreadingBypassed:
-                logif._XLogErrorEC(_EFwErrorCode.UE_00161, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_017).format(_SystemInfo._GetPythonVer(), _fwVer))
-                return False
-            _midPart = _FwTDbEngine.GetText(_EFwTextID.eFwRteConfig_ToString_04)
-            logif._XLogUrgentWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_018).format(_midPart, _SystemInfo._GetPythonVer(), _fwVer))
+            if _SystemInfo._IsPyVersionSupportedExperimentalFTPython():
+                if not _rteCfg._isExperimentalFreeThreadingBypassed:
+                    logif._XLogErrorEC(_EFwErrorCode.UE_00161, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_017).format(_SystemInfo._GetPythonVer(), _fwVer))
+                    return False
+                _midPart = _FwTDbEngine.GetText(_EFwTextID.eFwRteConfig_ToString_04)
+                logif._XLogUrgentWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_018).format(_midPart, _SystemInfo._GetPythonVer(), _fwVer))
 
         if _FwApiConnectorAP._APIsFwApiConnected():
             logif._XLogErrorEC(_EFwErrorCode.UE_00001, _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwApiBase_TID_001))
@@ -101,7 +110,6 @@ class _FwApiBase:
             return False
         if _apiRetRec.syncSem is not None:
             _apiRetRec.syncSem.acquire()
-
         return True
 
     @staticmethod

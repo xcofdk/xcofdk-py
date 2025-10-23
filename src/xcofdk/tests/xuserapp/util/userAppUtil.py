@@ -79,6 +79,10 @@ class UserAppUtil:
     # API
     # --------------------------------------------------------------------------
     @staticmethod
+    def IsExperimentalFTPythonVersion() -> bool:
+        return fwutil.IsExperimentalFTPythonVersion()
+
+    @staticmethod
     def GetPythonVersion() -> str:
         res = fwutil.GetPythonVersion()
         if (sys.version_info.minor >= 13) and not _PyIsGilEnabled():
@@ -166,69 +170,11 @@ class UserAppUtil:
         return res
 
     @staticmethod
-    def SampleFibonacci():
-        """
-        Prints out sample time of CPU consumption to calculate
-        'UserAppUtil.Fibonacci(N)' with N<=50 when running as standlone script
-        with no use of cache and for Python 3.12:
-
-            Fibonacci(0):            0  00:00:00.000.008 [hr]
-            Fibonacci(1):            1  00:00:00.000.003 [hr]
-            Fibonacci(2):            1  00:00:00.000.002 [hr]
-            Fibonacci(3):            2  00:00:00.000.002 [hr]
-            Fibonacci(4):            3  00:00:00.000.002 [hr]
-            Fibonacci(5):            5  00:00:00.000.002 [hr]
-            Fibonacci(6):            8  00:00:00.000.003 [hr]
-            Fibonacci(7):           13  00:00:00.000.005 [hr]
-            Fibonacci(8):           21  00:00:00.000.007 [hr]
-            Fibonacci(9):           34  00:00:00.000.011 [hr]
-            Fibonacci(10):          55  00:00:00.000.079 [hr]
-            Fibonacci(11):          89  00:00:00.000.051 [hr]
-            Fibonacci(12):         144  00:00:00.000.079 [hr]
-            Fibonacci(13):         233  00:00:00.000.070 [hr]
-            Fibonacci(14):         377  00:00:00.000.155 [hr]
-            Fibonacci(15):         610  00:00:00.000.190 [hr]
-            Fibonacci(16):         987  00:00:00.000.292 [hr]
-            Fibonacci(17):        1597  00:00:00.000.480 [hr]
-            Fibonacci(18):        2584  00:00:00.001.818 [hr]
-            Fibonacci(19):        4181  00:00:00.001.463 [hr]
-            Fibonacci(20):        6765  00:00:00.002.343 [hr]
-            Fibonacci(21):       10946  00:00:00.004.584 [hr]
-            Fibonacci(22):       17711  00:00:00.007.889 [hr]
-            Fibonacci(23):       28657  00:00:00.011.393 [hr]
-            Fibonacci(24):       46368  00:00:00.016.964 [hr]
-            Fibonacci(25):       75025  00:00:00.029.015 [hr]
-            Fibonacci(26):      121393  00:00:00.043.515 [hr]
-            Fibonacci(27):      196418  00:00:00.063.963 [hr]
-            Fibonacci(28):      317811  00:00:00.105.532 [hr]
-            Fibonacci(29):      514229  00:00:00.164.576 [hr]
-            Fibonacci(30):      832040  00:00:00.271.604 [hr]
-            Fibonacci(31):     1346269  00:00:00.424.861 [hr]
-            Fibonacci(32):     2178309  00:00:00.689.491 [hr]
-            Fibonacci(33):     3524578  00:00:01.109.348 [hr]
-            Fibonacci(34):     5702887  00:00:01.785.914 [hr]
-            Fibonacci(35):     9227465  00:00:02.883.205 [hr]
-            Fibonacci(36):    14930352  00:00:04.638.776 [hr]
-            Fibonacci(37):    24157817  00:00:07.469.615 [hr]
-            Fibonacci(38):    39088169  00:00:12.015.411 [hr]
-            Fibonacci(39):    63245986  00:00:19.465.279 [hr]
-            Fibonacci(40):   102334155  00:00:32.087.946 [hr]
-            Fibonacci(41):   165580141  00:00:52.016.172 [hr]
-            Fibonacci(42):   267914296  00:01:23.806.934 [hr]
-            Fibonacci(43):   433494437  00:02:17.115.432 [hr]
-            Fibonacci(44):   701408733  00:03:38.564.663 [hr]
-            Fibonacci(45):  1134903170  00:06:00.546.468 [hr]
-            Fibonacci(46):  1836311903  00:09:33.907.614 [hr]
-            Fibonacci(47):  2971215073  00:16:17.001.775 [hr]
-            Fibonacci(48):  4807526976  00:25:46.447.269 [hr]
-            Fibonacci(49):  7778742049  00:41:30.306.381 [hr]
-            Fibonacci(50): 12586269025  01:06:08.101.126 [hr]
-        """
-
-        _MAX_N = 40
-        for nn in range(_MAX_N+1):
-            start = UserAppUtil.GetCurrentTime()
-            print('Fibonacci({}): {:>9d}  {} [sec]'.format(nn, UserAppUtil.Fibonacci(nn), UserAppUtil.DeltaTime2Str(start, bIncludeUSec_=True)))
+    def FibonacciCpuTimeUS(in_: int) -> float:
+        _dt = datetime.now()
+        UserAppUtil.Fibonacci(in_)
+        _dt = datetime.now() - _dt
+        return _dt.total_seconds()*(10**6)
 
     @staticmethod
     def CreateDigitSet(repeatSize_: int = 5) -> str:
@@ -286,10 +232,3 @@ def CreateDigitSet(repeatSize_: int =5) -> str:
 
 def CartProdAlgo(tid_: Union[int, str] =None, bRequestByParentProc_ =False) -> CartProdResult:
     return UserAppUtil.CartProdAlgo(tid_=tid_, bRequestByParentProc_=bRequestByParentProc_)
-
-
-# ------------------------------------------------------------------------------
-# Execution
-# ------------------------------------------------------------------------------
-if __name__ == "__main__":
-    UserAppUtil.SampleFibonacci()

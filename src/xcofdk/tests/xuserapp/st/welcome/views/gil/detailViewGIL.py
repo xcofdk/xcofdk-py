@@ -25,28 +25,23 @@ from xuserapp.st.welcome.interfaces.viewif  import UserAppViewIF
 # Interface / impl
 # ------------------------------------------------------------------------------
 class DetailViewGILFrame(UserAppViewIF):
-    # Grid layout ------------------------------------------------------------------
+    # Grid layout --------------------------------------------------------------
     # (not necessarily up-to-date)
     #
     #             +---------------------+----------------------+--------------+
-    # row No. 1:  | lblNote             |                      |              |
+    # row No. 1:  | lblSrvTskTSText     | lblSrvTskTSValue     |              |
     #             +---------------------+----------------------+--------------+
-    #         2:  | lblSrvTskTSText     | lblSrvTskTSValue     |              |
+    #         2:  | lblFiboInputText    | lblFiboInputValue    |              |
     #             +---------------------+----------------------+--------------+
-    #         3:  | lblFiboInputText    | lblFiboInputValue    |              |
-    #             +---------------------+----------------------+--------------+
-    #         4:  | lblFiboCpuTimeText  | lblFiboCpuTimeValue  |              |
-    #             +---------------------+----------------------+--------------+
-    #         5:  |                     |                      | btnPauseGIL  |
+    #         3:  |                     |                      | btnPauseGIL  |
     #             +---------------------+----------------------+--------------+
     #
-    # ------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
 
 
-    __slots__ = [ '__mdlif' , '__lblNote' , '__btnPauseGIL'
-                , '__lblSrvTskTSText'    , '__lblSrvTskTSValue'
-                , '__lblFiboInputText'   , '__lblFiboInputValue'
-                , '__lblFiboCpuTimeText' , '__lblFiboCpuTimeValue'
+    __slots__ = [ '__mdlif' , '__btnPauseGIL'
+                , '__lblSrvTskTSText'  , '__lblSrvTskTSValue'
+                , '__lblFiboInputText' , '__lblFiboInputValue'
                 ]
 
     def __init__(self, rootWin_: tk.Tk, modelif_: UserAppModelIF = None, bGil2_ =False):
@@ -54,14 +49,11 @@ class DetailViewGILFrame(UserAppViewIF):
 
         self.__mdlif = modelif_
 
-        self.__lblNote             = None
         self.__btnPauseGIL         = None
         self.__lblSrvTskTSText     = None
         self.__lblSrvTskTSValue    = None
         self.__lblFiboInputText    = None
         self.__lblFiboInputValue   = None
-        self.__lblFiboCpuTimeText  = None
-        self.__lblFiboCpuTimeValue = None
 
         _itFONT = ('TkDefaultFont', 11, 'italic')
 
@@ -75,11 +67,9 @@ class DetailViewGILFrame(UserAppViewIF):
         if srvTaskGilSpec is None:
             _color          = 'black'
             _fiboInput      = '??'
-            _fiboCpuTime    = '??'
             _runPhaseFreqMS = '??'
         else:
             _fiboInput   = f'{srvTaskGilSpec.fibonacciInput}'
-            _fiboCpuTime = f'{srvTaskGilSpec.fibonacciCpuTimeMS}'
 
             if srvTaskGilSpec.isDeficientFrequencyForced:
                 _color = 'red'
@@ -92,13 +82,6 @@ class DetailViewGILFrame(UserAppViewIF):
         row = 0
 
         col = 0
-        self.__lblNote = ttk.Label(frm, text='NOTE:\nItems highlighted in magenta refer to reference test environment.\n')
-        self.__lblNote.grid(row=row, column=col, columnspan=3, padx=5, pady=0, sticky=tk.W)
-
-    # row 2
-        row += 1
-
-        col = 0
         self.__lblSrvTskTSText = ttk.Label(frm, text='Service Tasks\' run-phase frequency [ms]:  ')
         self.__lblSrvTskTSText.grid(row=row, column=col, padx=5, pady=0, sticky=tk.W)
 
@@ -107,7 +90,7 @@ class DetailViewGILFrame(UserAppViewIF):
         self.__lblSrvTskTSValue.grid(row=row, column=col, padx=5, pady=0, sticky=tk.W)
         self.__lblSrvTskTSValue.configure(foreground=_color)
 
-    # row 3
+    # row 2
         row += 1
 
         col = 0
@@ -121,20 +104,7 @@ class DetailViewGILFrame(UserAppViewIF):
         self.__lblFiboInputValue.grid(row=row, column=col, padx=5, pady=0, sticky=tk.W)
         self.__lblFiboInputValue.configure(foreground='blue')
 
-    # row 4
-        row += 1
-
-        col = 0
-        txt = f'Fibonacci ({_fiboInput}) ca. CPU time [ms]:  '
-        self.__lblFiboCpuTimeText = ttk.Label(frm, text=txt)
-        self.__lblFiboCpuTimeText.grid(row=row, column=col, padx=5, pady=0, sticky=tk.W)
-
-        col = 1
-        self.__lblFiboCpuTimeValue = ttk.Label(frm, text=_fiboCpuTime)
-        self.__lblFiboCpuTimeValue.grid(row=row, column=col, padx=5, pady=0, sticky=tk.W)
-        self.__lblFiboCpuTimeValue.configure(foreground='magenta')
-
-    # row 5
+    # row 3
         row += 1
 
         col = 2

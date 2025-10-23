@@ -82,7 +82,7 @@ def Main(cmdLineOpts_ : CLOptions):
     rtecfg.RtePolicyDisableSubSystemMessaging()
     rtecfg.RtePolicyDisableSubSystemMultiProcessing()
 
-    # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
+    # step 1: configure framework's RTE for experimental free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()
 

@@ -369,11 +369,16 @@ def RtePolicyBypassExperimentalFreeThreadingGuard() -> IRteConfig:
     """
     Request to allow running the framework with an experimental free-threaded
     Python interpreter with GIL disabled, even though this runtime condition of
-    the framework is officially not supprted yet.
+    the framework is officially not supprted.
 
     Returns:
     ----------
         RTE configuration after the requested policy change.
+
+    Note:
+    ------
+        - The framework considers Python versions 3.13 and pre-releases of the
+          stable version 3.14.0 supporting experimental free-threaded (FT).
 
     See:
     -----

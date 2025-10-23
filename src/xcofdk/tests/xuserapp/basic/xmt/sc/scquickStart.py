@@ -24,8 +24,8 @@ sys.path.extend(((_xua := os.path.normpath(os.path.join(os.path.dirname(__file__
 # Import libs / modules
 # ------------------------------------------------------------------------------
 from math      import pi             # for demonstration purposes only
-from math      import pow            # dito
-from threading import current_thread # dito
+from math      import pow            # ditto
+from threading import current_thread # ditto
 
 from xcofdk           import fwapi
 from xcofdk.fwapi     import rtecfg
@@ -142,7 +142,7 @@ def Main(cmdLineOpts_ : CLOptions):
           0 otherwise.
     """
 
-    # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
+    # step 1: configure framework's RTE for experimental free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()
 

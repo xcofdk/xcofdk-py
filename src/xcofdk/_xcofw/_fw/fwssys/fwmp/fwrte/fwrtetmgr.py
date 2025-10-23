@@ -206,6 +206,7 @@ class _FwRteToken(_PySHM):
         except (PickleError, Exception) as _xcp:
             _msg    = _msgPrfx + _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteException_TID_005)
             _dmpPld = None
+
             _rteXcp = _RteTSException(msg_=_msg, code_=_WRITE_ERR_ID.value, xcp_=_xcp, maxXPS_=tg_._maxXcpPayloadSize)
             if tg_._isTrackingProcessXcp:
                 _dmpPld = _rteXcp._Serialize()

@@ -66,10 +66,10 @@ class XFMainTaskMP(UserAppControllerIF):
                 , '__bAllProcDone' , '__mpNumErr' , '__bMPPaused' , '__srvProcCnt' , '__lstProcRes' , '__ctrFiboTrigger' ]
 
     __SRV_PROC_SPEC_TABLE = {
-        35 : MPServiceProcessResult(fiboInput_=35, fiboCpuTimeSEC_=2.9)
-      , 36 : MPServiceProcessResult(fiboInput_=36, fiboCpuTimeSEC_=4.7)
-      , 37 : MPServiceProcessResult(fiboInput_=37, fiboCpuTimeSEC_=7.5)
-      , 38 : MPServiceProcessResult(fiboInput_=38, fiboCpuTimeSEC_=12.0)
+        35 : MPServiceProcessResult(fiboInput_=35)
+      , 36 : MPServiceProcessResult(fiboInput_=36)
+      , 37 : MPServiceProcessResult(fiboInput_=37)
+      , 38 : MPServiceProcessResult(fiboInput_=38)
     }
 
     __FIBO_BASE_INPUT           = 35
@@ -347,6 +347,8 @@ class XFMainTaskMP(UserAppControllerIF):
         self.__mdl = _UserAppModelImpl(items_=items)
 
         self.__mdl.serviceProcess.mpStartMethod = XmpUtil.GetCurrentStartMethodName()
+        if XmpUtil.IsCurrentStartMethodSystemDefault():
+            self.__mdl.serviceProcess.mpStartMethod += ' (system default)'
 
     def __UpdateUserAppModel(self, bReset_ =False, lstProcNames_ =None, bDTimeOnly_ =False):
         self.__mdl.Lock()
@@ -367,8 +369,6 @@ class XFMainTaskMP(UserAppControllerIF):
 
         # reset process results only?
         if bReset_:
-            self.__mdl.serviceProcess.processElapsedTimeTotalSEC = None
-
             for pr in _lstProcRes:
                 pr.UpdateResult(bReset_=True)
 
@@ -407,10 +407,6 @@ class XFMainTaskMP(UserAppControllerIF):
 
                 if pr.isFrozen:
                     _numFrozen += 1
-
-            if _numFrozen == len(_lstProcRes):
-                _lstProcRes = sorted(_lstProcRes, key=lambda pp: pp.fibonacciInput, reverse=True)
-                self.__mdl.serviceProcess.processElapsedTimeTotalSEC = _lstProcRes[0].processElapsedTimeSEC
 
         self.__mdl.Unlock()
     # --------------------------------------------------------------------------

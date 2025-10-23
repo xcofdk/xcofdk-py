@@ -124,7 +124,6 @@ class _FwQueue(_AbsSlotsObject):
         else:
             if maxSize_ is None:
                 maxSize_ = _FwQueue.GetFiniteQueueMinSize()
-
             if _FwQueue.EQOption.IsQOptionFlagSet(_optMask, _FwQueue.EQOption.eBlockOnQueueSize):
                 if _FwQueue.EQOption.IsQOptionFlagSet(_optMask, _FwQueue.EQOption.eExceptionOnQueueSize):
                     _optMask = _FwQueue.EQOption.RemoveQOptionFlag(_optMask, _FwQueue.EQOption.eExceptionOnQueueSize)
@@ -156,7 +155,6 @@ class _FwQueue(_AbsSlotsObject):
 
         if _FwQueue.EQOption.IsQOptionFlagSet(self.__mp, _FwQueue.EQOption.eBlockOnQueueSize):
             _FwQueue.EQState.AddQState(self.__ms, _FwQueue.EQState.eEmpty)
-
         self.__s = _BinarySemaphore()
 
     @staticmethod
@@ -390,7 +388,6 @@ class _FwQueue(_AbsSlotsObject):
                         res = self.__q.popleft()
                     else:
                         res = self.__q.pop()
-
                     _FwQueue.EQState.RemoveQState(self.__ms, _FwQueue.EQState.eFull)
                     self.__s.Give()
                     return res
@@ -413,10 +410,8 @@ class _FwQueue(_AbsSlotsObject):
         if _FwQueue.EQState.IsBlockingDtorState(self.__ms):
             self.__md.Give()
             return None
-
         if _FwQueue.EQState.IsBlockingEmptyState(self.__ms):
             self.__md.Give()
-
             self.__s.Take()
             if _FwQueue.EQState.IsBlockingDtorState(self.__ms):
                 return None
@@ -425,7 +420,6 @@ class _FwQueue(_AbsSlotsObject):
             if _FwQueue.EQState.IsBlockingDtorState(self.__ms):
                 self.__md.Give()
                 return None
-
             if self.isFIFO:
                 res = self.__q.popleft()
             else:
@@ -443,7 +437,6 @@ class _FwQueue(_AbsSlotsObject):
                 raise ValueError(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwQueue_TID_004).format(self.ToString()))
             else:
                 self.__md.Give()
-
                 return None
 
         if self.isFIFO:

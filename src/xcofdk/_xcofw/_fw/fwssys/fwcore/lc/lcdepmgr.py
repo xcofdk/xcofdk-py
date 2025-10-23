@@ -239,6 +239,8 @@ class _LcDepManager(_ProtAbsSlotsObject):
         _dlShort = _CommonDefines._DASH_LINE_SHORT
 
         _pyv  = _SystemInfo._GetPythonVer()
+        if _SystemInfo._IsGilDisabled():
+            _pyv += _CommonDefines._CHAR_SIGN_SPACE + _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_FT_Python)
         _pyv  = _FwTDbEngine.GetText(_EFwTextID.eFwApiBase_StartPreamble_Python_Version).format(_pyv)
         _xcov = _FwVersion._GetVersionInfo(bShort_=False)
 

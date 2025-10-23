@@ -44,19 +44,6 @@ class EProcessStartMethodID(IntEnum):
         - fork
         - forkserver
 
-    Even though child processes, i.e. instances of class XProcess, will work
-    regardless of which of the above start methods is chosen by an application,
-    'forkserver' is considered by the framework as:
-        - not general-purpose,
-        - adding even more dependency to an auto-started server process, which
-          is basically invisible to the framework, especially whenever
-          termination is of concern. It simply lacks usual interface for a
-          managed control,
-        - not well-documented.
-
-    To point out the abovementioned concerns, no pre-defined ID corresponding to
-    'forkserver' has been provided by intention.
-
     Note:
     ------
         - For details of process start methods refer to the official
@@ -66,11 +53,14 @@ class EProcessStartMethodID(IntEnum):
     See:
     -----
         - class XmpUtil
+        - XmpUtil.GetDefinedStartMethdsNameList()
+        - XmpUtil.MapStartMethodToID()
     """
 
     SystemDefault = 0
     Spawn         = auto()
     Fork          = auto()
+    ForkServer    = auto()
 #END class EProcessStartMethodID
 
 

@@ -45,7 +45,6 @@ class _SSDeputyLogging(_LcSSysDeputy):
             return True
 
         res = True
-
         for _n, _m in _SSConfigLogging._ELoggingConfigEntityID.__members__.items():
             if dinjCmd_.isDeInject and (_m != _SSConfigLogging._ELoggingConfigEntityID.eLogIF__CleanUp):
                 continue
@@ -115,7 +114,6 @@ class _SSDeputyLogging(_LcSSysDeputy):
                                         , bDieMode_=_bDieMode
                                         , bXcpMode_=_bXcpMode
                                         , bVSEMode_=_bVSEtMode)
-
             else:
                 res = False
                 _errMsg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_SSDeputyLogging_TID_001).format(_m.value)

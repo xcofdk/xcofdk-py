@@ -10,4 +10,3 @@
 from _fw.fwssys.fwcore.types.aobject import _AbsObject
 from _fw.fwssys.fwmt.api             import xlogifbase
 from _fw.fwssys.fwcore.logging       import vlogif as rlogif
-

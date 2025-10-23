@@ -64,17 +64,8 @@ class MainTaskGIL(XMainTask, UserAppControllerIF):
                 , '__srvTaskCount' , '__dictSrvInfo' , '__curSrvView' , '__guiTitle' , '__cntErrSnd' , '__dictLastRcvUID'
                 , '__bGilPaused' , '__ctrOutOfOrder' , '__startTime' , '__fiboInput' ]
 
-    __MAX_NUM_ASYNC_SERVICE_TASKS = 12
-
-    __GIL_SPEC_TABLE = {
-        19 : ServiceTaskGilSpec(fiboInput_=19, fiboCpuTimeMS_=1.463, runPhaseFreqMS_=25, deficientRunPhaseFreqMS_=15)     # 11x  1.463  = 16.903 [ms]
-      , 20 : ServiceTaskGilSpec(fiboInput_=20, fiboCpuTimeMS_=2.343, runPhaseFreqMS_=40, deficientRunPhaseFreqMS_=20)     # 11x  2.343  = 25.773 [ms]
-      , 21 : ServiceTaskGilSpec(fiboInput_=21, fiboCpuTimeMS_=4.584, runPhaseFreqMS_=65, deficientRunPhaseFreqMS_=45)     # 11x  4.584  = 50.424 [ms]
-      , 22 : ServiceTaskGilSpec(fiboInput_=22, fiboCpuTimeMS_=7.889, runPhaseFreqMS_=100, deficientRunPhaseFreqMS_=75)    # 11x  7.889  = 86.779 [ms]
-      , 23 : ServiceTaskGilSpec(fiboInput_=23, fiboCpuTimeMS_=11.393, runPhaseFreqMS_=140, deficientRunPhaseFreqMS_=120)  # 11x 11.393  =125.323 [ms]
-      , 24 : ServiceTaskGilSpec(fiboInput_=24, fiboCpuTimeMS_=16.964, runPhaseFreqMS_=210, deficientRunPhaseFreqMS_=180)  # 11x 16.964  =186.604 [ms]
-    }
-
+    __NUM_ASYNC_SRV  = 12
+    __GIL_SPEC_TABLE = None
 
     def __init__ ( self, cmdLineOpts_ : CLOptions, taskProfile_ : XTaskProfile =None, guiTitle_ : str =None):
         self.__gui            = None
@@ -96,13 +87,14 @@ class MainTaskGIL(XMainTask, UserAppControllerIF):
         self.__ctrOutOfOrder = 0
 
         self.__dictSrvInfo   = dict()
-        self.__srvTaskCount  = MainTaskGIL.__MAX_NUM_ASYNC_SERVICE_TASKS
+        self.__srvTaskCount  = MainTaskGIL.__NUM_ASYNC_SRV
 
         if taskProfile_ is None:
             taskProfile_ = MainTaskGIL.__GetMyTaskProfile()
 
         # update gil spec for the selected fibonacci input
-        MainTaskGIL.__GIL_SPEC_TABLE[self.__fiboInput].isDeficientFrequencyForced = cmdLineOpts_.isForceDeficientFrequencyEnabled
+        MainTaskGIL.__GIL_SPEC_TABLE = ServiceTaskGilSpec.GetGilSpecTable()
+        MainTaskGIL.__GIL_SPEC_TABLE[self.__fiboInput].isDeficientFrequencyForced = self.__cmdLine.isForceDeficientFrequencyEnabled
 
         UserAppControllerIF.__init__(self)
         XMainTask.__init__(self, taskProfile_=taskProfile_)

@@ -96,7 +96,7 @@ def Main(cmdLineOpts_ : CLOptions):
     # optional: disable subsystem xmsg
     rtecfg.RtePolicyDisableSubSystemMessaging()
 
-    # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
+    # step 1: configure framework's RTE for experimental free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()
 

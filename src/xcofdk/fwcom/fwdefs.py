@@ -55,7 +55,7 @@ class ERtePolicyID(IntEnum):
              - eBypassExperimentalFTGuard :
                allows running the framework with an experimental free-threaded
                Python interpreter with GIL disabled, even though it is
-               officially not supprted yet,
+               officially not supprted,
 
         b) addressing control operation to wait for framework's shutdown:
            Mutually exclusive policies of this group all make the otherwise
@@ -101,6 +101,8 @@ class ERtePolicyID(IntEnum):
     ------
         - This enum class and the order of its members must not be changed or
           extended by additional enum members.
+        - The framework considers Python versions 3.13 and pre-releases of the
+          stable version 3.14.0 supporting experimental free-threaded (FT).
 
     See:
     -----

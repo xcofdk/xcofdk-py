@@ -10,7 +10,8 @@
 import re
 import platform
 import sys
-from   typing           import Tuple
+import sysconfig
+from   typing          import Tuple
 from   multiprocessing import cpu_count as _PyCpuCount
 
 try:
@@ -46,12 +47,31 @@ class _SystemInfo:
         return _SystemInfo.__IsPlatform('Windows')
 
     @staticmethod
-    def _IsPythonVersion(verMajor_ : int, verMinor_ : int =None) -> bool:
-        if not isinstance(verMajor_, int):
+    def _IsGilDisabled():
+        return False if not _SystemInfo._IsPyVersionSupportedFTPython() else not _PyIsGilEnabled()
+
+    @staticmethod
+    def _IsPyVersionSupported():
+        return _SystemInfo._IsPythonVersionCompatible(3, 8)
+
+    @staticmethod
+    def _IsPyVersionSupportedFTPython():
+        return _SystemInfo._IsPythonVersionCompatible(3, 13)
+
+    @staticmethod
+    def _IsPyVersionSupportedExperimentalFTPython() -> bool:
+        return _SystemInfo._IsPyVersionSupportedFTPython() and not _SystemInfo._IsPyVersionSupportedOfficialFTPython()
+
+    @staticmethod
+    def _IsPyVersionSupportedOfficialFTPython() -> bool:
+        _vinfo = sys.version_info
+        if not _SystemInfo._IsPyVersionSupportedFTPython():
             return False
-        if (verMinor_ is not None) and not isinstance(verMinor_, int):
+        if _vinfo.minor < 14:
             return False
-        return _SystemInfo._IsPythonVersionCompatible(verMajor_, verMinor_=verMinor_, bExactMatch_=True)
+        if (_vinfo.micro==0) and (_vinfo.releaselevel!='final'):
+            return False
+        return True
 
     @staticmethod
     def _IsPythonVersionCompatible(verMajor_ : int, verMinor_ : int =None, bExactMatch_ =False) -> bool:
@@ -66,22 +86,6 @@ class _SystemInfo:
         if res and (verMinor_ is not None):
             res = _minor==verMinor_ if bExactMatch_ else _minor>=verMinor_
         return res
-
-    @staticmethod
-    def _IsPyVersionSupported():
-        return _SystemInfo._IsPythonVersionCompatible(3, 8)
-
-    @staticmethod
-    def _IsFTPyVersionSupported():
-        return _SystemInfo._IsPythonVersionCompatible(3, 13)
-
-    @staticmethod
-    def _IsGilDisabled():
-        res = False
-        if _SystemInfo._IsFTPyVersionSupported():
-            res = not _PyIsGilEnabled()
-        return res
-
     @staticmethod
     def _GetPythonVer() -> str:
         return platform.python_version()

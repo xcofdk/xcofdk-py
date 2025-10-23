@@ -82,6 +82,23 @@ class XmpUtil:
 
 
     @staticmethod
+    def IsCurrentStartMethodSystemDefault() -> bool:
+        """
+        Returns:
+        ----------
+            True if current process start method is system default, False
+            otherwise.
+
+        See:
+        -----
+            >>> EProcessStartMethodID
+            >>> XmpUtil.GetCurrentStartMethodID()
+            >>> XmpUtil.GetSystemDefaultStartMethodID()
+        """
+        return _XMPUtilImpl._MPIsCurrentStartMethod(XmpUtil.GetSystemDefaultStartMethodID())
+
+
+    @staticmethod
     def IsValidStartMethodName(startMethod_ : str) -> bool:
         """
         Parameters:
@@ -123,7 +140,7 @@ class XmpUtil:
         """
         Getter function for platform-dependent default start method as defined
         by Python's multiprocessing package, that is:
-            - fork for linux platforms, and
+            - either fork or forkserver for linux platforms, and
             - spawn for other platforms.
 
         Returns:

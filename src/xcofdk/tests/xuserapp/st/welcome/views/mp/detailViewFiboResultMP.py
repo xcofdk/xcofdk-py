@@ -26,37 +26,34 @@ from xuserapp.st.welcome.interfaces.viewif  import UserAppViewIF
 # ------------------------------------------------------------------------------
 class DetailViewFiboResultMPFrame(UserAppViewIF):
 
-    # Grid layout ------------------------------------------------------------------
+    # Grid layout --------------------------------------------------------------
     # (not necessarily up-to-date)
     #
-    #             +-----------------+--------------------+---------------------+------------------+----------------------+
-    # row No. 1:  | lblSMText       | lblSMValue         |                     |                  | lblDurationValue     |
-    #             +-----------------+--------------------+---------------------+------------------+----------------------+
-    #         2:  | lblErrNumText   | lblErrNumValue     |                     |                  | btnPause             |
-    #             +-----------------+------------------- +---------------------+------------------+----------------------+
-    #         3:  | lblNote         |                    |                     |                  |                      |
-    #             +-----------------+------------------- +---------------------+------------------+----------------------+
-    #         4:  | lblTitleSender  | lblTitleFiboInput  | lblTitleFiboResult  | lblTitleCpuTime  | lblTitleElapsedTime  |
-    #             +---------------------+----------------+---------------------+------------------+----------------------+
-    #         5:  | lblSender1      | lblInput1          | lblResult1          | lblCpuTime1      | lblElapsedTime1      |
-    #             +-----------------+--------------------+---------------------+------------------+----------------------+
-    #         6:  | lblSender2      | lblInput2          | lblResult2          | lblCpuTime2      | lblElapsedTime2      |
-    #             +-----------------+--------------------+---------------------+------------------+----------------------+
-    #         7:  | lblSender3      | lblInput3          | lblResult3          | lblCpuTime3      | lblElapsedTime3      |
-    #             +-----------------+--------------------+---------------------+------------------+----------------------+
-    #         8:  | lblComp         |                    |                     | lblCpuTimeTotal  | lblElapsedTimeTotal  |
-    #             +---------------------+----------------+---------------------+------------------+----------------------+
+    #             +-----------------+--------------------+---------------------+----------------------+
+    # row No. 1:  | lblSMText       | lblSMValue         |                     | lblDurationValue     |
+    #             +-----------------+--------------------+---------------------+----------------------+
+    #         2:  | lblErrNumText   | lblErrNumValue     |                     | btnPause             |
+    #             +-----------------+------------------- +---------------------+----------------------+
+    #         3:  | lblTitleSender  | lblTitleFiboInput  | lblTitleFiboResult  | lblTitleElapsedTime  |
+    #             +---------------------+----------------+---------------------+----------------------+
+    #         4:  | lblSender1      | lblInput1          | lblResult1          | lblElapsedTime1      |
+    #             +-----------------+--------------------+---------------------+----------------------+
+    #         5:  | lblSender2      | lblInput2          | lblResult2          | lblElapsedTime2      |
+    #             +-----------------+--------------------+---------------------+----------------------+
+    #         6:  | lblSender3      | lblInput3          | lblResult3          | lblElapsedTime3      |
+    #             +-----------------+--------------------+---------------------+----------------------+
+    #         7:  | lblComp         |                    |                     | lblElapsedTimeTotal  |
+    #             +---------------------+----------------+---------------------+----------------------+
     #
-    # ------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
 
-    __slots__ = [ '__mdlif' , '__frmMP'  , '__lstHeader' , '__btnPause' , '__lblNote'
-                , '__lstLblSenderValue'  , '__lstLblFiboInputValue'     , '__lstLblFiboResultValue'
-                , '__lstLblCpuTimeValue' , '__lstLblElapsedTimeValue'
-                , '__lblCpuTimeTotal'    , '__lblElapsedTimeTotal'
-                , '__lblDurationValue'   , '__lstDummyLabels'
-                , '__lblSMText'          , '__lblSMValue'
-                , '__lblErrNumText'      , '__lblErrNumValue'
+    __slots__ = [ '__mdlif' , '__frmMP' , '__lstHeader' , '__btnPause'
+                , '__lstLblSenderValue'      , '__lstLblFiboInputValue'
+                , '__lstLblFiboResultValue'  , '__lstLblElapsedTimeValue'
+                , '__lblDurationValue'       , '__lstDummyLabels'
+                , '__lblSMText'              , '__lblSMValue'
+                , '__lblErrNumText'          , '__lblErrNumValue'
                 ]
 
     def __init__(self, rootWin_: tk.Tk, modelif_: UserAppModelIF =None, numServices_ =3):
@@ -74,19 +71,15 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
         self.__lstHeader              = []
         self.__lstDummyLabels         = []
         self.__lstLblSenderValue      = []
-        self.__lstLblCpuTimeValue     = []
         self.__lstLblFiboInputValue   = []
         self.__lstLblFiboResultValue  = []
         self.__lstLblElapsedTimeValue = []
 
-        self.__lblNote             = None
         self.__lblSMText           = None
         self.__lblSMValue          = None
         self.__lblErrNumText       = None
         self.__lblErrNumValue      = None
-        self.__lblCpuTimeTotal     = None
         self.__lblDurationValue    = None
-        self.__lblElapsedTimeTotal = None
 
         _itFONT             = ('TkDefaultFont', 11, 'italic')
         _mpSTART_METHOD     = self.__mdlif.serviceProcess.mpStartMethod
@@ -117,7 +110,7 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
         self.__lblSMValue.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.W)
         self.__lblSMValue.configure(foreground='blue')
 
-        for ii in range(2,4):
+        for ii in range(2,3):
             _col += 1
             _lbl = ttk.Label(_frm1, text=' '*_DUMMY_LEN)
             _lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.E)
@@ -138,7 +131,7 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
         self.__lblErrNumValue = ttk.Label(_frm1, text='0')
         self.__lblErrNumValue.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.W)
 
-        _col = 4
+        _col = 3
         self.__btnPause = tk.Button(_frm1, text='Pause (next) MP Run', width=16, font=_itFONT, command=self.__Pause)
         self.__btnPause.grid(row=_row, column=_col, padx=5, pady=5, sticky=tk.W)
 
@@ -150,13 +143,6 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
         self.__frmMP = _frm2
 
         _row = 0
-
-        col = 0
-        self.__lblNote = ttk.Label(_frm2, text='NOTE:\nItems highlighted in magenta refer to reference test environment.\n')
-        self.__lblNote.grid(row=_row, column=col, columnspan=5, padx=5, pady=0, sticky=tk.W)
-
-    # row 4
-        _row += 1
 
         _col = 0
         lbl = ttk.Label(_frm2, text='PID::Service Process:  ')
@@ -174,16 +160,11 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
         self.__lstHeader.append(lbl)
 
         _col += 1
-        lbl = ttk.Label(_frm2, text='ST CPU Time [s]: ')
-        lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.W)
-        self.__lstHeader.append(lbl)
-
-        _col += 1
         lbl = ttk.Label(_frm2, text='MP CPU Time [s]: ')
         lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.W)
         self.__lstHeader.append(lbl)
 
-    # rows 5, 6, 7
+    # rows 4, 5, 6
         for ii in range(numServices_):
             _row += 1
 
@@ -205,31 +186,9 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
 
             _col += 1
             lbl = ttk.Label(_frm2, text='-')
-            lbl.configure(foreground='magenta')
-            self.__lstLblCpuTimeValue.append(lbl)
-            lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.E)
-
-            _col += 1
-            lbl = ttk.Label(_frm2, text='-')
             self.__lstLblElapsedTimeValue.append(lbl)
             lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.E)
         #END for ii...
-
-    # row 8
-        if numServices_ > 1:
-            _row += 1
-
-            _col = 3
-            lbl = ttk.Label(_frm2, text='-')
-            lbl.configure(foreground='green')
-            lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.E)
-            self.__lblCpuTimeTotal = lbl
-
-            _col += 1
-            lbl = ttk.Label(_frm2, text='-')
-            lbl.configure(foreground='green')
-            lbl.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.E)
-            self.__lblElapsedTimeTotal = lbl
 
         self.UpdateView()
 
@@ -261,19 +220,10 @@ class DetailViewFiboResultMPFrame(UserAppViewIF):
         self.__lblErrNumValue['text']   = f'{_srvProcess.mpNumErrors}'
         self.__lblDurationValue['text'] = _srvProcess.durationTime
 
-        if self.__lblCpuTimeTotal is not None:
-            if self.__lblCpuTimeTotal['text'].startswith('-'):
-                _fiboCpuTotal = sum( [pr.fibonacciCpuTimeSEC for pr in _lstProcResult] )
-                self.__lblCpuTimeTotal['text'] = f'ST vs. MP:  {_fiboCpuTotal}'
-
-        if self.__lblElapsedTimeTotal is not None:
-            self.__lblElapsedTimeTotal['text'] = _srvProcess.processElapsedTimeTotalSEC
-
         for ii in range(NUM_ROWS):
             _procResult = _lstProcResult[ii]
 
             self.__lstLblSenderValue[ii]['text']      = _procResult.processName
-            self.__lstLblCpuTimeValue[ii]['text']     = _procResult.fibonacciCpuTimeSEC
             self.__lstLblFiboInputValue[ii]['text']   = _procResult.fibonacciInput
             self.__lstLblElapsedTimeValue[ii]['text'] = _procResult.processElapsedTimeSEC
 

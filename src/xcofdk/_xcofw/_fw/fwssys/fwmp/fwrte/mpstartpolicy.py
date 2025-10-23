@@ -27,8 +27,7 @@ class _EProcessStartMethodID(IntEnum):
     eSystemDefault = EProcessStartMethodID.SystemDefault.value
     eSpawn         = EProcessStartMethodID.Spawn.value
     eFork          = EProcessStartMethodID.Fork.value
-
-    eForkServer = -1
+    eForkServer    = EProcessStartMethodID.ForkServer.value
 
     @property
     def compactName(self):
@@ -84,7 +83,11 @@ class _MPStartPolicy:
             return False
 
         _curSM = _MPStartPolicy.__FetchCurrentStartMethodID()
-        res = (_curSM is not None) and _curSM == smID_
+        if _curSM is None:
+            return False
+        if _curSM.isSystemDefault:
+            _curSM = _MPStartPolicy._GetSystemDefaultStartMethodID()
+        res = (_curSM is not None) and (_curSM == smID_)
         return res
 
     @staticmethod
@@ -109,15 +112,22 @@ class _MPStartPolicy:
 
     @staticmethod
     def _GetSystemDefaultStartMethodID() -> _EProcessStartMethodID:
-        return _EProcessStartMethodID.eFork if _SystemInfo._IsPlatformLinux() else _EProcessStartMethodID.eSpawn
+        if _SystemInfo._IsPlatformLinux():
+            res = _EProcessStartMethodID.eForkServer if _SystemInfo._IsPyVersionSupportedFTPython() else _EProcessStartMethodID.eFork
+        else:
+            res = _EProcessStartMethodID.eSpawn
+        return res
 
     @staticmethod
     def _GetDefinedStartMethdsNameList() -> list:
-        return list(_MPStartPolicy.__KNOWN_START_METHODS_NAME_LIST)
+        return [_MPStartPolicy._MapStartMethodToID(_sm).compactName for _sm in _PyMP.get_all_start_methods()]
 
     @staticmethod
     def _GetCurrentStartMethodID() -> Union[_EProcessStartMethodID, None]:
-        return _MPStartPolicy.__FetchCurrentStartMethodID()
+        res = _MPStartPolicy.__FetchCurrentStartMethodID()
+        if (res is not None) and res.isSystemDefault:
+            res = _MPStartPolicy._GetSystemDefaultStartMethodID()
+        return res
 
     @staticmethod
     def _MapStartMethodToID(smName_ : str) -> Union[_EProcessStartMethodID, None]:

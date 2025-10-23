@@ -14,6 +14,7 @@
 from xuserapp.util.tkimport import tk
 from xuserapp.util.tkimport import ttk
 
+from xuserapp.st.welcome.interfaces.modelif import UserAppUtil
 from xuserapp.st.welcome.interfaces.modelif import UserAppModelIF
 
 
@@ -68,7 +69,7 @@ class WelcomeInfoFrame:
             self.__lblVerPy = ttk.Label(_frm, text=f'Python:  v{_ver}')
             self.__lblVerPy.grid(row=_row, column=_col, padx=5, pady=0, sticky=tk.W)
             if _bFT:
-                self.__lblVerPy.configure(foreground='red')
+                self.__lblVerPy.configure(foreground='red' if UserAppUtil.IsExperimentalFTPythonVersion() else 'blue')
 
             _col += 1
             _txt = modelif_.hostPlatform

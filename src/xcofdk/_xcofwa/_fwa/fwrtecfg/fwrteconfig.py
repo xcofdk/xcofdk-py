@@ -287,11 +287,20 @@ class _FwRteConfig(_AbsSlotsObject, _IFwRteConfig):
                     _bm = _EBitMask.AddEnumBitFlag(_bm, _EFwRtePolicyID.bfDisableSubSysXMPXcpTracking)
 
             if _bBypassXFT is not None:
-                if _bBypassXFT and not _SystemInfo._IsFTPyVersionSupported():
+                if _bBypassXFT:
                     _pp = _EFwRtePolicyID._FromFwRtePolicyID(ERtePolicyID.eBypassExperimentalFTGuard)
-                    _bm = _EBitMask.RemoveEnumBitFlag(_bm, _pp)
-                    _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteConfig_TID_003).format(_SystemInfo._GetPythonVer())
-                    logif._XLogWarning(_msg)
+                    if not _SystemInfo._IsPyVersionSupportedFTPython():
+                        _bm = _EBitMask.RemoveEnumBitFlag(_bm, _pp)
+                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteConfig_TID_003).format(_SystemInfo._GetPythonVer())
+                        logif._XLogWarning(_msg)
+                    elif not _SystemInfo._IsGilDisabled():
+                        _bm = _EBitMask.RemoveEnumBitFlag(_bm, _pp)
+                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteConfig_TID_002).format(_SystemInfo._GetPythonVer())
+                        logif._XLogWarning(_msg)
+                    elif _SystemInfo._IsPyVersionSupportedOfficialFTPython():
+                        _bm = _EBitMask.RemoveEnumBitFlag(_bm, _pp)
+                        _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_FwRteConfig_TID_017).format(_SystemInfo._GetPythonVer())
+                        logif._XLogWarning(_msg)
 
             if _bEnableAS is None:
                 _bEnableAS = _EBitMask.IsEnumBitFlagSet(_bm, _EFwRtePolicyID.bfEnableAutoStop)

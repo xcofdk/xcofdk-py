@@ -89,7 +89,7 @@ def Main(cmdLineOpts_ : CLOptions):
     # optional: disable subsystem xmsg
     rtecfg.RtePolicyDisableSubSystemMessaging()
 
-    # step 1: configure framework's RTE for free-threaded Python (if enabled via CmdLine)
+    # step 1: configure framework's RTE for experimental free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isFreeThreadingGuardBypassed:
         rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()
 
@@ -141,12 +141,12 @@ def _CheckSetProcessStartMode():
         - Main()
         - https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
         - https://docs.python.org/3/library/multiprocessing.html#multiprocessing.set_start_method
-
     """
 
-    __PROCESS_START_METHOD_FORK      = 'fork'
-    __PROCESS_START_METHOD_SPAWN     = 'spawn'
-    __PROCESS_START_METHOD_NOT_FIXED = None
+    __PROCESS_START_METHOD_FORK       = 'fork'
+    __PROCESS_START_METHOD_SPAWN      = 'spawn'
+    __PROCESS_START_METHOD_FORKSERVER = 'forkserver'
+    __PROCESS_START_METHOD_NOT_FIXED  = None
 
     __bCHANGE_PROCESS_START_METHOD = False
     __bCHANGE_BY_FORCE             = False
@@ -157,6 +157,7 @@ def _CheckSetProcessStartMode():
 
     res    = True
     _curSM = _PyMP.get_start_method(allow_none=True)
+    print(f'[exampleMPB11][platform:{__PLF}] Current MP process start method: \'{_curSM}\'')
 
     if __bCHANGE_PROCESS_START_METHOD:
         if _curSM != __TGT_PROCESS_START_METHOD:
@@ -173,8 +174,6 @@ def _CheckSetProcessStartMode():
                     print(f'[exampleMPB11][platform:{__PLF}] Set MP process start method to \'{__TGT_PROCESS_START_METHOD}\'.')
         else:
             print(f'[exampleMPB11][platform:{__PLF}] Current MP process start method is set to \'{__TGT_PROCESS_START_METHOD}\', ignoring request to reset it.')
-    else:
-        pass
 
     return res, _curSM
 #END _CheckSetProcessStartMode()

@@ -10,10 +10,12 @@
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
-from enum   import auto
-from enum   import IntEnum
-from enum   import unique
-from typing import List
+import platform
+from   enum   import auto
+from   enum   import IntEnum
+from   enum   import unique
+from   typing import List
+from   typing import Dict
 
 from xuserapp.util.userAppUtil  import UserAppUtil
 from xuserapp.util.userAppRLock import UserAppRLock as RLock
@@ -177,43 +179,15 @@ class TaskInfo:
 
 
 class ServiceTaskGilSpec:
-    __slots__ = [ '__bDeficientFreq' , '__bGilPaused'
-                , '__fiboInput'      , '__fiboCpuTimeMS'
-                , '__runPhaseFreqMS' , '__deficientRunPhaseFreqMS'
-                ]
+    __slots__ = [ '__bDeficientFreq' , '__bGilPaused' , '__fiboInput' , '__runPhaseFreqMS' , '__deficientRunPhaseFreqMS' ]
 
-    __DEFAULT_FIBO_INPUT                  = 22
-    __DEFAULT_FIBO_CPU_TIME_MS            = 7.523
-    __DEFAULT_RUN_PHASE_FREQ_MS           = 100
-    __DEFAULT_DEFICIENT_RUN_PHASE_FREQ_MS = 80
-
-    def __init__(self, fiboInput_ : int =None, fiboCpuTimeMS_ : float =None, runPhaseFreqMS_ : int =None, deficientRunPhaseFreqMS_ =None):
+    def __init__(self, fiboInput_ : int, runPhaseFreqMS_ : int, deficientRunPhaseFreqMS_):
         self.__bGilPaused     = False
         self.__bDeficientFreq = False
 
-        # fibonacci input
-        if not (isinstance(fiboInput_, int) and (fiboInput_ > 0)):
-            self.__fiboInput = ServiceTaskGilSpec.__DEFAULT_FIBO_INPUT
-        else:
-            self.__fiboInput = fiboInput_
-
-        # fibonacci cpu consumption time
-        if not (isinstance(fiboCpuTimeMS_, float) and (fiboCpuTimeMS_ > 0.0)):
-            self.__fiboCpuTimeMS = ServiceTaskGilSpec.__DEFAULT_FIBO_CPU_TIME_MS
-        else:
-            self.__fiboCpuTimeMS = fiboCpuTimeMS_
-
-        # run-phase frequency
-        if not (isinstance(runPhaseFreqMS_, int) and (runPhaseFreqMS_ > 0)):
-            self.__runPhaseFreqMS = ServiceTaskGilSpec.__DEFAULT_RUN_PHASE_FREQ_MS
-        else:
-            self.__runPhaseFreqMS = runPhaseFreqMS_
-
-        # deficient run-phase frequency
-        if not (isinstance(deficientRunPhaseFreqMS_, int) and (deficientRunPhaseFreqMS_ > 0)):
-            self.__deficientRunPhaseFreqMS = ServiceTaskGilSpec.__DEFAULT_DEFICIENT_RUN_PHASE_FREQ_MS
-        else:
-            self.__deficientRunPhaseFreqMS = deficientRunPhaseFreqMS_
+        self.__fiboInput               = fiboInput_
+        self.__runPhaseFreqMS          = runPhaseFreqMS_
+        self.__deficientRunPhaseFreqMS = deficientRunPhaseFreqMS_
 
     @property
     def isGilPaused(self) -> bool:
@@ -236,23 +210,37 @@ class ServiceTaskGilSpec:
         return self.__fiboInput
 
     @property
-    def fibonacciCpuTimeMS(self):
-        return self.__fiboCpuTimeMS
-
-    @property
     def runPhaseFrequencyMS(self):
         return self.__runPhaseFreqMS
 
     @property
     def deficientRunPhaseFrequencyMS(self):
         return self.__deficientRunPhaseFreqMS
+
+    @staticmethod
+    def GetGilSpecTable(fiboStart_ : int =None, tableSize_ : int =None) -> Dict:
+        _bWIN = platform.system() == 'Windows'
+
+        if fiboStart_ is None:
+            fiboStart_ = 17 if _bWIN else 19
+        if tableSize_ is None:
+            tableSize_ = 10 if _bWIN else 8
+
+        res   = dict()
+        _base = UserAppUtil.FibonacciCpuTimeUS(fiboStart_)
+        _base = max(_base, 1000)
+        _freq = int(11 * _base) // 1000
+        for _ii in range(fiboStart_, fiboStart_+tableSize_):
+            _spec = ServiceTaskGilSpec(fiboInput_=_ii, runPhaseFreqMS_=_freq, deficientRunPhaseFreqMS_=_freq-int(_freq*0.2))
+            res[_spec.fibonacciInput] = _spec
+            _fctr = 1.6 if _bWIN else 1.5
+            _freq = int(_freq*_fctr)
+        return res
 #END ServiceTaskGilSpec
 
 
 class MPServiceProcess:
-    __slots__ = [ '__ctrMpRun'   , '__bPaused' , '__dtime'
-                , '__procDTotal' , '__mpSM' , '__numErr'
-                ]
+    __slots__ = [ '__ctrMpRun'   , '__bPaused' , '__dtime' , '__mpSM' , '__numErr' ]
 
     def __init__(self):
         self.__mpSM       = ''
@@ -260,7 +248,6 @@ class MPServiceProcess:
         self.__numErr     = 0
         self.__bPaused    = False
         self.__ctrMpRun   = 0
-        self.__procDTotal = None
 
     @property
     def isPaused(self):
@@ -301,38 +288,20 @@ class MPServiceProcess:
     @mpStartMethod.setter
     def mpStartMethod(self, mpStartMethod_ : str):
         self.__mpSM = mpStartMethod_
-
-    @property
-    def processElapsedTimeTotalSEC(self):
-        return '-' if self.__procDTotal is None else self.__procDTotal
-
-    @processElapsedTimeTotalSEC.setter
-    def processElapsedTimeTotalSEC(self, totalElapsedTime_ : str):
-        self.__procDTotal = totalElapsedTime_
 #END class MPServiceProcess
 
 
 class MPServiceProcessResult:
-    __slots__ = [ '__fiboInput' , '__fiboResult'   , '__procName'
-                , '__startTime' , '__procDuration' , '__fiboCpuTime'
-                , '__bFrozen'
-                ]
+    __slots__ = [ '__fiboInput' , '__fiboResult' , '__procName' , '__startTime' , '__procDuration' , '__bFrozen' ]
 
-    __DEFAULT_FIBO_INPUT        = 36
-    __DEFAULT_FIBO_CPU_TIME_SEC = 2.9
+    __DEFAULT_FIBO_INPUT = 36
 
-    def __init__(self, fiboInput_ : int =None, fiboCpuTimeSEC_ : float =None):
+    def __init__(self, fiboInput_ : int =None):
         # fibonacci input
         if not (isinstance(fiboInput_, int) and (fiboInput_ > 0)):
             self.__fiboInput = MPServiceProcessResult.__DEFAULT_FIBO_INPUT
         else:
             self.__fiboInput = fiboInput_
-
-        # fibonacci cpu consumption time
-        if not (isinstance(fiboCpuTimeSEC_, float) and (fiboCpuTimeSEC_ > 0.0)):
-            self.__fiboCpuTime = MPServiceProcessResult.__DEFAULT_FIBO_CPU_TIME_SEC
-        else:
-            self.__fiboCpuTime = fiboCpuTimeSEC_
 
         self.__bFrozen      = False
         self.__procName     = None
@@ -359,10 +328,6 @@ class MPServiceProcessResult:
     @property
     def fibonacciResult(self):
         return '-' if self.__fiboResult is None else self.__fiboResult
-
-    @property
-    def fibonacciCpuTimeSEC(self):
-        return self.__fiboCpuTime
 
     def UpdateResult(self, procName_ : str =None, bReset_ =False, fiboResult_ : int =None):
         if self.__bFrozen and not bReset_:

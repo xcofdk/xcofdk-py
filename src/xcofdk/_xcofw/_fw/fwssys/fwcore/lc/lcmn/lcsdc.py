@@ -78,7 +78,6 @@ class _LcSDCoordinator:
         if (_curSDR is None) or not _curSDR.isPreShutdown:
             if vlogif._IsReleaseModeEnabled():
                 vlogif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSDC_TID_001))
-
         if _lcm.isCoordinatedShutdownRunning:
             self.__CoordinateCeasingGateXT(_ELcCeaseGateFlag.ebfPreShutdownGate)
         if _lcm.isCoordinatedShutdownRunning:
@@ -87,7 +86,6 @@ class _LcSDCoordinator:
 
     def _ExecuteCoordinatedShutdownGate(self):
         _lcm = self.__m
-
         _SINGLE_WAIT_TIMESPAN_MS = _LcMonitorImpl.GetPerSingleStepWaitTimespanMS()
         _MAX_WAIT_NUM            = _LcMonitorImpl.GetPerShutdownRequestWaitTimespanMS() // _SINGLE_WAIT_TIMESPAN_MS
 
@@ -115,7 +113,6 @@ class _LcSDCoordinator:
         if (_curSDR is None) or not _curSDR.isShutdown:
             if vlogif._IsReleaseModeEnabled():
                 vlogif._XLogWarning(_FwTDbEngine.GetText(_EFwTextID.eLogMsg_LcSDC_TID_002))
-
         if _lcm.isCoordinatedShutdownRunning:
             self.__CoordinateCeasingGateXT(_ELcCeaseGateFlag.ebfShutdownGate)
         if _lcm.isCoordinatedShutdownRunning:
@@ -174,6 +171,7 @@ class _LcSDCoordinator:
             if self.__bM:
                 _lstCTLBs = [_ctlb for _ctlb in _lstCTLBs if not _ctlb.lcStaticTLB.taskBadge.isFwMain]
             _bIgnore = len(_lstCTLBs) < 1
+
         if _bIgnore:
             return
 

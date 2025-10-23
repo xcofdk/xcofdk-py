@@ -82,6 +82,39 @@ def IsTaskRunning(taskUID_ : Union[int, EXmsgPredefinedID]) -> bool:
     return _FwApiBase.FwApiIsXTaskRunning(taskUID_)
 
 
+def IsFTPythonVersion() -> bool:
+    """
+    Returns:
+    ----------
+        True if the running Python interpreter officially supports
+        free-threaded with GIL is disabled, False otherwise.
+
+    Note:
+    ------
+        - The framework considers the stable version 3.14.0 the first Python
+          version officially supporting free-threaded (FT).
+        - Any Python version older than 3.14.0 is considered by the framework
+          to be not officially supporting free-threaded.
+          This includes even the pre-releases of 3.14.0.
+    """
+    return _FwApiBase.FwApiIsFTPythonVersion()
+
+
+def IsExperimentalFTPythonVersion() -> bool:
+    """
+    Returns:
+    ----------
+        True if the running Python interpreter supports experimental
+        free-threaded with GIL is disabled, False otherwise.
+
+    Note:
+    ------
+        - The framework considers Python versions 3.13 and pre-releases of the
+          stable version 3.14.0 supporting experimental free-threaded (FT).
+    """
+    return _FwApiBase.FwApiIsExperimentalFTPythonVersion()
+
+
 def GetLcFailure() -> Union[LcFailure, None]:
     """
     Returns:

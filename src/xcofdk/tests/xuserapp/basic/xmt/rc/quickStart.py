@@ -27,11 +27,12 @@ sys.path.extend(((_xua := os.path.normpath(os.path.join(os.path.dirname(__file__
 from enum      import auto, IntEnum
 from threading import current_thread  # for demonstration purposes only
 from typing    import List
+from datetime  import datetime
 
 from xcofdk       import fwapi
-from xcofdk.fwapi import rtecfg
 from xcofdk.fwcom import EExecutionCmdID, EXmsgPredefinedID
-from xcofdk.fwapi import SyncTask, AsyncTask, MessageDrivenTask, IRCTask
+from xcofdk.fwapi import rtecfg, IRCTask, IRCCommTask
+from xcofdk.fwapi import SyncTask, AsyncTask, MessageDrivenTask
 from xcofdk.fwapi import GetCurTask, IMessage, XProcess, xlogif
 
 from xuserapp.util.cloptions   import ECLOptionID, CLOptions, GetCmdLineOptions
@@ -46,7 +47,7 @@ class EMsgLabel(IntEnum):
     AlgoRequest = auto()
     Quit        = auto()
 
-def AlgoServerCBTgt(myTsk_ : IRCTask, msg_ : IMessage) -> EExecutionCmdID:
+def AlgoServerCBTgt(myTsk_ : IRCCommTask, msg_ : IMessage) -> EExecutionCmdID:
     # very first message?
     if myTsk_.isFirstRunPhaseIteration:
         xlogif.LogInfo(f'Task {myTsk_.aliasName} received first delivered message.')
@@ -68,6 +69,9 @@ def AlgoServerCBTgt(myTsk_ : IRCTask, msg_ : IMessage) -> EExecutionCmdID:
 
         # framework has been started in TerminalMode?
         if rtecfg.RtePolicyGetConfig().isTerminalModeEnabled:
+            # wait for running child processes to complete
+            fwapi.JoinProcesses()
+
             # instruct the framework to stop
             fwapi.StopXcoFW()
             xlogif.LogInfo(f'Put request to stop the framework.')
@@ -137,7 +141,7 @@ def StarterTaskCBTgt(srvUID_ : int, count_ : int, procPool_ : List[XProcess]) ->
     # wait for termination of client tasks
     fwapi.JoinTasks([_cc.taskUID for _cc in _clientPool])
     if not _curTsk.SelfCheck():
-        xlogif.LogFatal('Encountered unexpected self-error.'.lower())
+        xlogif.LogFatal('Encountered unexpected self-error.')
 
     # collect the CP-results of client tasks and store them as own (user) data
     _ud = []
@@ -166,7 +170,6 @@ def CreateStartStarterTask(cmdLineOpts_ : CLOptions, srvUID_ : int, count_ : int
     _msg = 'TerminalMode' if rtecfg.RtePolicyGetConfig().isTerminalModeEnabled else 'AutoStop mode'
     _msg = f'Welcome to XCOFDK in {_msg} of RTE.'
     xlogif.LogInfo(_msg)
-    #xlogif.LogInfo(f'Starting message-driven task {_algoSrv.aliasName} and {_myStarterTsk.aliasName}...')
 
     # start (a)sync. starter task and wait until all child processes have been started
     res.Start(srvUID_, count_, procPool_)
@@ -176,8 +179,10 @@ def CreateStartStarterTask(cmdLineOpts_ : CLOptions, srvUID_ : int, count_ : int
     return res
 
 def Main(cmdLineOpts_ : CLOptions):
+    _startTime = datetime.now()
+
     # step 1: configure framework's RTE for terminal mode and/or
-    #         free-threaded Python (if enabled via CmdLine)
+    #         experimental free-threaded Python (if enabled via CmdLine)
     if cmdLineOpts_.isSmallCartProdEnabled:
         DisableBigCartProd()
         rtecfg.RtePolicyEnableTerminalMode()
@@ -193,26 +198,29 @@ def Main(cmdLineOpts_ : CLOptions):
     _algoSrv.Start()
 
     # step 4: create and start appplication's starter task
-    #         (which will create and start both child process and client tasks, too)
+    #         (which will create and start both child processes and client tasks, too)
     _count, _procPool = 5, []
     _starterTsk = CreateStartStarterTask(cmdLineOpts_, _algoSrv.taskUID, _count, _procPool)
 
-    # step 5: wait for running child processes to complete
-    fwapi.JoinProcesses()
-    _procPoolRes = [ _pp.processSuppliedData for _pp in _procPool if _pp.processSuppliedData is not None ]
+    # step 5: if not in terminal mode, wait for running child processes to complete
+    if not rtecfg.RtePolicyGetConfig().isTerminalModeEnabled:
+        fwapi.JoinProcesses()
 
     # step 6: wait for framework's coordinated shutdown
     _bLcErrorFree = fwapi.JoinXcoFW()
 
     # step 7: collect and print out results of CP requests executed
     if _bLcErrorFree:
+        _procPoolRes = [_pp.processSuppliedData for _pp in _procPool if _pp.processSuppliedData is not None]
         _cp  = _procPoolRes + _starterTsk.GetTaskOwnedData() + _algoSrv.GetTaskOwnedData()
         _cp.sort(key=lambda _ee: _ee.cartProdTimestamp)
         _cpLEN = len(_cp)
         _cp = '\n\t'.join( [str(_ee) for _ee in _cp] )
 
-        xlogif.LogInfo(f'Got total of {_cpLEN}x CartProdAlgo executions:\n\t{_cp}')
-        xlogif.LogInfo('Done.')
+        _msg1 = 'small' if cmdLineOpts_.isSmallCartProdEnabled else 'big'
+        _msg2 = f'Got total of {_cpLEN}x {_msg1} CartProdAlgo executions:\n\t{_cp}'
+        xlogif.LogInfo(_msg2)
+        xlogif.LogInfo(f'Done, elapsed time for {_msg1} CartProdAlgo: ' + str(datetime.now()-_startTime))
 
     # done: check for LC failure (if any)
     res = 72 if not _bLcErrorFree else 0

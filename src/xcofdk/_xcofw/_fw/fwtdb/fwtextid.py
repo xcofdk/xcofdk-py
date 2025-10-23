@@ -19,7 +19,6 @@ class _EFwTextID(Enum):
     eMisc_Name                                  = auto()
     eMisc_Task                                  = auto()
     eMisc_User                                  = auto()
-    eMisc_Sync                                  = auto()
     eMisc_Async                                 = auto()
     eMisc_Fatal                                 = auto()
     eMisc_Tasks                                 = auto()
@@ -177,8 +176,9 @@ class _EFwTextID(Enum):
     eEUTaskApiID_ProcessInternalMessage       = auto()
     eEUTaskApiID_ProcessExternalMessage       = auto()
 
-    eFwApiBase_StartPreamble                    = auto()
-    eFwApiBase_StartPreamble_Python_Version     = auto()
+    eFwApiBase_StartPreamble                  = auto()
+    eFwApiBase_StartPreamble_FT_Python        = auto()
+    eFwApiBase_StartPreamble_Python_Version   = auto()
 
     eLogException_TypeName_Fatal            = auto()
     eLogException_TypeName_BadUse           = auto()
@@ -212,8 +212,6 @@ class _EFwTextID(Enum):
     eThrdP_AN_ATTR_KEY_UTASK_CONN            = auto()
     eThrdP_AN_ATTR_KEY_THREAD_TARGET         = auto()
 
-
-
     eXTaskPrfBase_ToString_01               = auto()
     eXTaskPrfBase_ToString_02               = auto()
     eXTaskPrfBase_ToString_03               = auto()
@@ -231,7 +229,6 @@ class _EFwTextID(Enum):
     eXTaskPrfBase_ToString_15               = auto()
 
     eXTaskPrfExt_ToString_02                = auto()
-
 
     eLcConfig_ToString                      = auto()
 
@@ -295,8 +292,6 @@ class _EFwTextID(Enum):
 
     eFwCallable_ToString_01                 = auto()
 
-
-
     eMutex_ToString_01                      = auto()
 
     eSemaphoreBase_ToString_01              = auto()
@@ -344,7 +339,6 @@ class _EFwTextID(Enum):
 
     eMessageFilter_ToString_01            = auto()
 
-
     eMessageCluster_ToString_01           = auto()
 
     eXcoMsgHeader_ToString_01             = auto()
@@ -358,8 +352,6 @@ class _EFwTextID(Enum):
     eCallableSignature_ToString_01        = auto()
 
     eXProcessConn_ToString_01             = auto()
-
-    eXMPUtilImpl_ToString_01              = auto()
 
     eFwRteConfig_ToString_01              = auto()
     eFwRteConfig_ToString_02              = auto()
@@ -403,7 +395,6 @@ class _EFwTextID(Enum):
     eFwConfig_TID_003              = auto()
     eFwConfig_TID_004              = auto()
     eFwConfig_TID_005              = auto()
-
 
     eLogMsg_AbsTask_TID_001        = auto()
 
@@ -498,7 +489,6 @@ class _EFwTextID(Enum):
     eLogMsg_XTaskPrfExt_TID_001    = auto()
     eLogMsg_XTaskPrfExt_TID_002    = auto()
 
-
     eLogMsg_FSUtil_TID_001         = auto()
     eLogMsg_FSUtil_TID_002         = auto()
 
@@ -536,7 +526,6 @@ class _EFwTextID(Enum):
     eLogMsg_Util_TID_011           = auto()
     eLogMsg_Util_TID_012           = auto()
     eLogMsg_Util_TID_013           = auto()
-
 
     eLogMsg_PcErrHandler_TID_001   = auto()
     eLogMsg_PcErrHandler_TID_002   = auto()
@@ -621,7 +610,6 @@ class _EFwTextID(Enum):
     eLogMsg_LcSetupFailure_TID_002   = auto()
     eLogMsg_LcSetupFailure_TID_003   = auto()
 
-
     eLogMsg_LcFailure_TID_001        = auto()
     eLogMsg_LcFailure_TID_003        = auto()
     eLogMsg_LcFailure_TID_005        = auto()
@@ -701,8 +689,6 @@ class _EFwTextID(Enum):
     eLogMsg_LcStateImpl_TID_013          = auto()
     eLogMsg_LcStateImpl_TID_014          = auto()
 
-
-
     eLogMsg_Mutex_TID_001                = auto()
 
     eLogMsg_SemaphoreBase_TID_001        = auto()
@@ -757,7 +743,6 @@ class _EFwTextID(Enum):
     eLogMsg_MessageClusterMap_TID_004    = auto()
     eLogMsg_MessageClusterMap_TID_005    = auto()
 
-
     eLogMsg_DispatchFilter_TID_001        = auto()
     eLogMsg_DispatchFilter_TID_002        = auto()
     eLogMsg_DispatchFilter_TID_003        = auto()
@@ -765,7 +750,6 @@ class _EFwTextID(Enum):
     eLogMsg_DispatchFilter_TID_005        = auto()
     eLogMsg_DispatchFilter_TID_006        = auto()
     eLogMsg_DispatchFilter_TID_007        = auto()
-
 
     eLogMsg_MessageHeader_TID_001        = auto()
     eLogMsg_MessageHeader_TID_002        = auto()
@@ -866,6 +850,7 @@ class _EFwTextID(Enum):
     eLogMsg_XMPUtilImpl_TID_002           = auto()
 
     eLogMsg_FwRteConfig_TID_001           = auto()
+    eLogMsg_FwRteConfig_TID_002           = auto()
     eLogMsg_FwRteConfig_TID_003           = auto()
     eLogMsg_FwRteConfig_TID_004           = auto()
     eLogMsg_FwRteConfig_TID_005           = auto()
@@ -880,6 +865,7 @@ class _EFwTextID(Enum):
     eLogMsg_FwRteConfig_TID_014           = auto()
     eLogMsg_FwRteConfig_TID_015           = auto()
     eLogMsg_FwRteConfig_TID_016           = auto()
+    eLogMsg_FwRteConfig_TID_017           = auto()
 
     eLogMsg_XProcessAgent_001             = auto()
 

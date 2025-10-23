@@ -98,8 +98,14 @@ class IRteConfig:
         Returns:
         ----------
            True if the RTE policy to allow running the framework with an
-           experimental free-threaded Python interpreter with GIL disabled is
-           enabled, False otherwise.
+           experimental free-threaded (FT) Python interpreter with GIL is
+           disabled, False otherwise.
+
+        Note:
+        ------
+            - The framework considers Python versions 3.13 and pre-releases of
+              the stable version 3.14.0 supporting experimental free-threaded
+              (FT).
         """
         pass
 

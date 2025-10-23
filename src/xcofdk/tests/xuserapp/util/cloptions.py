@@ -22,10 +22,11 @@ except ImportError:
 # ------------------------------------------------------------------------------
 # Import libs / modules
 # ------------------------------------------------------------------------------
-from enum   import auto
-from enum   import IntEnum
-from typing import List
-from typing import Union
+import platform
+from   enum   import auto
+from   enum   import IntEnum
+from   typing import List
+from   typing import Union
 
 
 # ------------------------------------------------------------------------------
@@ -327,7 +328,10 @@ class CLOptions:
             elif _id == ECLOptionID.eServiceTasksCount:
                 _tbl[_id] = _CLOptionSpec('--service-tasks-count', 12, help_='[--service-tasks-count COUNT]', choices_=['[1..12]'], bKeyValue_=True)
             elif _id == ECLOptionID.eFiboInput:
-                _tbl[_id] = _CLOptionSpec('--fibonacci-input', 21, help_='[--fibonacci-input FIBOIN]', choices_=['[19..24]'], bKeyValue_=True)
+                _bWIN  = platform.system() == 'Windows'
+                _dIN   = 17 if _bWIN else 20
+                _minIN = 17 if _bWIN else 19
+                _tbl[_id] = _CLOptionSpec('--fibonacci-input', _dIN, help_='[--fibonacci-input FIBOIN]', choices_=[f'[{_minIN}..26]'], bKeyValue_=True)
         return _tbl
 
     def __GetUsage(self) -> str:
@@ -474,9 +478,11 @@ class CLOptions:
             _bFiboInput  = _kk == ECLOptionID.eFiboInput
             _bSrvTsksCnt = _kk == ECLOptionID.eServiceTasksCount
             if _bSrvTsksCnt or _bFiboInput:
-                _FIBO_INPUT_MIN     = 19
-                _FIBO_INPUT_MAX     = 24
-                _FIBO_INPUT_DEFAULT = 21
+                _bWIN = platform.system()=='Windows'
+
+                _FIBO_INPUT_MIN     = 17 if _bWIN else 19
+                _FIBO_INPUT_MAX     = 26
+                _FIBO_INPUT_DEFAULT = 17 if _bWIN else 20
                 _MIN_NUM_SRV_TASKS  = 1
                 _MAX_NUM_SRV_TASKS  = 12
                 _FALLBACK_VAL       = _FIBO_INPUT_DEFAULT if _bFiboInput else _MAX_NUM_SRV_TASKS

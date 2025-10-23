@@ -76,32 +76,30 @@ class _XProcessTarget:
                     _errID = _ERteTXErrorID.eDisallowedSuppliedDataType
                     if _tkng._isTrackingProcessXcp:
                         _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessTarget_TID_002).format(rteDX_.childRteSeed, str(_xd))
-                        _xd = _RteTSException(msg_=_msg, code_=_errID.value, maxXPS_=_tkng._maxXcpPayloadSize)
+                        _xd  = _RteTSException(msg_=_msg, code_=_errID.value, maxXPS_=_tkng._maxXcpPayloadSize)
                     else:
                         _xd = None
                 else:
                     _errID = _ERteTXErrorID.eSuccess
-
             except SystemExit as _xcp:
                 _xc    = _xcp.code if isinstance(_xcp.code, int) else 0
                 _errID = _ERteTXErrorID.eSysExitXcpByChildProcess
                 if _tkng._isTrackingProcessXcp:
                     _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessTarget_TID_001).format(type(_xcp).__name__, rteDX_.childRteSeed.seed)
-                    _xd = _RteTSException(msg_=_msg, code_=_errID.value, xcp_=_xcp, maxXPS_=_tkng._maxXcpPayloadSize)
-
+                    _xd  = _RteTSException(msg_=_msg, code_=_errID.value, xcp_=_xcp, maxXPS_=_tkng._maxXcpPayloadSize)
             except BaseException as _xcp:
                 if isinstance(_xcp, _DISALLOWED_TYPES):
                     _errID = _ERteTXErrorID.eDisallowedXcpDataType
                     _xc    = _errID.value
                     if _tkng._isTrackingProcessXcp:
                         _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessTarget_TID_003).format(rteDX_.childRteSeed, str(_xcp))
-                        _xd = _RteTSException(msg_=_msg, code_=_errID.value, maxXPS_=_tkng._maxXcpPayloadSize)
+                        _xd  = _RteTSException(msg_=_msg, code_=_errID.value, maxXPS_=_tkng._maxXcpPayloadSize)
                 else:
                     _errID = _ERteTXErrorID.eOtherXcpByChildProcess
                     _xc    = _errID.value
                     if _tkng._isTrackingProcessXcp:
                         _msg = _FwTDbEngine.GetText(_EFwTextID.eLogMsg_XProcessTarget_TID_001).format(type(_xcp).__name__, rteDX_.childRteSeed.seed)
-                        _xd = _RteTSException(msg_=_msg, code_=_errID.value, xcp_=_xcp, maxXPS_=_tkng._maxXcpPayloadSize)
+                        _xd  = _RteTSException(msg_=_msg, code_=_errID.value, xcp_=_xcp, maxXPS_=_tkng._maxXcpPayloadSize)
 
             finally:
                 _procXD.errorID  = _errID

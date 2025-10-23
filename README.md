@@ -17,290 +17,216 @@ It provides Python applications with a runtime environment capable of:
 - managed, unified error handling,
 - parallel or concurrent processing out-of-the-box,
 - instant access for transparent task or process communication,
+- supporting free-threaded (FT) Python (starting with the stable Python version <tt>3.14.0</tt>), 
 - providing API for auxiliary, bundled services commonly expected for application developement. 
 
 <br>
+
 
 # Installation
 
 [XCOFDK](https://github.com/xcofdk/xcofdk-py) is available for **Python versions 3.8+** on both POSIX and Windows platfroms.
 
 > **NOTE:** <br>
-> By installing you agree to the terms and conditions of use of the software (see section [Licensing](#licensing) below).
+> - By installing you agree to the terms and conditions of use of the software (see section [Licensing](#licensing) below). 
+
+<br> 
 
 Install using [PyPI package xcofdk](https://pypi.org/project/xcofdk/):
 
 ```bash
-$> # install for Python 3.12
-$> python3.12 -m pip install xcofdk
+$> python3 -m pip install xcofdk
 ```
 
 <br>
 
+
 # Quick Start
 
-The console program [quickStart.py](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xuserapp/basic/xmt/rc/quickStart.py) 
-demonstrates (partly advanced) use of the framework of [XCOFDK for Python](https://github.com/xcofdk/xcofdk-py) 
-illustrating many of its features available for applications developed for multitasking. Its task model is composed of:
-- a message-driven server task, an instance of class <tt>MessageDrivenTask</tt>,
-- an (a)synchronous starter (or main) task, an instance of class <tt>AsyncTask</tt> or <tt>SyncTask</tt>,
-- a few asynchronous client tasks, instances of class <tt>AsyncTask</tt>.
+In general, the [runtime environment RTE](https://github.com/xcofdk/xcofdk-py/wiki/3.-Architecture#312-runtime-environment-rte) 
+of the framework of [XCOFDK for Python](https://github.com/xcofdk/xcofdk-py) is responsible for the complete execution 
+(of part) of the task model of a program which uses the 
+[multithreading subsystem](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#42-xmt---subsystem-multithreading) 
+of XCOFDK to construct that (part of the) task model. As such and except for the traditional <tt>'Hello world!'</tt>, 
+any possible quick-start and sample porgram is by definition more than a 2-liner, especially when demonstrating some 
+major aspects in practice.
 
-The usage of the program is as shown below:
-```bash
-$> python3.12 -m quickStart --help
-Usage: $> cd .../src/xcofdk/tests/xuserapp/basic/xmt/rc/
-       $> python3 -m quickStart [-h] [--help] 
-                                [--sync-starter-task] [--no-main-starter-task] [--small-cartesian-product] [--bypass-free-threading-guard] 
-                                [--log-level LLEVEL] [--fw-log-level FWLLEVEL] [--disable-log-callstack] [--disable-log-timestamp] [--disable-log-highlighting]
-                                LLEVEL   : trace | debug | info | warning | error
-                                FWLLEVEL : info | kpi | warning | error
-$> 
+Hence, the console program [<tt>quickStart.py</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xuserapp/basic/xmt/rc/quickStart.py) 
+demonstrates (partly advanced) use of the framework illustrating many of framework's features available for 
+applications developed for multitasking. The task model of <tt>quickStart.py</tt> is composed of task instances designed for 
+*rapid construction (RC)* by passing a (regular) callback function to the contructor of the respective class: 
+- a [message-driven server task](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#24-algoservercbtgt), an 
+  instance of class [<tt>MessageDrivenTask</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwapi/xmt/rctask.py),
+- a few [asynchronous client tasks](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#25-algoclientcbtgt), 
+  instances of class [<tt>AsyncTask</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwapi/xmt/rctask.py), 
+- an [(a)synchronous starter (or main) task](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#26-startertaskcbtgt), 
+  an instance of class [<tt>AsyncTask</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwapi/xmt/rctask.py) 
+  or [<tt>SyncTask</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwapi/xmt/rctask.py). 
+
+Note that the above-mentioned [RC task classes](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#421-task-classes) 
+are each an implementation of the interface class 
+[IRCTask](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwapi/apiif/ifrctask.py) or 
+[IRCCommTask](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwapi/apiif/ifrctask.py), respectively. 
+
+
+## Program Purpose
+
+The application is designed to provide the execution of a given algorithm, here 
+[<tt>CartProdAlgo()</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xuserapp/util/userAppUtil.py), 
+several times using both multithreading and multiprocessing. Each time an execution is requested, the algorithm 
+constructs a random **Cartesian Product (CP)** and properly returns the result to the requestor, which is either an 
+application (client) task or a child process. 
+
+The output of the program is as shown below: 
+- with the command line option for small CPs supplied:
+  ```bash
+  $> python3 -m quickStart --small-cartesian-product
+  ...
+  [14:12:13.121 XINF][MainThread] Welcome to XCOFDK in TerminalMode of RTE.
+  [14:12:13.124 XINF][Tsk_501002] Running async. MainTask, current host thread: Tsk_501002
+  [14:12:13.129 XINF][Tsk_501002] Starting 5x child processes...
+  [14:12:13.137 XINF][CTsk_501001] Task AlgoSrv received first delivered message.
+  [14:12:13.178 XINF][Tsk_501002] Starting 5x async. algo-client tasks...
+  [14:12:14.841 XINF][CTsk_501001] Put request to stop the framework.
+  [14:12:15.087 XINF] Got total of 29x small CartProdAlgo executions:
+      [14:12:13.144][TID:501001:AlgoSrv]  digitSet='439811'   size=7776     tail:   11113 ,  11119 ,  11118 ,  11111 ,  11111
+      [14:12:13.144][TID:501002]          digitSet='220997'   size=7776     tail:   77772 ,  77770 ,  77779 ,  77779 ,  77777
+      [14:12:13.187][TID:501003]          digitSet='268683'   size=7776     tail:   33336 ,  33338 ,  33336 ,  33338 ,  33333
+      [14:12:13.190][TID:501004:AlgoC_4]  digitSet='735711'   size=7776     tail:   11113 ,  11115 ,  11117 ,  11111 ,  11111
+      [14:12:13.203][TID:501006:AlgoC_6]  digitSet='865122'   size=7776     tail:   22226 ,  22225 ,  22221 ,  22222 ,  22222
+      [14:12:13.204][TID:501003:AlgoC_3]  digitSet='539839'   size=7776     tail:   99993 ,  99999 ,  99998 ,  99993 ,  99999
+      [14:12:13.209][TID:501005]          digitSet='470867'   size=7776     tail:   77777 ,  77770 ,  77778 ,  77776 ,  77777
+      [14:12:13.231][TID:501007]          digitSet='962670'   size=7776     tail:   00006 ,  00002 ,  00006 ,  00007 ,  00000
+      [14:12:13.232][TID:501003]          digitSet='818163'   size=7776     tail:   33331 ,  33338 ,  33331 ,  33336 ,  33333
+      [14:12:13.247][TID:501003:AlgoC_3]  digitSet='242801'   size=7776     tail:   11114 ,  11112 ,  11118 ,  11110 ,  11111
+      [14:12:13.254][TID:501004]          digitSet='657175'   size=7776     tail:   55555 ,  55557 ,  55551 ,  55557 ,  55555
+      [14:12:13.258][TID:501005:AlgoC_5]  digitSet='944577'   size=7776     tail:   77774 ,  77774 ,  77775 ,  77777 ,  77777
+      [14:12:13.273][TID:501004:AlgoC_4]  digitSet='524020'   size=7776     tail:   00002 ,  00004 ,  00000 ,  00002 ,  00000
+      [14:12:13.296][TID:501006]          digitSet='022271'   size=7776     tail:   11112 ,  11112 ,  11112 ,  11117 ,  11111
+      [14:12:13.312][TID:501007:AlgoC_7]  digitSet='868329'   size=7776     tail:   99996 ,  99998 ,  99993 ,  99992 ,  99999
+      [14:12:13.318][TID:501004]          digitSet='559993'   size=7776     tail:   33335 ,  33339 ,  33339 ,  33339 ,  33333
+      [14:12:13.340][TID:501005]          digitSet='557954'   size=7776     tail:   44445 ,  44447 ,  44449 ,  44445 ,  44444
+      [14:12:13.367][TID:501006:AlgoC_6]  digitSet='183362'   size=7776     tail:   22228 ,  22223 ,  22223 ,  22226 ,  22222
+      [14:12:13.381][TID:501005:AlgoC_5]  digitSet='038110'   size=7776     tail:   00003 ,  00008 ,  00001 ,  00001 ,  00000
+      [14:12:13.422][TID:501007]          digitSet='609383'   size=7776     tail:   33330 ,  33339 ,  33333 ,  33338 ,  33333
+      [14:12:13.465][TID:501006]          digitSet='149734'   size=7776     tail:   44444 ,  44449 ,  44447 ,  44443 ,  44444
+      [14:12:13.515][TID:501007:AlgoC_7]  digitSet='174329'   size=7776     tail:   99997 ,  99994 ,  99993 ,  99992 ,  99999
+      [14:12:13.731][TID:501002]          digitSet='013871'   size=7776     tail:   11111 ,  11113 ,  11118 ,  11117 ,  11111
+      [14:12:13.732][TID:501001:AlgoSrv]  digitSet='756316'   size=7776     tail:   66665 ,  66666 ,  66663 ,  66661 ,  66666
+      [14:12:14.703][PID:18098]           digitSet='16217270' size=2097152  tail:  0000001 , 0000007 , 0000002 , 0000007 , 0000000
+      [14:12:14.758][PID:18099]           digitSet='68090537' size=2097152  tail:  7777779 , 7777770 , 7777775 , 7777773 , 7777777
+      [14:12:14.762][PID:18097]           digitSet='99538187' size=2097152  tail:  7777773 , 7777778 , 7777771 , 7777778 , 7777777
+      [14:12:14.771][PID:18100]           digitSet='06201049' size=2097152  tail:  9999990 , 9999991 , 9999990 , 9999994 , 9999999
+      [14:12:14.772][PID:18101]           digitSet='58426844' size=2097152  tail:  4444442 , 4444446 , 4444448 , 4444444 , 4444444
+  [14:12:15.087 XINF] Done, elapsed time for small CartProdAlgo: 0:00:02.041763
+  ```
+- lines with **<tt>[TID:nnnn]</tt>** inside are each the CP result of a request made by or on behalf of an application (client) task,
+- lines with **<tt>[PID:nnnn]</tt>** inside are each the CP result of a request made out of a child process.
+
+
+## Main Function
+
+The module function [<tt>Main()</tt>](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xuserapp/basic/xmt/rc/quickStart.py) 
+represents program's entry point which is basically organized in accordance to the 
+[common pattern of use](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#4411-common-pattern-of-use) of the 
+framework. When called, it performs below activities:
+- **step 1:** [configuration of framework's RTE](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#432-rte-configuration-api) 
+  depending on the supplied command line options (if any):
+  - enable RTE policy for [TerminalMode](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwcom/fwdefs.py), 
+  - bypass RTE policy for [experimental free-threading guard](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwcom/fwdefs.py),
+- **step 2:** [start of the framework](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#4412-control-functions), 
+- **step 3:** create and start application's [message-driven server task](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#24-algoservercbtgt) 
+  which will be responsible for: 
+  - triggering new CP calculations on behalf of application (client) tasks the server receives request messages from, 
+  - managing the <tt>TerminalMode</tt> (if enabled):
+    - wait for running child processes (if any) to complete, 
+    - leave the <tt>TerminalMode</tt> by putting a [stop request to the framework](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#4412-control-functions), 
+- **step 4:** create and start application's [starter task](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#26-startertaskcbtgt), 
+  responsible for: 
+  - start of both child processes and client tasks,
+  - wait for client tasks to complete,
+  - request the server task to quit, 
+- **step 5:** if the RTE policy <tt>TerminalMode</tt> is disabled: 
+  - wait for running child processes (if any) to complete, 
+- **step 6:** wait for [framework's coordinated shutdown](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview#4412-control-functions): 
+  - if the RTE policy <tt>TerminalMode</tt> is enabled, then the framework will wait before entering its shutdown sequence <br> 
+    as long as the <tt>TerminalMode</tt> is not left (see step 3 above), 
+  - otherwise it will wait as long as there are application tasks still running (see RTE policy 
+    [AutoStop](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/fwcom/fwdefs.py)),
+- **step 7:** collect and put out the CP results.
+
+<br>
+
+```python
+def Main(cmdLineOpts_ : CLOptions):
+    _startTime = datetime.now()
+
+    # step 1: configure framework's RTE for terminal mode and/or
+    #         experimental free-threaded Python (if enabled via CmdLine)
+    if cmdLineOpts_.isSmallCartProdEnabled:
+        DisableBigCartProd()
+        rtecfg.RtePolicyEnableTerminalMode()
+    if cmdLineOpts_.isFreeThreadingGuardBypassed:
+        rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()
+
+    # step 2: start framework
+    if not fwapi.StartXcoFW(fwStartOptions_=cmdLineOpts_.GetSuppliedFwOptions()):
+        return 71
+
+    # step 3: create and start appplication's algo-server task
+    _algoSrv = MessageDrivenTask(AlgoServerCBTgt, aliasName_='AlgoSrv', bRefToCurTaskRequired_=True, pollingFrequency_=20)
+    _algoSrv.Start()
+
+    # step 4: create and start appplication's starter task
+    #         (which will create and start both child processes and client tasks, too)
+    _count, _procPool = 5, []
+    _starterTsk = CreateStartStarterTask(cmdLineOpts_, _algoSrv.taskUID, _count, _procPool)
+
+    # step 5: if not in terminal mode, wait for running child processes to complete
+    if not rtecfg.RtePolicyGetConfig().isTerminalModeEnabled:
+        fwapi.JoinProcesses()
+
+    # step 6: wait for framework's coordinated shutdown
+    _bLcErrorFree = fwapi.JoinXcoFW()
+
+    # step 7: collect and print out results of CP requests executed
+    if _bLcErrorFree:
+        _procPoolRes = [_pp.processSuppliedData for _pp in _procPool if _pp.processSuppliedData is not None]
+        _cp  = _procPoolRes + _starterTsk.GetTaskOwnedData() + _algoSrv.GetTaskOwnedData()
+        _cp.sort(key=lambda _ee: _ee.cartProdTimestamp)
+        _cpLEN = len(_cp)
+        _cp = '\n\t'.join( [str(_ee) for _ee in _cp] )
+
+        _msg1 = 'small' if cmdLineOpts_.isSmallCartProdEnabled else 'big'
+        _msg2 = f'Got total of {_cpLEN}x {_msg1} CartProdAlgo executions:\n\t{_cp}'
+        xlogif.LogInfo(_msg2)
+        xlogif.LogInfo(f'Done, elapsed time for {_msg1} CartProdAlgo: ' + str(datetime.now()-_startTime))
+
+    # done: check for LC failure (if any)
+    res = 72 if not _bLcErrorFree else 0
+    return res
 ```
 
-The bullet points below give a (schematic) description of program's purpose and structure (refer to 
-[quickStart.py](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xuserapp/basic/xmt/rc/quickStart.py)) 
-for full version of the source code).
-
-- **Purpose of program:** <br>
-  The application is supposed to provide the execution of a given algorithm, here <tt>CartProdAlgo</tt>, several times 
-  using both multithreading and multiprocessing. <br> 
-  Each time an execution is requested, the algorithm constructs a random *Cartesian Product* (CP) and properly returns 
-  the result to the requestor, which is either an application task or a child process. <br>
-  For example, the output of the program should look like below if executed with the command line option 
-  <tt>--small-cartesian-product</tt> supplied:
-
-    ```bash
-    $> python3.12 -m quickStart --small-cartesian-product
-    ...
-    [10:34:26.056 XINF] Welcome to XCOFDK in TerminalMode of RTE.
-    [10:34:26.058 XINF][Tsk_501002] Running async. MainTask, current host thread: Tsk_501002
-    [10:34:26.078 XINF][CTsk_501001] Task AlgoSrv received first delivered message.
-    [10:34:26.135 XINF][Tsk_501002] Starting 5x child processes...
-    [10:34:26.244 XINF][Tsk_501002] Starting 5x async. algo-client tasks...
-    [10:34:26.795 XINF][CTsk_501001] Put request to stop the framework.
-    [10:34:27.071 XINF] Got total of 29x CartProdAlgo executions:
-        [10:34:26.080][TID:501001:AlgoSrv]  digitSet='230464'   size=7776     tail:   44443 ,  44440 ,  44444 ,  44446 ,  44444
-        [10:34:26.080][TID:501002]          digitSet='642920'   size=7776     tail:   00004 ,  00002 ,  00009 ,  00002 ,  00000
-        [10:34:26.194][PID:6416]            digitSet='9344143'  size=117649   tail:  333334 , 333334 , 333331 , 333334 , 333333
-        [10:34:26.203][PID:6417]            digitSet='4445617'  size=117649   tail:  777774 , 777775 , 777776 , 777771 , 777777
-        [10:34:26.239][PID:6418]            digitSet='6584554'  size=117649   tail:  444448 , 444444 , 444445 , 444445 , 444444
-        [10:34:26.256][TID:501003]          digitSet='448984'   size=7776     tail:   44444 ,  44448 ,  44449 ,  44448 ,  44444
-        [10:34:26.259][TID:501004:AlgoC_4]  digitSet='558330'   size=7776     tail:   00005 ,  00008 ,  00003 ,  00003 ,  00000
-        [10:34:26.269][TID:501006:AlgoC_6]  digitSet='776740'   size=7776     tail:   00007 ,  00006 ,  00007 ,  00004 ,  00000
-        [10:34:26.275][TID:501003:AlgoC_3]  digitSet='853336'   size=7776     tail:   66665 ,  66663 ,  66663 ,  66663 ,  66666
-        [10:34:26.280][TID:501005]          digitSet='898731'   size=7776     tail:   11119 ,  11118 ,  11117 ,  11113 ,  11111
-        [10:34:26.288][PID:6419]            digitSet='7164156'  size=117649   tail:  666666 , 666664 , 666661 , 666665 , 666666
-        [10:34:26.295][PID:6420]            digitSet='1189117'  size=117649   tail:  777778 , 777779 , 777771 , 777771 , 777777
-        [10:34:26.296][TID:501007]          digitSet='563531'   size=7776     tail:   11116 ,  11113 ,  11115 ,  11113 ,  11111
-        [10:34:26.318][TID:501003]          digitSet='597979'   size=7776     tail:   99999 ,  99997 ,  99999 ,  99997 ,  99999
-        [10:34:26.319][TID:501004]          digitSet='665646'   size=7776     tail:   66666 ,  66665 ,  66666 ,  66664 ,  66666
-        [10:34:26.320][TID:501003:AlgoC_3]  digitSet='711602'   size=7776     tail:   22221 ,  22221 ,  22226 ,  22220 ,  22222
-        [10:34:26.327][TID:501005:AlgoC_5]  digitSet='169842'   size=7776     tail:   22226 ,  22229 ,  22228 ,  22224 ,  22222
-        [10:34:26.343][TID:501004:AlgoC_4]  digitSet='585428'   size=7776     tail:   88888 ,  88885 ,  88884 ,  88882 ,  88888
-        [10:34:26.362][TID:501006]          digitSet='543092'   size=7776     tail:   22224 ,  22223 ,  22220 ,  22229 ,  22222
-        [10:34:26.379][TID:501007:AlgoC_7]  digitSet='758838'   size=7776     tail:   88885 ,  88888 ,  88888 ,  88883 ,  88888
-        [10:34:26.405][TID:501004]          digitSet='157746'   size=7776     tail:   66665 ,  66667 ,  66667 ,  66664 ,  66666
-        [10:34:26.406][TID:501005]          digitSet='887103'   size=7776     tail:   33338 ,  33337 ,  33331 ,  33330 ,  33333
-        [10:34:26.433][TID:501006:AlgoC_6]  digitSet='473863'   size=7776     tail:   33337 ,  33333 ,  33338 ,  33336 ,  33333
-        [10:34:26.451][TID:501005:AlgoC_5]  digitSet='606221'   size=7776     tail:   11110 ,  11116 ,  11112 ,  11112 ,  11111
-        [10:34:26.494][TID:501007]          digitSet='888171'   size=7776     tail:   11118 ,  11118 ,  11111 ,  11117 ,  11111
-        [10:34:26.517][TID:501006]          digitSet='178848'   size=7776     tail:   88887 ,  88888 ,  88888 ,  88884 ,  88888
-        [10:34:26.586][TID:501007:AlgoC_7]  digitSet='965081'   size=7776     tail:   11116 ,  11115 ,  11110 ,  11118 ,  11111
-        [10:34:26.793][TID:501002]          digitSet='822035'   size=7776     tail:   55552 ,  55552 ,  55550 ,  55553 ,  55555
-        [10:34:26.794][TID:501001:AlgoSrv]  digitSet='588403'   size=7776     tail:   33338 ,  33338 ,  33334 ,  33330 ,  33333
-    [10:34:27.071 XINF] Done.
-    ```
-
-- **Import of needed API:** <br>
-  e.g. the above-mentioned CP-algo <tt>CartProdAlgo</tt>, or task classes <tt>AsyncTask</tt>, <tt>MessageDrivenTask</tt> 
-  etc.:
-  
-    ```python
-    # file : quickStart.py
-    # ...
-
-    from xcofdk       import fwapi
-    from xcofdk.fwapi import rtecfg
-    from xcofdk.fwcom import EExecutionCmdID, EXmsgPredefinedID
-    from xcofdk.fwapi import SyncTask, AsyncTask, MessageDrivenTask, IRCTask
-    from xcofdk.fwapi import GetCurTask, IMessage, XProcess, xlogif
-
-    from xuserapp.util.cloptions   import ECLOptionID, CLOptions, GetCmdLineOptions
-    from xuserapp.util.userAppUtil import CartProdAlgo, DisableBigCartProd
-
-    class EMsgLabel(IntEnum):
-        DontCare    = EXmsgPredefinedID.MinUserDefinedID.value
-        AlgoRequest = auto()
-        Quit        = auto()
-    ```
-
-- **Main function:** <br>
-
-    ```python
-    def Main(cmdLineOpts_ : CLOptions):
-        # step 1: configure framework's RTE for terminal mode and/or
-        #         free-threaded Python (if enabled via CmdLine)
-        if cmdLineOpts_.isSmallCartProdEnabled:
-            DisableBigCartProd()
-            rtecfg.RtePolicyEnableTerminalMode()
-        if cmdLineOpts_.isFreeThreadingGuardBypassed:
-            rtecfg.RtePolicyBypassExperimentalFreeThreadingGuard()
-
-        # step 2: start framework
-        if not fwapi.StartXcoFW(fwStartOptions_=cmdLineOpts_.GetSuppliedFwOptions()):
-            return 71
-
-        # step 3: create and start appplication's algo-server task
-        _algoSrv = MessageDrivenTask(AlgoServerCBTgt, aliasName_='AlgoSrv', bRefToCurTaskRequired_=True, pollingFrequency_=20)
-        _algoSrv.Start()
-
-        # step 4: create and start appplication's starter task
-        #         (which will create and start both child process and client tasks, too)
-        _count, _procPool = 5, []
-        _starterTsk = CreateStartStarterTask(cmdLineOpts_, _algoSrv.taskUID, _count, _procPool)
-
-        # step 5: wait for running child processes to complete
-        fwapi.JoinProcesses()
-        _procPoolRes = [ _pp.processSuppliedData for _pp in _procPool if _pp.processSuppliedData is not None ]
-
-        # step 6: wait for framework's coordinated shutdown
-        _bLcErrorFree = fwapi.JoinXcoFW()
-
-        # step 7: collect and print out results of CP requests executed
-        if _bLcErrorFree:
-            _cp  = _procPoolRes + _starterTsk.GetTaskOwnedData() + _algoSrv.GetTaskOwnedData()
-            _cp.sort(key=lambda _ee: _ee.cartProdTimestamp)
-            _cpLEN = len(_cp)
-            _cp = '\n\t'.join( [str(_ee) for _ee in _cp] )
-
-            xlogif.LogInfo(f'Got total of {_cpLEN}x CartProdAlgo executions:\n\t{_cp}')
-            xlogif.LogInfo('Done.')
-
-        # done: check for LC failure (if any)
-        res = 72 if not _bLcErrorFree else 0
-        return res
-    ```
-
-- **Callback of message-driven algo-server task:** <br>
-  responsible to process CP-requests or other messages sent by algo clients or starter task. <br>
-  The server is also responsible to stop the frameworks, if it was started in <tt>TerminalMode</tt>: 
-
-    ```python
-    def AlgoServerCBTgt(myTsk_ : IRCTask, msg_ : IMessage) -> EExecutionCmdID:
-        # ...
-        _lbl = msg_.msgHeader.msgLabel
-
-        # dont-care message?
-        if _lbl == EMsgLabel.DontCare:
-            # ignore, wait for next message
-            return EExecutionCmdID.CONTINUE
-
-        # request to quit?
-        if _lbl != EMsgLabel.AlgoRequest:
-            # put last own CP-request
-            CartProdAlgo(tid_=f'{myTsk_.taskUID}:{myTsk_.aliasName}')
-
-            # framework has been started in TerminalMode?
-            if rtecfg.RtePolicyGetConfig().isTerminalModeEnabled:
-                # instruct the framework to stop
-                fwapi.StopXcoFW()
-                xlogif.LogInfo(f'Put request to stop the framework.')
-
-            # stop the algo-server
-            return EExecutionCmdID.STOP
-
-        # put a new CP-request on behalf of the sender
-        CartProdAlgo(tid_=msg_.msgHeader.msgSender)
-
-        # wait for next message
-        return EExecutionCmdID.CONTINUE
-    ```
-
-- **Callback of async. algo-client tasks:** <br>
-  responsible to provide next CP-request:
-
-    ```python
-    def AlgoClientCBTgt(myTsk_ : IRCTask, srvUID_ : int) -> EExecutionCmdID:
-        # already done 4x CP-requests?
-        if myTsk_.currentRunPhaseIterationNo >= 4:
-            # stop running
-            return EExecutionCmdID.STOP
-
-        # delegate next CP-request to algo-server, or do it yourself
-        _bDelegate = (myTsk_.taskCompoundUID.instNo + myTsk_.currentRunPhaseIterationNo) % 2
-        if _bDelegate:
-            myTsk_.SendMessage(srvUID_, EMsgLabel.AlgoRequest)
-        else:
-            CartProdAlgo(tid_=f'{myTsk_.taskUID}:{myTsk_.aliasName}')
-
-        # continue running
-        return EExecutionCmdID.CONTINUE
-    ```
-
-- **Callback of (a)sync. starter task:** <br>
-  responsible to start both child processes (i.e. instances of class <tt>XProcess</tt>) and client tasks waiting for 
-  the termination of clients. <br> 
-  It also collects the CP-results of the clients before requesting the algo-server to quit.
-
-    ```python
-    def StarterTaskCBTgt(srvUID_ : int, count_ : int, procPool_ : List[XProcess]) -> EExecutionCmdID:
-        _curTsk = GetCurTask()
-        #...
-
-        # send first CP-request to algo-server
-        _curTsk.SendMessage(srvUID_, EMsgLabel.AlgoRequest)
-
-        # create and start child processes
-        procPool_ += CreateStartAlgoProcesses(count_)
-
-        # create and start client tasks
-        _clientPool = CreateStartAlgoClients(count_, srvUID_)
-
-        # wait for termination of client tasks
-        fwapi.JoinTasks([_cc.taskUID for _cc in _clientPool])
-
-        # collect the CP-results of client tasks and store them as own (user) data
-        _ud = []
-        for _cc in _clientPool:
-            if _cc.GetTaskOwnedData() is not None:
-                _ud += _cc.GetTaskOwnedData()
-        _curTsk.SetTaskOwnedData(_ud)
-
-        # send one last CP-request to algo-server
-        _curTsk.SendMessage(srvUID_, EMsgLabel.AlgoRequest)
-
-        # put request to algo-server to quit
-        _curTsk.SendMessage(srvUID_, EMsgLabel.Quit)
-
-        # done, stop the starter task
-        return EExecutionCmdID.STOP
-    ```
-
-- **Helper functions:** <br>
-
-    ```python
-    def CreateStartAlgoProcesses(count_ : int) -> List[XProcess]:
-        #...
-    def CreateStartAlgoClients(count_ : int, srvUID_ : int) -> list:
-        #...
-    def CreateStartStarterTask(cmdLineOpts_ : CLOptions, srvUID_ : int, count_ : int, procPool_ : List[XProcess]):
-        #...
-    ```
 <br>
 
 More introductory information relared to [XCOFDK for Python](https://github.com/xcofdk/xcofdk-py) available on the 
 wiki pages below: 
-- [1. Introduction](https://github.com/xcofdk/xcofdk-py/wiki/1.-Introduction) for an overview of the framework and 
-  roadmap of XCOFDK,
-- [2. Quick Start](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start) explaining the above console program
-  in more detail,
+- [1. Introduction](https://github.com/xcofdk/xcofdk-py/wiki/1.-Introduction) for an overview of the framework, 
+- [2. Quick Start](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start) explaining the above console program 
+  in more detail: 
+  - [2.2 Import of the API](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#22-import-of-the-api)
+  - [2.4 AlgoServerCBTgt()](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#24-algoservercbtgt)
+  - [2.5 AlgoClientCBTgt()](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#25-algoclientcbtgt)
+  - [2.6 StarterTaskCBTgt()](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#26-startertaskcbtgt)
+  - [2.7.1 CreateStartStarterTask()](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#271-createstartstartertask)
+  - [2.7.2 CreateStartAlgoProcesses()](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#272-createstartalgoprocesses)
+  - [2.7.3 CreateStartAlgoClients()](https://github.com/xcofdk/xcofdk-py/wiki/2.-Quick-Start#273-createstartalgoclients)
 - [3. Architecture](https://github.com/xcofdk/xcofdk-py/wiki/3.-Architecture) for the design and subsystems of the 
   framework,
-- [4. API Overview](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview) for an overview of the API of the framework,
+- [4. API Overview](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview) for an overview of the API of the framework, 
 - [6. Basic Examples](https://github.com/xcofdk/xcofdk-py/wiki/6.-Basic-Examples) for introductory examples of 
-  (real-world) programs using the framework. <br>
-  Note that most of the examples are applications developed using GUI framework [tkinter](https://docs.python.org/3/library/tkinter.html).
+  (real-world) programs using the framework. <br> 
+  Note that most of the examples are applications developed using GUI framework [tkinter](https://docs.python.org/3/library/tkinter.html). 
 
 <br>
 
@@ -317,7 +243,7 @@ wiki pages below:
 | **Wiki**             | **:**  | [**XCOFDK Wiki**](https://github.com/xcofdk/xcofdk-py/wiki)                                                                                                                                                                                           |
 | **API**              | **:**  | [**API Overview**](https://github.com/xcofdk/xcofdk-py/wiki/4.-API-Overview)                                                                                                                                                                          |
 | **Examples**         | **:**  | [**xcofdk-py-examples.tar.gz**](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xcofdk-py-examples.tar.gz) \| [**xcofdk-py-examples.zip**](https://github.com/xcofdk/xcofdk-py/blob/master/src/xcofdk/tests/xcofdk-py-examples.zip)  |
-| **Changelog**        | **:**  | [**Release highlights & release notes**](https://github.com/xcofdk/xcofdk-py/blob/master/doc/release_notes.md#release-highlights-v31)                                                                                                                 |
+| **Changelog**        | **:**  | [**Release highlights & release notes**](https://github.com/xcofdk/xcofdk-py/blob/master/doc/release_notes.md#release-highlights-v32)                                                                                                                 |
 | **Roadmap**          | **:**  | [**Roadmap of XCOFDK**](https://github.com/xcofdk/xcofdk-py/wiki/1.-Introduction#12-roadmap-of-xcofdk)                                                                                                                                                |
 | **License file**     | **:**  | [**MIT License**](https://github.com/xcofdk/xcofdk-py/blob/master/LICENSE.txt)                                                                                                                                                                        |
 | **Error reporting**  | **:**  | **error-xpy@xcofdk.de**                                                                                                                                                                                                                               |

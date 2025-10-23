@@ -17,7 +17,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eMisc_Name                                     : "name"
         , _EFwTextID.eMisc_Task                                     : "task"
         , _EFwTextID.eMisc_User                                     : "user"
-        , _EFwTextID.eMisc_Sync                                     : "sync"
         , _EFwTextID.eMisc_Async                                    : "async"
         , _EFwTextID.eMisc_Fatal                                    : "fatal"
         , _EFwTextID.eMisc_Tasks                                    : "tasks"
@@ -177,6 +176,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eEUTaskApiID_ProcessExternalMessage      : "ProcessExternalMessage"
 
         , _EFwTextID.eFwApiBase_StartPreamble                   : "{}\n{}\n{} XCOFDK {}\n{} {}\n{}\n{}"
+        , _EFwTextID.eFwApiBase_StartPreamble_FT_Python         : "FT"
         , _EFwTextID.eFwApiBase_StartPreamble_Python_Version    : "Python {}"
 
         , _EFwTextID.eLogException_TypeName_Fatal               : "_LogExceptionFatal"
@@ -211,8 +211,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eThrdP_AN_ATTR_KEY_UTASK_CONN               : "pa-utask-conn"
         , _EFwTextID.eThrdP_AN_ATTR_KEY_THREAD_TARGET            : "pa-thread-target"
 
-
-
         , _EFwTextID.eXTaskPrfBase_ToString_01  : "Task profile :\n"
         , _EFwTextID.eXTaskPrfBase_ToString_02  : "aliasName"
         , _EFwTextID.eXTaskPrfBase_ToString_03  : "isMainTask"
@@ -230,7 +228,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eXTaskPrfBase_ToString_15  : "\t{:<32} : {}\n"
 
         , _EFwTextID.eXTaskPrfExt_ToString_02               : "isRcTask"
-
 
         , _EFwTextID.eLcConfig_ToString                     : "tgtScope={}"
 
@@ -294,8 +291,6 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eFwCallable_ToString_01                : ", methodName={}"
 
-
-
         , _EFwTextID.eMutex_ToString_01                     : "{}: (ownerID, numLocks)=({}, {})"
 
         , _EFwTextID.eSemaphoreBase_ToString_01             : "MAX_COUNT"
@@ -343,7 +338,6 @@ def _GetFwTextDefines():
 
         , _EFwTextID.eMessageFilter_ToString_01            : "Message filter: (type, channel, cluster, label, sender, receiver)=({})"
 
-
         , _EFwTextID.eMessageCluster_ToString_01           : "{}: cluster={} , labels={}"
 
         , _EFwTextID.eXcoMsgHeader_ToString_01             : "Xco message header: (cluster, label, sender, receiver, bInternal)=({})"
@@ -357,8 +351,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eCallableSignature_ToString_01        : "callableID: {} , {}"
 
         , _EFwTextID.eXProcessConn_ToString_01             : "[XPC] {} , {} , {}"
-
-        , _EFwTextID.eXMPUtilImpl_ToString_01              : "  ({})"
 
         , _EFwTextID.eFwRteConfig_ToString_01              : "Framework's RTE policy configuration:\n"
         , _EFwTextID.eFwRteConfig_ToString_02              : "enable-auto-stop"
@@ -403,7 +395,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eFwConfig_TID_004               : "[CFG] Non-existing fw core dir."
         , _EFwTextID.eFwConfig_TID_005               : "[CFG] Non-existing fw config dir."
 
-
         , _EFwTextID.eLogMsg_AbsTask_TID_001         : "{}: (badge, running, state)=({}, {}, {})"
 
         , _EFwTextID.eLogMsg_FwTask_TID_002          : "below while trying to join {}."
@@ -435,9 +426,8 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_FwApiBase_TID_004       : "Failed to start framework."
         , _EFwTextID.eLogMsg_FwApiBase_TID_014       : "XCOFDK version {} supports Python versions 3.8 and higher only."
         , _EFwTextID.eLogMsg_FwApiBase_TID_016       : "Refused to start the framework due to conflicting configuration attempt done previously:\n{}"
-        , _EFwTextID.eLogMsg_FwApiBase_TID_017       : "Used Python interpreter version {} supports free-threading with GIL currently disabled.\nXCOFDK version {} does not support this runtime configuration of the interpreter."
-        , _EFwTextID.eLogMsg_FwApiBase_TID_018       : "RTE configuration policy '{}' is enabled.\nUsed Python interpreter version {} supports free-threading with GIL currently disabled, the framework will keep going to start.\nNevertheless, be aware that XCOFDK version {} does not officially support this runtime configuration of the interpreter."
-
+        , _EFwTextID.eLogMsg_FwApiBase_TID_017       : "Used Python interpreter version {} supports experimental free-threaded with GIL currently disabled.\nXCOFDK version {} does not support this runtime configuration of the interpreter.\nConsider to use the corresponding RTE policy for bypassing this guard (if applicable)"
+        , _EFwTextID.eLogMsg_FwApiBase_TID_018       : "RTE configuration policy '{}' is enabled.\nUsed Python interpreter version {} supports experimental free-threaded with GIL currently disabled, the framework will keep going to start.\nNevertheless, be aware that XCOFDK version {} does not officially support this runtime configuration of the interpreter."
         , _EFwTextID.eLogMsg_UserTask_TID_002        : "[UTsk] Encountered unexpected fatal error while creation of task instance of {}."
         , _EFwTextID.eLogMsg_UserTask_TID_003        : "[UTsk] Invalid task profile object of type {} passed in, cannot construct task instance."
         , _EFwTextID.eLogMsg_UserTask_TID_004        : "[UTsk] Failed to create/clone ext. task profile out of profile below:\n\t{}."
@@ -497,7 +487,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XTaskPrfExt_TID_001     : "Bad/invalid task profile instance: {}"
         , _EFwTextID.eLogMsg_XTaskPrfExt_TID_002     : "Failed to assign by task profile instance: {}"
 
-
         , _EFwTextID.eLogMsg_FSUtil_TID_001          : "Directory exists already: {}"
         , _EFwTextID.eLogMsg_FSUtil_TID_002          : "Unexpected (system) error while trying to create dir: (dirPath, exception)=({:<s}, '{:<s}'"
 
@@ -535,7 +524,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_Util_TID_011            : "Bad minimum value: (value, minRange)=({}, {})"
         , _EFwTextID.eLogMsg_Util_TID_012            : "Found None argument(s): (value, maxRange)=({}, {})"
         , _EFwTextID.eLogMsg_Util_TID_013            : "Bad maximum value: (value, maxRange)=({}, {})"
-
 
         , _EFwTextID.eLogMsg_PcErrHandler_TID_001    : "[EHdl][{}] Got unexpected error handler call."
         , _EFwTextID.eLogMsg_PcErrHandler_TID_002    : "while trying to add error entry:\n\t[{}]: {}"
@@ -620,7 +608,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcSetupFailure_TID_002   : "[LcSF] Empty LcSF error message."
         , _EFwTextID.eLogMsg_LcSetupFailure_TID_003   : "[LcSF] Bad/invalid LcSF error code object/value: {}"
 
-
         , _EFwTextID.eLogMsg_LcFailure_TID_001        : "[LcF] A severe error occurred during setup phase of LC."
         , _EFwTextID.eLogMsg_LcFailure_TID_003        : "[LcF] Permission denied: Overwriting LC runtime failure with setup failure: {}"
         , _EFwTextID.eLogMsg_LcFailure_TID_005        : "[LcF] Failed to set LC setup failure."
@@ -700,8 +687,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_LcStateImpl_TID_013         : "[LC][LcState] Bad LC component ID object for setting new state: type={}"
         , _EFwTextID.eLogMsg_LcStateImpl_TID_014         : "[LC][LcState] Mismatch of passed in params #{}: {}"
 
-
-
         , _EFwTextID.eLogMsg_Mutex_TID_001               : "Failed to release mutex due to exception: {}: {}"
 
         , _EFwTextID.eLogMsg_SemaphoreBase_TID_001       : "Failed to release semaphore due to exception: {}: {}"
@@ -756,7 +741,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_MessageClusterMap_TID_004   : "Cannot add dont-care label to cluster: {}"
         , _EFwTextID.eLogMsg_MessageClusterMap_TID_005   : "Message label {} is not a member of message cluster {}."
 
-
         , _EFwTextID.eLogMsg_DispatchFilter_TID_001      : "Encountered an error (ID={}) while trying to construct message filter:\n\t"
         , _EFwTextID.eLogMsg_DispatchFilter_TID_002      : "{}got bad t/c: (t, c)=({}, {})"
         , _EFwTextID.eLogMsg_DispatchFilter_TID_003      : "{}one or more invalid IDs passed in:\n\t(t, c, cluster, label, sender, receiver)=({}, {}, {}, {}, {}, {})"
@@ -764,7 +748,6 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_DispatchFilter_TID_005      : "{}bad filter parameters passed in for default dispatch filter:\n\tlabel={}, cluster={}, sender={}, receiver={}"
         , _EFwTextID.eLogMsg_DispatchFilter_TID_006      : "{}this version of the framework does not support broadcast dispatch filters:\n\tlabel={}, cluster={}, sender={}, receiver={}"
         , _EFwTextID.eLogMsg_DispatchFilter_TID_007      : "{}Unhandled errID: {}"
-
 
         , _EFwTextID.eLogMsg_MessageHeader_TID_001       : "Encountered an error (ID={}) while trying to construct message header:\n\t"
         , _EFwTextID.eLogMsg_MessageHeader_TID_002       : "{}Got bad t/c: (t, c)=({}, {})"
@@ -865,7 +848,8 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_XMPUtilImpl_TID_002         : "Framework is currently not available, ignoring API request to framework's MP api."
 
         , _EFwTextID.eLogMsg_FwRteConfig_TID_001         : "Ignoring attempt to (re-) configure frozen framework's RTE policy."
-        , _EFwTextID.eLogMsg_FwRteConfig_TID_003         : "Python version {} does not support (build) configuration of the interpreter for (experimental) free-threading."
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_002         : "Running Python interpreter {} does support (experimental) free-threaded,\nbut it is built and/or configured to run with GIL enabled.\nThe framework will ignore RTE configuration request to bypass experimental free-threaded guard."
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_003         : "Python version {} does not support (build) configuration of the interpreter for (experimental) free-threaded.\nThe framework will ignore RTE configuration request to bypass experimental free-threaded guard."
         , _EFwTextID.eLogMsg_FwRteConfig_TID_004         : "RTE configuration policies 'terminal-mode' and 'auto-stop' (or 'forced-auto-stop') are mutually exclusive, enabling both of them is disallowed."
         , _EFwTextID.eLogMsg_FwRteConfig_TID_005         : "Encountered unknown/invalid RTE policy ID: {}"
         , _EFwTextID.eLogMsg_FwRteConfig_TID_006         : "Encountered unexpected RTE policy ID: {}"
@@ -879,6 +863,7 @@ def _GetFwTextDefines():
         , _EFwTextID.eLogMsg_FwRteConfig_TID_014         : "Caught {} exception below while trying to configrue redirection file sink:\n\t{}"
         , _EFwTextID.eLogMsg_FwRteConfig_TID_015         : "Caught {} exception below while trying to configrue redirection TCP sink for: ip={} , port={}\n\t{}"
         , _EFwTextID.eLogMsg_FwRteConfig_TID_016         : "Encountered invalid line ending '{}' while trying to configrue redirection TCP sink for: ip={} , port={}"
+        , _EFwTextID.eLogMsg_FwRteConfig_TID_017         : "Running Python interpreter {} does officially support free-threaded.\nThe framework will ignore RTE configuration request to bypass experimental free-threaded guard."
 
         , _EFwTextID.eLogMsg_XProcessAgent_001           : "Cannot create child process instances before start of the framework."
 
